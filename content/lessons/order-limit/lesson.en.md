@@ -31,6 +31,39 @@ Recall the logical order: `ORDER BY` comes after `SELECT`, and `LIMIT` and `OFFS
 
 The PostgreSQL manual is emphatic: with `LIMIT`, use an `ORDER BY` that puts the rows in a unique order, or you get "an unpredictable subset of the query's rows".
 
+## Syntax {#syntax}
+
+`ORDER BY`, `LIMIT` and `OFFSET` all come at the end of a query, in a fixed order:
+
+```syntax
+SELECT select_list
+FROM table_name
+[ WHERE condition ]
+[ ORDER BY expression [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, …] ]
+[ LIMIT { count | ALL } ]
+[ OFFSET start ]
+```
+
+| Part | What goes there | Optional? |
+|---|---|---|
+| `expression` | A sort key: a column, an alias from `SELECT`, or a calculation | With `ORDER BY`, at least one is required |
+| `ASC` / `DESC` | This key's direction | Yes; the default is `ASC` |
+| `NULLS FIRST` / `NULLS LAST` | Which end this key's NULLs go to (see Going deeper) | Yes; by default `NULLS LAST` ascending, `NULLS FIRST` descending |
+| `[, …]` | More sort keys, each consulted only when the previous ones tie | Yes |
+| `count` | The most rows to return; `ALL` means no limit | The whole `LIMIT` can go |
+| `start` | How many rows to skip first | The whole `OFFSET` can go; the default is 0 |
+
+The shape shows two things that are easy to miss:
+
+- **`ASC | DESC` and `NULLS …` sit inside `[, …]`.** They belong to each sort key, not to `ORDER BY` as a whole. In `ORDER BY country, name DESC`, `DESC` applies to `name` only.
+- **`LIMIT` and `ORDER BY` are separate clauses.** The shape allows `LIMIT` without `ORDER BY`. That is valid syntax, but the result is unpredictable (see Common mistakes, number 1).
+
+Some clauses, read against the shape:
+
+- `ORDER BY price DESC LIMIT 3`: one key, `DESC`, then 3 rows.
+- `ORDER BY country, name`: two keys, both directions left out, so both ascending.
+- `ORDER BY city NULLS FIRST`: one key, direction left out, NULL position given.
+
 ## Example {#example}
 
 Task: list the customers sorted by country, and by name within each country.
@@ -69,6 +102,23 @@ ORDER BY stock_value DESC
 LIMIT 3;
 ```
 
+**The standard `FETCH FIRST`, and ties.** In standard SQL, taking the first rows is written `FETCH FIRST`, in this shape:
+
+```syntax
+FETCH FIRST count ROWS { ONLY | WITH TIES }
+```
+
+`ONLY` behaves like `LIMIT`; `WITH TIES` also brings along every row tied with the last one. Sorting by country and taking the first 2:
+
+```sql run
+SELECT name, country
+FROM customers
+ORDER BY country
+FETCH FIRST 2 ROWS WITH TIES;
+```
+
+Three rows come back: the 2nd row is a customer in Canada, and the other Canadian customer ties with it, so it comes too. With `LIMIT 2` only two rows would remain, and which Canadian stays would be arbitrary. `WITH TIES` needs an `ORDER BY`; without one there is no way to say what ties with what.
+
 **The most recent records.** Times sort too; newest first is `DESC`:
 
 ```sql run
@@ -94,6 +144,10 @@ Other databases do the opposite by default: MySQL and SQLite put NULLs first in 
 
 **Ties and `LIMIT`.** "The 3 most expensive products" is unambiguous when there are no ties. But if the 3rd and 4th cost the same, `LIMIT 3` keeps one of them arbitrarily. The standard `FETCH FIRST 3 ROWS WITH TIES` includes every tied row. `LIMIT` itself is PostgreSQL and MySQL syntax; the standard equivalent is `FETCH FIRST 3 ROWS ONLY`.
 
+**Sorting by column position.** PostgreSQL lets a number stand for a column of the select list: `ORDER BY 2, 1` sorts by the second column, then the first. It is short, but add or remove a column in `SELECT` later and the number points at a different column; the query still runs, quietly sorted wrong. This course does not use it.
+
+**`LIMIT ALL`.** `LIMIT ALL` is the same as no `LIMIT`. It helps when a program builds the SQL: the page size can be a number, or `ALL` for no paging, without deleting the whole clause.
+
 **Large `OFFSET`s are slow.** Rows skipped by `OFFSET` still have to be computed and then thrown away. Skipping millions of rows makes each page slower than the last. Real systems often remember the last value on the previous page and start the next page after it instead.
 
 ## Common mistakes {#mistakes}
@@ -115,6 +169,8 @@ The leftmost key wins.
 **4. Relying on the default NULL position.** Move to another database and the NULLs may jump to the other end. Write `NULLS FIRST` / `NULLS LAST` when the position matters.
 
 **5. An off-by-one `OFFSET`.** Page 1 is `OFFSET 0`, not `OFFSET 1`; `OFFSET 1` skips the first row.
+
+**6. A clause in the wrong place.** `ORDER BY` must come before `LIMIT`. Writing `... LIMIT 3 ORDER BY price` fails with `syntax error at or near "ORDER"`. Write the clauses top to bottom in the order of the syntax, and this never happens.
 
 ## Summary {#summary}
 

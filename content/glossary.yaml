@@ -65,6 +65,8 @@ boolean:          { en: Boolean value, zh: 布尔值 }
 operator-precedence: { en: operator precedence, zh: 运算符优先级 }
 wildcard:         { en: wildcard, zh: 通配符 }
 pattern-matching: { en: pattern matching, zh: 模式匹配 }
+collation:        { en: collation, zh: 排序规则 }
+regular-expression: { en: regular expression, zh: 正则表达式 }
 truth-table:      { en: truth table, zh: 真值表 }
 ascending:        { en: ascending order, zh: 升序 }
 descending:       { en: descending order, zh: 降序 }

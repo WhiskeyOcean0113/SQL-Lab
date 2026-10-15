@@ -18,6 +18,17 @@ FROM customers
 WHERE country = 'China' OR country = 'Japan';
 ```
 
+把所有情况列成一张{{term:truth-table}}：
+
+| A | B | `A AND B` | `A OR B` |
+|---|---|---|---|
+| true | true | true | true |
+| true | false | false | true |
+| false | true | false | true |
+| false | false | false | false |
+
+`AND` 只有一行为 true，所以它让条件更严、结果更少；`OR` 只有一行为 false，所以它让条件更松、结果更多。这里只列了 true 和 false，遇到 NULL 时还有第三种结果，本章 NULL 那一课再补全这张表。
+
 **{{Term:operator-precedence}}**：没有括号时，`NOT` 最先算，其次是 `AND`，最后是 `OR`。就像算术里先乘除后加减一样，`AND` 比 `OR` 结合得更紧。所以
 
 ```sql
@@ -27,6 +38,32 @@ WHERE a OR b AND c
 的意思是 `a OR (b AND c)`，而不是 `(a OR b) AND c`。
 
 比较运算（`=`、`<` 等）比这三个都优先，所以 `price < 50 AND stock > 10` 不需要括号，它本来就是 `(price < 50) AND (stock > 10)`。
+
+## 语法 {#syntax}
+
+上一课的 `WHERE condition` 里，`condition` 是一个比较。这一课的三个运算符把条件组合成新的条件：
+
+```syntax
+condition AND condition
+condition OR condition
+NOT condition
+( condition )
+```
+
+| 形状 | 什么时候为 true |
+|---|---|
+| `condition AND condition` | 两个条件都为 true |
+| `condition OR condition` | 至少一个条件为 true |
+| `NOT condition` | 条件为 false |
+| `( condition )` | 和括号里的条件一样；括号只决定先算哪一部分 |
+
+关键在于：这四种形状的结果**本身也是一个 `condition`**，所以可以填进另一个形状的占位符里，一层套一层。按这个思路拆示例里的条件：
+
+- `(category_id = 1 OR category_id = 2) AND price < 50` 最外层是 `condition AND condition`。
+- 左边的 `condition` 是 `( condition )`，括号里是 `condition OR condition`，两边各是一个比较。
+- 右边的 `condition` 是比较 `price < 50`。
+
+去掉括号后，按优先级，最外层变成了 `condition OR condition`，右边的 `condition` 才是 `category_id = 2 AND price < 50`。同样的词，拆出来的结构不同，意思也就不同。
 
 ## 示例 {#example}
 
@@ -74,6 +111,16 @@ FROM orders
 WHERE customer_id = 1 AND status = 'delivered' AND ordered_at < '2024-03-01';
 ```
 
+**用 `AND` 写一个范围。** 上一课说过，要找某一天的订单，得写成“不早于当天零点，并且早于第二天零点”：
+
+```sql run
+SELECT id, ordered_at
+FROM orders
+WHERE ordered_at >= '2024-01-05' AND ordered_at < '2024-01-06';
+```
+
+订单 1 在 2024-01-05 上午下单，现在被找到了。左边用 `>=`、右边用 `<`，这样相邻的两天既不会重叠，也不会漏掉午夜前后的时间。
+
 **混合使用时总加括号。** 即使你记得优先级，读代码的人未必记得。只要同一个条件里同时出现 `AND` 和 `OR`，就加上括号写明意图。
 
 ## 深入 {#deeper}
@@ -84,6 +131,8 @@ WHERE customer_id = 1 AND status = 'delivered' AND ordered_at < '2024-03-01';
 - `NOT (A OR B)` 等于 `NOT A AND NOT B`
 
 “不是 China 也不是 Japan”的顾客可以写成 `NOT (country = 'China' OR country = 'Japan')`，也可以写成 `country <> 'China' AND country <> 'Japan'`。常见的错误写法是 `country <> 'China' OR country <> 'Japan'`：任何一位顾客至少满足其中一个，所以它会返回全部 12 位顾客。
+
+**不要指望条件从左往右算。** 很多编程语言保证 `A && B` 先算 `A`，`A` 为假就不再算 `B`。SQL 不作这个保证：PostgreSQL 可以按它认为最快的顺序计算 `AND` 和 `OR` 的两边。所以 `stock <> 0 AND 100 / stock > 5` 并不能确保避开除以零的错误。需要控制计算顺序时，要用第 2 章的 `CASE` 表达式。
 
 **遇到 NULL 时，逻辑不只是真和假。** 如果某个条件因为 NULL 而无法判断，它的结果既不是 true 也不是 false，而是 unknown。`AND`、`OR`、`NOT` 对 unknown 有一套专门的规则，这是下下篇的主题。
 
@@ -112,6 +161,8 @@ WHERE country = 'China' OR 'Japan';
 **3. 混用 `AND` 和 `OR` 却不加括号。** 见上面的示例：少了括号，查询照样运行，只是多出几行。这类错误不报错，只能靠你检查结果。
 
 **4. 对“不是 A 也不是 B”用了 `OR`。** 见“深入”里的德摩根定律：`<> A OR <> B` 永远为 true。
+
+**5. 把其他语言的逻辑符号带进来。** SQL 的“并且”“或者”“取反”写作 `AND`、`OR`、`NOT`，而不是 `&&`、`||`、`!`。在 PostgreSQL 里，`||` 是拼接字符串的运算符（第 2 章），写成 `country = 'China' || country = 'Japan'` 不会得到“或者”的意思，而是报错。
 
 ## 小结 {#summary}
 

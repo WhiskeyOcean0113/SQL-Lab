@@ -24,6 +24,30 @@ FROM customers;
 
 在逻辑顺序里，`DISTINCT` 排在 `SELECT` 之后、`ORDER BY` 之前：先算出要输出的列，再去重，最后排序。
 
+## 语法 {#syntax}
+
+```syntax
+SELECT [ ALL | DISTINCT [ ON ( expression [, …] ) ] ] select_list
+FROM table_name
+[ WHERE condition ]
+[ ORDER BY expression [, …] ]
+```
+
+| 部分 | 意思 | 能省略吗 |
+|---|---|---|
+| `ALL` | 保留所有行，包括重复的 | 可以；什么都不写时就是 `ALL` |
+| `DISTINCT` | 去掉整行重复的行 | 可以 |
+| `ON ( expression [, …] )` | 只按括号里的表达式去重，每组保留一行（PostgreSQL 扩展，见“深入”） | 可以；只能跟在 `DISTINCT` 后面 |
+| `select_list` | 要输出的列，和第 1 章第一课的格式一样 | 不能 |
+
+格式里最要紧的是位置：`DISTINCT` 写在 `SELECT` 和 `select_list` 之间，不属于其中任何一列。所以它作用于整个选择列表，而不是紧跟着它的那一列。它也不能写在列与列之间：`SELECT country, DISTINCT city` 是语法错误。
+
+对照格式读几条：
+
+- `SELECT DISTINCT country`：选择列表只有一列，按这一列去重。
+- `SELECT DISTINCT country, city`：选择列表有两列，按两列的组合去重。
+- `SELECT DISTINCT ON (country) country, name, joined_on`：用了 `ON`，只按 `country` 去重，选择列表仍是三列。
+
 ## 示例 {#example}
 
 问题：顾客分布在哪些“国家 + 城市”的组合里？
@@ -68,6 +92,26 @@ ORDER BY customer_id;
 
 10 位顾客，正好缺了从没下过单的 11 和 12。
 
+**对计算出来的列去重。** 去重发生在 `SELECT` 算出结果之后，所以选择列表里的表达式也能去重。商品里有没有 100 美元以上的高价商品，又有没有便宜的？
+
+```sql run
+SELECT DISTINCT price >= 100 AS premium
+FROM products;
+```
+
+16 件商品去重后只剩两行：true 和 false。
+
+**先筛选，再去重。** `WHERE` 在 `DISTINCT` 之前执行。哪些顾客有过已取消的订单？
+
+```sql run
+SELECT DISTINCT customer_id
+FROM orders
+WHERE status = 'cancelled'
+ORDER BY customer_id;
+```
+
+先留下已取消的订单，再对它们的 `customer_id` 去重。同一位顾客即使取消过不止一笔，也只出现一次。
+
 **`ALL` 是默认值。** `SELECT ALL country` 和 `SELECT country` 一样，保留所有行。几乎没有人写 `ALL`，但知道它存在有助于理解：不去重才是常态，`DISTINCT` 是你主动要求的额外一步。
 
 ## 深入 {#deeper}
@@ -94,6 +138,10 @@ ORDER BY country, joined_on;
 
 `DISTINCT ON` 的列必须和 `ORDER BY` 最左边的列一致，而“第一行”由后面的排序键决定。它不是标准 SQL；第 6 章的窗口函数能用标准的方式做到同样的事。
 
+**`DISTINCT` 有代价。** 去重需要把所有行排序或者分组比较，行数多时并不便宜。在不会出现重复的地方加 `DISTINCT`，只会让查询变慢。比如 `SELECT DISTINCT id FROM customers`：`id` 是主键，本来就不会重复。
+
+**`DISTINCT` 和 `GROUP BY`。** 第 3 章会看到，`SELECT DISTINCT country` 和 `SELECT country ... GROUP BY country` 的结果相同。`DISTINCT` 只是去重；`GROUP BY` 还能对每一组做统计。
+
 **`DISTINCT` 不是万能的修补。** 第 4 章学 join 时会看到，连接方式不对会让行重复。用 `DISTINCT` 把重复的行藏起来，往往掩盖了真正的错误。看到意料之外的重复，先找出它从哪里来。
 
 ## 常见错误 {#mistakes}
@@ -112,6 +160,15 @@ FROM customers;
 **3. `ORDER BY` 用了不在选择列表里的列。** 见上面的“深入”：`SELECT DISTINCT` 时，排序只能用选出来的列。
 
 **4. 用 `DISTINCT` 掩盖重复。** 当结果出现了不该有的重复，`DISTINCT` 能让它“看起来对”，但重复背后的原因还在。先弄清楚为什么重复。
+
+**5. 把 `DISTINCT` 写在列中间。**
+
+```sql run error
+SELECT country, DISTINCT city
+FROM customers;
+```
+
+报 `syntax error at or near "DISTINCT"`。按格式，`DISTINCT` 只能紧跟在 `SELECT` 后面。如果你真正想要的是“每个国家列出它的城市，城市不重复”，那就是两列一起去重：`SELECT DISTINCT country, city`。
 
 ## 小结 {#summary}
 

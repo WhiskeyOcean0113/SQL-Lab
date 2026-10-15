@@ -40,6 +40,53 @@ SELECT … FROM … WHERE … GROUP BY … HAVING … ORDER BY … LIMIT …
 
 这是“逻辑”顺序，不是数据库真正干活的步骤。PostgreSQL 会自己决定最快的执行方式，比如先用索引找到少数几行再读取。但无论怎么执行，结果都和按这个顺序一步步做出来的完全一样。所以推理查询会返回什么时，只需要想这个逻辑顺序。
 
+## 语法 {#syntax}
+
+把书写顺序写成语法格式，就得到一条查询的完整骨架。后面每学一个子句，就是把骨架里的一行展开来讲。
+
+```syntax
+SELECT [ DISTINCT ] select_list
+[ FROM from_item ]
+[ WHERE condition ]
+[ GROUP BY grouping_element [, …] ]
+[ HAVING condition ]
+[ ORDER BY expression [ ASC | DESC ] [, …] ]
+[ LIMIT count ]
+[ OFFSET start ]
+```
+
+| 子句 | 占位符填什么 | 逻辑顺序 | 在哪里学 |
+|---|---|---|---|
+| `SELECT [ DISTINCT ] select_list` | `select_list`：要输出的列，用逗号分隔；`DISTINCT` 可选，去掉重复的行 | 第 5、6 步 | 第 1 章 |
+| `FROM from_item` | 一张表；以后也可以是几张连接起来的表，或者一个子查询 | 第 1 步 | 第 1、4、5 章 |
+| `WHERE condition` | 对每一行判断真假的条件，比如 `price < 20` | 第 2 步 | 第 1 章 |
+| `GROUP BY grouping_element` | 按什么分组，通常是列名 | 第 3 步 | 第 3 章 |
+| `HAVING condition` | 对每个分组判断真假的条件 | 第 4 步 | 第 3 章 |
+| `ORDER BY expression` | 按什么排序；`ASC` 升序（默认），`DESC` 降序 | 第 7 步 | 第 1 章 |
+| `LIMIT count` | 最多返回几行 | 第 8 步 | 第 1 章 |
+| `OFFSET start` | 先跳过几行 | 第 8 步 | 第 1 章 |
+
+从骨架上能直接读出三件事：
+
+- **只有 `SELECT` 是必须写的。** 其他每一行都在方括号里，可以不写。`SELECT 2 + 3` 就是只有第一行的查询。
+- **写了的子句，要按骨架从上到下的顺序排列。** 唯一的例外是 `LIMIT` 和 `OFFSET`，PostgreSQL 允许两者互换位置。
+- **`[ ASC | DESC ]` 是方括号里套着竖线**：可以不写；要写，就从两项里选一项。
+
+骨架的书写顺序和右边一列的逻辑顺序对不上，这正是本课的重点：从上往下写，数据库却从 `FROM` 开始处理。
+
+对照骨架读一条用了六个子句的查询：
+
+```sql run
+SELECT DISTINCT country
+FROM customers
+WHERE country <> 'China'
+ORDER BY country
+LIMIT 3
+OFFSET 1;
+```
+
+它用了骨架的第 1、2、3、6、7、8 行，跳过了 `GROUP BY` 和 `HAVING`。按逻辑顺序：先取所有顾客，去掉中国的顾客，取出国家并去重，按字母排序，跳过第一个 Brazil，再取三个：Canada、France、India。
+
 ## 示例 {#example}
 
 问题：Electronics 分类（`category_id` 为 2）里最贵的两件商品是哪两件？

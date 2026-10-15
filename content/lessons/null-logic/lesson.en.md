@@ -29,6 +29,35 @@ FROM customers
 WHERE email IS NULL;
 ```
 
+## Syntax {#syntax}
+
+The conditions built for NULL:
+
+```syntax
+expression IS [ NOT ] NULL
+expression IS [ NOT ] DISTINCT FROM expression
+condition IS [ NOT ] { TRUE | FALSE | UNKNOWN }
+```
+
+| Shape | True when | Can it be unknown? |
+|---|---|---|
+| `expression IS NULL` | The value is NULL | No |
+| `expression IS NOT NULL` | The value is not NULL | No |
+| `a IS DISTINCT FROM b` | The two differ; NULL against a value counts as different, and two NULLs count as the same | No |
+| `a IS NOT DISTINCT FROM b` | The two are the same, two NULLs included | No |
+| `condition IS TRUE` | The condition is true | No |
+| `condition IS UNKNOWN` | The condition is unknown | No |
+
+What they share is the last column: the result is only ever true or false, never unknown. In `WHERE`, they always behave predictably.
+
+Mind the spelling: `IS NULL` is one unit, and `NULL` here is a keyword without quotes. `NOT` goes after `IS`: `IS NOT NULL`.
+
+Some conditions, read against the shapes:
+
+- `email IS NULL`: the first line, without `NOT`.
+- `city IS DISTINCT FROM 'Shanghai'`: the second line, with a literal as the right-hand `expression`.
+- `(city <> 'Shanghai') IS NOT FALSE`: the third line, where the `condition` is a comparison, with `FALSE` picked and `NOT` added.
+
 ## Example {#example}
 
 Task: which orders have been placed or paid for but not yet shipped? (Cancelled orders do not count.)
@@ -82,6 +111,26 @@ WHERE city IS DISTINCT FROM 'Shanghai';
 
 Both return 10 rows. `IS DISTINCT FROM` is part of standard SQL, and `IS NOT DISTINCT FROM` is the matching "equal, treating two NULLs as equal".
 
+**Testing a condition's outcome: `IS NOT FALSE`.** "Customers not in Shanghai, counting those whose city is unknown" can also be put this way: keep the row unless "not in Shanghai" is false.
+
+```sql run
+SELECT name, city
+FROM customers
+WHERE (city <> 'Shanghai') IS NOT FALSE;
+```
+
+Again 10 rows. True and unknown are both "not false", so both stay. Here are the outcomes side by side:
+
+```sql run
+SELECT name,
+       city,
+       city <> 'Shanghai' AS not_shanghai,
+       (city <> 'Shanghai') IS UNKNOWN AS is_unknown
+FROM customers;
+```
+
+In the `not_shanghai` column, the two rows with a NULL city show NULL: that is what unknown looks like in a result. The `is_unknown` column holds only true and false.
+
 **`IS NOT NULL`**: only rows that have a value.
 
 ```sql run
@@ -106,6 +155,10 @@ WHERE city NOT IN ('Shanghai', NULL);
 
 **Why not `= NULL`.** The PostgreSQL manual says it plainly: do not write `expression = NULL`, because NULL is not "equal to" NULL. A compatibility setting, `transform_null_equals`, rewrites `= NULL` into `IS NULL` for old applications, but it is off by default and nothing should rely on it.
 
+**NULL is not an empty string.** The empty string `''` is a definite value: text of length zero. NULL is the absence of a value. In PostgreSQL and standard SQL they are entirely different. Oracle is the exception: it treats an empty string as NULL, so in Oracle `WHERE city = ''` never finds a row.
+
+**Replacing NULL with a default.** When displaying results, you often want NULL to show as something like "unknown". The `coalesce` function from Chapter 2 does exactly that: `coalesce(city, 'unknown')` returns `'unknown'` when `city` is NULL.
+
 **NULL in other clauses.** In `ORDER BY`, PostgreSQL puts NULLs last in ascending order by default (next lesson); in `DISTINCT`, all NULLs count as one value (the lesson after); aggregate functions ignore NULLs (chapter 3). Each clause has its own rule; learn each where you meet it.
 
 ## Common mistakes {#mistakes}
@@ -127,6 +180,8 @@ WHERE email = NULL;
 **4. Putting NULL in a `NOT IN` list.** The result is always empty.
 
 **5. Forgetting that NULL can appear at all.** Before writing a condition, ask whether the column can hold NULL. In a table definition, any column without a `NOT NULL` constraint can.
+
+**6. Putting NULL in quotes.** `WHERE city = 'NULL'` looks for a city spelt N, U, L, L and returns 0 rows. `'NULL'` is a piece of text; `NULL` is the absence of a value, and testing for it takes `IS NULL`.
 
 ## Summary {#summary}
 

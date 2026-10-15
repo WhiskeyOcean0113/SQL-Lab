@@ -39,6 +39,35 @@ WHERE name LIKE 'D%';
 
 `'D%'` 的意思是“以 D 开头，后面是什么都行”。注意 `LIKE` 要匹配整段文字：`'D'` 只能匹配正好是 D 的文字，想在中间任何位置找某个词，要两头都加 `%`。
 
+## 语法 {#syntax}
+
+三种写法都是 `condition`，可以直接放进 `WHERE`，也可以用 `AND`、`OR` 和别的条件组合：
+
+```syntax
+expression [ NOT ] IN ( value [, …] )
+expression [ NOT ] BETWEEN [ SYMMETRIC ] low AND high
+string [ NOT ] { LIKE | ILIKE } pattern [ ESCAPE escape_character ]
+```
+
+| 部分 | 填什么 | 能省略吗 |
+|---|---|---|
+| `expression` | 要检查的值，通常是列名 | 不能 |
+| `value [, …]` | 一个或多个值，用逗号隔开，整个列表放在括号里 | 至少写一个 |
+| `low`、`high` | 范围的下界和上界，两端都包含 | 不能 |
+| `string` | 要检查的文字，通常是文字类型的列 | 不能 |
+| `pattern` | 带通配符的文字，写在单引号里 | 不能 |
+| `NOT` | 把整个条件取反 | 可以 |
+| `SYMMETRIC` | 让 `BETWEEN` 自动交换上下界（见“深入”） | 可以 |
+| `ESCAPE escape_character` | 指定转义字符（见“深入”） | 可以，默认是反斜杠 |
+
+注意 `BETWEEN low AND high` 里的 `AND` 是 `BETWEEN` 写法的一部分，不是上一课的逻辑运算符 `AND`。数据库能分清两者：`price BETWEEN 22 AND 42 AND stock > 20` 的意思是“价格在 22 到 42 之间，并且库存多于 20”。
+
+对照格式读几个条件：
+
+- `country IN ('Canada', 'France', 'Italy')`：`value` 写了三个。
+- `country NOT IN ('China', 'Japan')`：用了可选的 `NOT`。
+- `name ILIKE '%pen%'`：从 `{ LIKE | ILIKE }` 里选了 `ILIKE`，没有写 `ESCAPE`。
+
 ## 示例 {#example}
 
 问题：哪些顾客的邮箱地址里，`@` 前面一个字符是字母 d？
@@ -75,6 +104,26 @@ WHERE name ILIKE '%pen%';
 
 `ILIKE` 不是 SQL 标准的一部分，是 PostgreSQL 的扩展。在别的数据库里，常见的做法是把两边都转成小写再比较，第 2 章会学到 `lower()`。
 
+**`IN` 的列表可以是数字。** 上一课的示例用 `IN` 改写，不再需要括号来管优先级：
+
+```sql run
+SELECT name, category_id, price
+FROM products
+WHERE category_id IN (1, 2) AND price < 50;
+```
+
+结果和上一课加了括号的版本一样，还是那 3 行。`IN` 本身是一个完整的条件，和 `AND` 组合时不会被拆开。
+
+**`BETWEEN` 用于日期。** 2023 年上半年加入的顾客：
+
+```sql run
+SELECT name, joined_on
+FROM customers
+WHERE joined_on BETWEEN '2023-01-01' AND '2023-06-30';
+```
+
+`joined_on` 是日期类型，没有时分秒，所以两端都包含正好合适：6 月 30 日加入的顾客也会算进来。带时间的时间戳就不一样了，见“深入”。
+
 **`NOT IN`、`NOT BETWEEN`、`NOT LIKE`。** 在前面加 `NOT` 就是取反：
 
 ```sql run
@@ -107,6 +156,8 @@ WHERE ordered_at >= '2024-06-01' AND ordered_at < '2024-06-29';
 
 **匹配 `%` 和 `_` 本身。** 如果要找的文字里本来就有 `%` 或 `_`，在它前面加一个反斜杠：`LIKE '%\_%'` 找包含下划线的文字。
 
+**正则表达式。** `LIKE` 只有两个通配符，表达能力有限。PostgreSQL 还提供 `~` 运算符，用{{term:regular-expression}}匹配文字，比如 `name ~ '^[A-D]'` 找以 A 到 D 开头的名字。标准 SQL 另有一个 `SIMILAR TO`，介于两者之间，很少用到。正则表达式超出了本课程的范围，知道有这个工具就够了。
+
 **`NOT IN` 和 NULL。** 如果列表里有 NULL，`NOT IN` 会一行都不返回。原因要等下一篇讲完 NULL 才能说清楚，先记住：不要把 NULL 放进 `NOT IN` 的列表。
 
 ## 常见错误 {#mistakes}
@@ -128,6 +179,10 @@ WHERE name LIKE '%pen%';
 **4. 用 `=` 搭配通配符。** `name = 'D%'` 找的是名字正好叫 `D%` 的商品；通配符只在 `LIKE` 和 `ILIKE` 里起作用。
 
 **5. `IN` 的列表忘了括号或引号。** `country IN 'China', 'Japan'` 是语法错误；文字值要逐个加单引号，整个列表放在括号里：`IN ('China', 'Japan')`。
+
+**6. 在 `IN` 的列表里写通配符。** `name IN ('D%')` 找的是名字正好叫 `D%` 的商品，结果是 0 行。和第 4 条一样，通配符只在 `LIKE` 和 `ILIKE` 里起作用。
+
+**7. 把 `BETWEEN` 的 `AND` 换成别的词。** `price BETWEEN 22 OR 42` 是语法错误。`BETWEEN` 的格式固定是 `BETWEEN low AND high`，这里的 `AND` 不能换成 `OR` 或逗号。
 
 ## 小结 {#summary}
 

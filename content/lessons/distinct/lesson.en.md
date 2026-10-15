@@ -24,6 +24,30 @@ The key point: **`DISTINCT` compares whole rows, every column of the select list
 
 In the logical order, `DISTINCT` comes after `SELECT` and before `ORDER BY`: first compute the output columns, then remove duplicates, then sort.
 
+## Syntax {#syntax}
+
+```syntax
+SELECT [ ALL | DISTINCT [ ON ( expression [, …] ) ] ] select_list
+FROM table_name
+[ WHERE condition ]
+[ ORDER BY expression [, …] ]
+```
+
+| Part | Meaning | Optional? |
+|---|---|---|
+| `ALL` | Keep every row, duplicates included | Yes; writing nothing means `ALL` |
+| `DISTINCT` | Remove rows that duplicate a whole row | Yes |
+| `ON ( expression [, …] )` | Deduplicate on the expressions in parentheses only, keeping one row per group (a PostgreSQL extension; see Going deeper) | Yes; only after `DISTINCT` |
+| `select_list` | The output columns, in the same shape as Chapter 1's first lesson | No |
+
+What matters most is the position: `DISTINCT` sits between `SELECT` and `select_list` and belongs to none of the columns. That is why it applies to the whole select list rather than the column right after it. Nor can it go between columns: `SELECT country, DISTINCT city` is a syntax error.
+
+Some queries, read against the shape:
+
+- `SELECT DISTINCT country`: one column in the list, deduplicated on that column.
+- `SELECT DISTINCT country, city`: two columns, deduplicated on their combination.
+- `SELECT DISTINCT ON (country) country, name, joined_on`: with `ON`, deduplicated on `country` alone, while the list still has three columns.
+
 ## Example {#example}
 
 Task: which combinations of country and city do customers live in?
@@ -68,6 +92,26 @@ ORDER BY customer_id;
 
 10 customers, missing exactly 11 and 12, who have never ordered.
 
+**Deduplicating computed columns.** Duplicates are removed after `SELECT` computes the output, so expressions in the list deduplicate too. Does the shop have products of 100 dollars or more, and cheaper ones as well?
+
+```sql run
+SELECT DISTINCT price >= 100 AS premium
+FROM products;
+```
+
+The 16 products shrink to two rows: true and false.
+
+**Filter first, then deduplicate.** `WHERE` runs before `DISTINCT`. Which customers have had an order cancelled?
+
+```sql run
+SELECT DISTINCT customer_id
+FROM orders
+WHERE status = 'cancelled'
+ORDER BY customer_id;
+```
+
+The cancelled orders are kept first, then their `customer_id`s are deduplicated. A customer with more than one cancelled order still appears once.
+
 **`ALL` is the default.** `SELECT ALL country` is the same as `SELECT country` and keeps every row. Hardly anyone writes `ALL`, but it is a useful reminder: keeping duplicates is the normal case, and `DISTINCT` is an extra step you ask for.
 
 ## Going deeper {#deeper}
@@ -94,6 +138,10 @@ ORDER BY country, joined_on;
 
 The `DISTINCT ON` columns must match the leftmost `ORDER BY` columns, and the keys after them decide which row is "first". It is not standard SQL; the window functions of chapter 6 do the same thing in a standard way.
 
+**`DISTINCT` has a cost.** Removing duplicates means sorting or hashing every row, which is not cheap when there are many. Adding `DISTINCT` where duplicates cannot occur only slows the query down. `SELECT DISTINCT id FROM customers` is an example: `id` is the primary key and never repeats anyway.
+
+**`DISTINCT` and `GROUP BY`.** Chapter 3 shows that `SELECT DISTINCT country` gives the same result as `SELECT country ... GROUP BY country`. `DISTINCT` only removes duplicates; `GROUP BY` can also compute statistics for each group.
+
 **`DISTINCT` is not a universal fix.** In chapter 4 you will see that a wrong join can repeat rows. Hiding those repeats with `DISTINCT` often hides the real mistake. When unexpected duplicates appear, find out where they come from first.
 
 ## Common mistakes {#mistakes}
@@ -112,6 +160,15 @@ Still 9 rows. `(country)` is just one column in parentheses, and `DISTINCT` stil
 **3. `ORDER BY` on a column that is not selected.** See Going deeper above: with `SELECT DISTINCT`, you can only sort by selected columns.
 
 **4. Using `DISTINCT` to cover up duplicates.** When a result has repeats it should not have, `DISTINCT` can make it look right while the cause remains. Find out why the rows repeat first.
+
+**5. `DISTINCT` between columns.**
+
+```sql run error
+SELECT country, DISTINCT city
+FROM customers;
+```
+
+That fails with `syntax error at or near "DISTINCT"`. In the shape, `DISTINCT` can only come straight after `SELECT`. If what you really want is each country with its cities, no city repeated, that is deduplicating two columns together: `SELECT DISTINCT country, city`.
 
 ## Summary {#summary}
 

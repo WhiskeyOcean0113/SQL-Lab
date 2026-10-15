@@ -39,6 +39,35 @@ WHERE name LIKE 'D%';
 
 `'D%'` means "starts with D, followed by anything". Note that `LIKE` must match the whole text: the pattern `'D'` matches only text that is exactly D. To find a word anywhere inside, put `%` at both ends.
 
+## Syntax {#syntax}
+
+All three forms are a `condition`: they go straight into `WHERE`, or combine with other conditions through `AND` and `OR`:
+
+```syntax
+expression [ NOT ] IN ( value [, …] )
+expression [ NOT ] BETWEEN [ SYMMETRIC ] low AND high
+string [ NOT ] { LIKE | ILIKE } pattern [ ESCAPE escape_character ]
+```
+
+| Part | What goes there | Optional? |
+|---|---|---|
+| `expression` | The value being tested, usually a column | No |
+| `value [, …]` | One or more values, separated by commas, the whole list in parentheses | At least one |
+| `low`, `high` | The lower and upper bound, both included | No |
+| `string` | The text being tested, usually a text column | No |
+| `pattern` | Text with wildcards, in single quotes | No |
+| `NOT` | Negates the whole condition | Yes |
+| `SYMMETRIC` | Lets `BETWEEN` swap the bounds when needed (see Going deeper) | Yes |
+| `ESCAPE escape_character` | Sets the escape character (see Going deeper) | Yes; the default is a backslash |
+
+The `AND` in `BETWEEN low AND high` belongs to `BETWEEN`; it is not the logical `AND` from the previous lesson. The database tells them apart: `price BETWEEN 22 AND 42 AND stock > 20` means "priced from 22 to 42, and more than 20 in stock".
+
+Some conditions, read against the shapes:
+
+- `country IN ('Canada', 'France', 'Italy')`: three `value`s.
+- `country NOT IN ('China', 'Japan')`: with the optional `NOT`.
+- `name ILIKE '%pen%'`: `ILIKE` picked from `{ LIKE | ILIKE }`, with no `ESCAPE`.
+
 ## Example {#example}
 
 Task: which customers have an email address in which the character just before `@` is the letter d?
@@ -75,6 +104,26 @@ WHERE name ILIKE '%pen%';
 
 `ILIKE` is not part of standard SQL; it is a PostgreSQL extension. Elsewhere the usual approach is to lower-case both sides before comparing, with the `lower()` function you will meet in chapter 2.
 
+**An `IN` list of numbers.** The previous lesson's example, rewritten with `IN`, no longer needs parentheses to manage precedence:
+
+```sql run
+SELECT name, category_id, price
+FROM products
+WHERE category_id IN (1, 2) AND price < 50;
+```
+
+The result is the same 3 rows as the parenthesised version. `IN` is one complete condition, so `AND` cannot split it apart.
+
+**`BETWEEN` with dates.** Customers who joined in the first half of 2023:
+
+```sql run
+SELECT name, joined_on
+FROM customers
+WHERE joined_on BETWEEN '2023-01-01' AND '2023-06-30';
+```
+
+`joined_on` is a date with no time of day, so including both ends is exactly right: someone who joined on 30 June counts. Timestamps, which carry a time, are another matter; see Going deeper.
+
 **`NOT IN`, `NOT BETWEEN`, `NOT LIKE`.** A leading `NOT` negates each of them:
 
 ```sql run
@@ -107,6 +156,8 @@ This half-open range works for dates and timestamps alike, with no need to worry
 
 **Matching `%` and `_` themselves.** If the text you are looking for contains `%` or `_`, put a backslash before it: `LIKE '%\_%'` finds text containing an underscore.
 
+**Regular expressions.** `LIKE` has only two wildcards, which limits what it can describe. PostgreSQL also offers the `~` operator, which matches text against a {{term:regular-expression}}: `name ~ '^[A-D]'` finds names starting with A to D. Standard SQL also has `SIMILAR TO`, somewhere between the two and rarely used. Regular expressions are beyond this course; it is enough to know the tool exists.
+
 **`NOT IN` and NULL.** If the list contains a NULL, `NOT IN` returns no rows at all. The reason will make sense after the next lesson on NULL; for now, never put NULL in a `NOT IN` list.
 
 ## Common mistakes {#mistakes}
@@ -128,6 +179,10 @@ WHERE name LIKE '%pen%';
 **4. Wildcards with `=`.** `name = 'D%'` looks for a product literally called `D%`. Wildcards only work with `LIKE` and `ILIKE`.
 
 **5. An `IN` list without parentheses or quotes.** `country IN 'China', 'Japan'` is a syntax error. Quote each text value and wrap the whole list in parentheses: `IN ('China', 'Japan')`.
+
+**6. Wildcards in an `IN` list.** `name IN ('D%')` looks for a product literally called `D%` and returns 0 rows. As with mistake 4, wildcards only work with `LIKE` and `ILIKE`.
+
+**7. Replacing the `AND` in `BETWEEN`.** `price BETWEEN 22 OR 42` is a syntax error. The shape of `BETWEEN` is fixed as `BETWEEN low AND high`; that `AND` cannot become `OR` or a comma.
 
 ## Summary {#summary}
 

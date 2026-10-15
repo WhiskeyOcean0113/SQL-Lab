@@ -29,6 +29,35 @@ FROM customers
 WHERE email IS NULL;
 ```
 
+## 语法 {#syntax}
+
+专门用来处理 NULL 的几种条件：
+
+```syntax
+expression IS [ NOT ] NULL
+expression IS [ NOT ] DISTINCT FROM expression
+condition IS [ NOT ] { TRUE | FALSE | UNKNOWN }
+```
+
+| 形状 | 什么时候为 true | 会不会得到 unknown |
+|---|---|---|
+| `expression IS NULL` | 值是 NULL | 不会 |
+| `expression IS NOT NULL` | 值不是 NULL | 不会 |
+| `a IS DISTINCT FROM b` | 两边不同；一边是 NULL、另一边不是，也算不同；两边都是 NULL 算相同 | 不会 |
+| `a IS NOT DISTINCT FROM b` | 两边相同，两个 NULL 也算相同 | 不会 |
+| `condition IS TRUE` | 条件的结果是 true | 不会 |
+| `condition IS UNKNOWN` | 条件的结果是 unknown | 不会 |
+
+这几种写法的共同点在最后一列：它们的结果只有 true 和 false，没有 unknown。所以放进 `WHERE` 里，行为总是可以预料的。
+
+要注意的是写法：`IS NULL` 是一个整体，`NULL` 在这里是关键字，不加引号。`NOT` 写在 `IS` 后面：`IS NOT NULL`。
+
+对照格式读几个条件：
+
+- `email IS NULL`：第一行，没有 `NOT`。
+- `city IS DISTINCT FROM 'Shanghai'`：第二行，右边的 `expression` 是一个字面量。
+- `(city <> 'Shanghai') IS NOT FALSE`：第三行，`condition` 是一个比较，选了 `FALSE`，加了 `NOT`。
+
 ## 示例 {#example}
 
 问题：哪些订单已经付款或下单、但还没有发货？（已取消的订单不算。）
@@ -82,6 +111,26 @@ WHERE city IS DISTINCT FROM 'Shanghai';
 
 两种写法都返回 10 行。`IS DISTINCT FROM` 是 SQL 标准的一部分，`IS NOT DISTINCT FROM` 则是“把两个 NULL 视为相等”的等于。
 
+**直接检查条件的真假：`IS NOT FALSE`。** “不住在 Shanghai 的顾客，城市未知的也算”，还可以这样说：只要“不住在 Shanghai”这个判断不是 false，就留下。
+
+```sql run
+SELECT name, city
+FROM customers
+WHERE (city <> 'Shanghai') IS NOT FALSE;
+```
+
+同样是 10 行。true 和 unknown 都“不是 false”，所以都留下了。把三种结果并排看一看：
+
+```sql run
+SELECT name,
+       city,
+       city <> 'Shanghai' AS not_shanghai,
+       (city <> 'Shanghai') IS UNKNOWN AS is_unknown
+FROM customers;
+```
+
+`not_shanghai` 一列里，城市为 NULL 的两行显示为 NULL，这就是 unknown 在结果里的样子；`is_unknown` 一列则只有 true 和 false。
+
 **`IS NOT NULL`**：只要有值的行。
 
 ```sql run
@@ -106,6 +155,10 @@ WHERE city NOT IN ('Shanghai', NULL);
 
 **为什么不用 `= NULL`。** PostgreSQL 文档特别提醒：不要写 `expression = NULL`，因为 NULL 不“等于” NULL。数据库有一个兼容旧程序的设置 `transform_null_equals`，会把 `= NULL` 改写成 `IS NULL`，但它默认关闭，也不应该依赖它。
 
+**NULL 不是空字符串。** 空字符串 `''` 是一个确定的值：长度为 0 的文字。NULL 则是没有值。在 PostgreSQL 和标准 SQL 里，两者完全不同。Oracle 是个例外，它把空字符串当成 NULL 处理；换到 Oracle 时，`WHERE city = ''` 永远找不到任何行。
+
+**把 NULL 换成一个默认值。** 显示结果时，常常想把 NULL 显示成“未知”之类的文字。第 2 章的 `coalesce` 函数专门做这件事：`coalesce(city, 'unknown')` 在 `city` 为 NULL 时返回 `'unknown'`。
+
 **NULL 在其他子句里的表现。** `ORDER BY` 时，PostgreSQL 默认把 NULL 排在升序的最后（下一篇）；`DISTINCT` 时，所有 NULL 被看作同一个值（下下篇）；聚合函数会忽略 NULL（第 3 章）。规则各不相同，遇到时一一记住。
 
 ## 常见错误 {#mistakes}
@@ -127,6 +180,8 @@ WHERE email = NULL;
 **4. 在 `NOT IN` 的列表里放 NULL。** 结果永远是空的。
 
 **5. 忘了 NULL 可能出现。** 写条件之前，先想一想这一列有没有 NULL。看表结构时，没有 `NOT NULL` 约束的列都可能是 NULL。
+
+**6. 把 NULL 写进引号。** `WHERE city = 'NULL'` 找的是城市名正好是 N、U、L、L 四个字母的顾客，结果是 0 行。`'NULL'` 是一段文字，`NULL` 才是“没有值”，而判断它要用 `IS NULL`。
 
 ## 小结 {#summary}
 

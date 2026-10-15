@@ -95,7 +95,8 @@ Every `##` heading ends with a fixed id. Sections appear in this order;
 `variants` and `deeper` are optional, the rest are required. Both languages
 have exactly the same sections. `syntax` is being added lesson by lesson
 (`sql-syntax` and `select-basics` are the models); validate warns where it is
-missing, and it becomes required once every lesson has it.
+missing, and it becomes required once every lesson has it. Lessons before
+`sql-syntax`, which teaches the notation, have no `syntax` section.
 
 | id         | zh heading    | en heading       | What goes in it |
 |------------|---------------|------------------|-----------------|

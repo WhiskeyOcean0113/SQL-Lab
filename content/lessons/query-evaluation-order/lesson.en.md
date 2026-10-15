@@ -40,6 +40,53 @@ Two consequences come up again and again:
 
 This is the logical order, not the work the database physically does. PostgreSQL chooses the fastest way to execute a query, for example using an index to find a few rows before reading anything else. However it executes, the result is exactly what working through these steps in order would give. So to reason about what a query returns, the logical order is all you need.
 
+## Syntax {#syntax}
+
+Write the clause order out as a syntax block and you get the skeleton of a whole query. Each later lesson that teaches a clause expands one line of it.
+
+```syntax
+SELECT [ DISTINCT ] select_list
+[ FROM from_item ]
+[ WHERE condition ]
+[ GROUP BY grouping_element [, …] ]
+[ HAVING condition ]
+[ ORDER BY expression [ ASC | DESC ] [, …] ]
+[ LIMIT count ]
+[ OFFSET start ]
+```
+
+| Clause | What the placeholder holds | Logical step | Taught in |
+|---|---|---|---|
+| `SELECT [ DISTINCT ] select_list` | `select_list`: the output columns, comma-separated; the optional `DISTINCT` removes duplicate rows | 5 and 6 | Chapter 1 |
+| `FROM from_item` | A table; later also several joined tables, or a subquery | 1 | Chapters 1, 4 and 5 |
+| `WHERE condition` | A condition that is true or false for each row, such as `price < 20` | 2 | Chapter 1 |
+| `GROUP BY grouping_element` | What to group by, usually a column | 3 | Chapter 3 |
+| `HAVING condition` | A condition that is true or false for each group | 4 | Chapter 3 |
+| `ORDER BY expression` | What to sort by; `ASC` ascending (the default), `DESC` descending | 7 | Chapter 1 |
+| `LIMIT count` | The most rows to return | 8 | Chapter 1 |
+| `OFFSET start` | How many rows to skip first | 8 | Chapter 1 |
+
+Three things can be read straight off the skeleton:
+
+- **Only `SELECT` is required.** Every other line is in brackets and can be left out. `SELECT 2 + 3` is a query with just the first line.
+- **The clauses you do write go in the skeleton's order, top to bottom.** The one exception is `LIMIT` and `OFFSET`, which PostgreSQL accepts either way round.
+- **`[ ASC | DESC ]` is a bar inside brackets:** you may leave it out, and if you write it, pick one of the two.
+
+The written order down the skeleton does not match the logical steps in the table, and that mismatch is the point of this lesson: you write from the top, but the database starts at `FROM`.
+
+Here is a query using six of the clauses, read against the skeleton:
+
+```sql run
+SELECT DISTINCT country
+FROM customers
+WHERE country <> 'China'
+ORDER BY country
+LIMIT 3
+OFFSET 1;
+```
+
+It uses lines 1, 2, 3, 6, 7 and 8 and skips `GROUP BY` and `HAVING`. In logical order: take every customer, drop the ones in China, take their countries and remove duplicates, sort alphabetically, skip the first one, Brazil, and keep the next three: Canada, France and India.
+
 ## Example {#example}
 
 Task: which are the two most expensive products in the Electronics category (`category_id` 2)?

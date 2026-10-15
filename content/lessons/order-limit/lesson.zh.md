@@ -31,6 +31,39 @@ LIMIT 3;
 
 PostgreSQL 文档特别强调：使用 `LIMIT` 时一定要有能确定唯一顺序的 `ORDER BY`，否则得到的是“查询结果里不可预测的一部分”。
 
+## 语法 {#syntax}
+
+`ORDER BY`、`LIMIT`、`OFFSET` 都写在查询的最后，顺序固定：
+
+```syntax
+SELECT select_list
+FROM table_name
+[ WHERE condition ]
+[ ORDER BY expression [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, …] ]
+[ LIMIT { count | ALL } ]
+[ OFFSET start ]
+```
+
+| 部分 | 填什么 | 能省略吗 |
+|---|---|---|
+| `expression` | 排序键：列名、`SELECT` 里的别名，或者计算式 | 写了 `ORDER BY` 就至少要有一个 |
+| `ASC` / `DESC` | 这个排序键的方向 | 可以，默认 `ASC` |
+| `NULLS FIRST` / `NULLS LAST` | 这个排序键里 NULL 排在哪头（见“深入”） | 可以，默认升序时 `NULLS LAST`、降序时 `NULLS FIRST` |
+| `[, …]` | 更多排序键，前一个相同时才比较下一个 | 可以 |
+| `count` | 最多返回几行；写 `ALL` 表示不限制 | 整个 `LIMIT` 可以不写 |
+| `start` | 先跳过几行 | 整个 `OFFSET` 可以不写，默认 0 |
+
+从格式里能看出两件常被忽略的事：
+
+- **`ASC | DESC` 和 `NULLS …` 在 `[, …]` 的里面。** 也就是说，它们属于每一个排序键，而不是整个 `ORDER BY`。`ORDER BY country, name DESC` 里，`DESC` 只管 `name`。
+- **`LIMIT` 和 `ORDER BY` 是两个独立的子句。** 格式允许只写 `LIMIT` 不写 `ORDER BY`，语法上没错，结果却不可预测（见“常见错误”第 1 条）。
+
+对照格式读几条：
+
+- `ORDER BY price DESC LIMIT 3`：一个排序键，方向 `DESC`，再取 3 行。
+- `ORDER BY country, name`：两个排序键，都省略了方向，都是升序。
+- `ORDER BY city NULLS FIRST`：一个排序键，省略了方向，指定了 NULL 的位置。
+
 ## 示例 {#example}
 
 问题：把顾客名单按国家排列，同一个国家的顾客按名字排列。
@@ -69,6 +102,23 @@ ORDER BY stock_value DESC
 LIMIT 3;
 ```
 
+**标准写法 `FETCH FIRST`，以及并列。** SQL 标准里，取前几行写作 `FETCH FIRST`，格式是：
+
+```syntax
+FETCH FIRST count ROWS { ONLY | WITH TIES }
+```
+
+`ONLY` 和 `LIMIT` 一样；`WITH TIES` 会把和最后一行并列的行也一起带上。按国家排序，取前 2 行：
+
+```sql run
+SELECT name, country
+FROM customers
+ORDER BY country
+FETCH FIRST 2 ROWS WITH TIES;
+```
+
+结果是 3 行：第 2 行是 Canada 的顾客，另一位 Canada 顾客和它并列，也被带上了。换成 `LIMIT 2`，就只剩两行，留下哪位 Canada 顾客是随意的。`WITH TIES` 必须配合 `ORDER BY` 使用，否则无从判断谁和谁并列。
+
 **最近的记录。** 时间也能排序，最新的排在最前用 `DESC`：
 
 ```sql run
@@ -94,6 +144,10 @@ ORDER BY city NULLS FIRST;
 
 **并列和 `LIMIT`。** “价格最高的 3 件商品”在没有并列时没有歧义。但如果第 3 名和第 4 名价格相同，`LIMIT 3` 会随意留下其中一件。SQL 标准的写法 `FETCH FIRST 3 ROWS WITH TIES` 会把并列的都带上；`LIMIT` 本身是 PostgreSQL 和 MySQL 的写法，标准里对应的是 `FETCH FIRST 3 ROWS ONLY`。
 
+**按列的位置排序。** PostgreSQL 允许用数字代表 `SELECT` 列表里的第几列：`ORDER BY 2, 1` 就是先按第二列、再按第一列排序。写起来短，但以后在 `SELECT` 里增删一列，数字指的就变成了另一列，查询照样运行，排序却悄悄错了。本课程不用这种写法。
+
+**`LIMIT ALL`。** `LIMIT ALL` 和不写 `LIMIT` 完全一样。它的用处在程序拼接 SQL 时：“每页多少行”可以填一个具体数字，也可以填 `ALL` 表示不分页，而不必删掉整个子句。
+
 **大的 `OFFSET` 很慢。** 被 `OFFSET` 跳过的行，数据库仍然要先算出来再丢掉。跳过几百万行时，翻页会越来越慢。真实系统里常用“记住上一页最后一行的值，下一页从它之后开始”的方式代替。
 
 ## 常见错误 {#mistakes}
@@ -115,6 +169,8 @@ ORDER BY name, country;
 **4. 依赖 NULL 的默认位置。** 换了数据库，NULL 可能跑到另一头去。需要固定位置时写 `NULLS FIRST` / `NULLS LAST`。
 
 **5. 分页时 `OFFSET` 算错。** 第 1 页是 `OFFSET 0`，不是 `OFFSET 1`；`OFFSET 1` 会跳过第一行。
+
+**6. 子句写错了位置。** `ORDER BY` 必须写在 `LIMIT` 前面。写成 `... LIMIT 3 ORDER BY price` 会报 `syntax error at or near "ORDER"`。照着语法格式从上往下写，就不会出错。
 
 ## 小结 {#summary}
 

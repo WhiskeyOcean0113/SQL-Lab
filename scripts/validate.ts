@@ -12,8 +12,12 @@ import { runnableBlocks, syntaxBlocks } from './lib/markdown.ts'
 /** Section ids in teaching order. Required ones must appear; all must keep this order. */
 export const TEMPLATE = ['why', 'core', 'syntax', 'example', 'variants', 'deeper', 'mistakes', 'summary'] as const
 const REQUIRED = new Set(['why', 'core', 'example', 'mistakes', 'summary'])
-/** Being added lesson by lesson; becomes required once every lesson has it. */
+/**
+ * Being added lesson by lesson; becomes required once every lesson has it.
+ * Only from the lesson that teaches the notation onwards: earlier lessons come before it.
+ */
 const EXPECTED = new Set(['syntax'])
+const NOTATION_LESSON = 'sql-syntax'
 const MIN_EXERCISES = 4
 const MIN_KINDS = 3
 
@@ -56,7 +60,10 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       last = Math.max(last, at)
     }
     for (const r of REQUIRED) if (!enIds.includes(r)) problems.push(where(`missing required section "${r}"`))
-    for (const r of EXPECTED) if (!enIds.includes(r)) warnings.push(where(`no "${r}" section yet`))
+    const notationAt = course.path.indexOf(NOTATION_LESSON)
+    if (notationAt !== -1 && course.path.indexOf(id) >= notationAt) {
+      for (const r of EXPECTED) if (!enIds.includes(r)) warnings.push(where(`no "${r}" section yet`))
+    }
 
     // Runnable examples are code, so both languages must carry identical copies.
     const zhRuns = runnableBlocks(sources[id]?.zh ?? '')

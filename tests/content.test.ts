@@ -52,3 +52,17 @@ describe('validate', () => {
     expect(problems).toEqual([])
   }, 30_000)
 })
+
+describe('validate: predict answers', () => {
+  it('flags a verify.rows that does not match the data', async () => {
+    const { cpSync, mkdtempSync, writeFileSync, readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const { tmpdir } = await import('node:os')
+    const dir = mkdtempSync(join(tmpdir(), 'sql-lab-'))
+    cpSync(root, dir, { recursive: true })
+    const file = join(dir, 'lessons/basics/exercises/04-predict.yaml')
+    writeFileSync(file, readFileSync(file, 'utf8').replace('verify: { rows: 2 }', 'verify: { rows: 3 }'))
+    const { problems } = await validate(dir)
+    expect(problems).toEqual(['exercise basics/04-predict: verify.rows is 3 but the query returns 2 rows'])
+  }, 30_000)
+})

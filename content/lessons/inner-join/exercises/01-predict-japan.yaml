@@ -19,3 +19,4 @@ explain:
     3 行，全部是 Kenji Sato：Kenji Sato 有 3 笔订单（3、12、24），每一笔都和 Kenji Sato 配对一次。Mei Tanaka 从没下过单，找不到配对，所以一行都没有。顾客的人数并不决定结果的行数，配对的数量才决定。
   en: |
     3 rows, all for Kenji Sato, who has three orders (3, 12 and 24), each paired once. Mei Tanaka has never ordered, finds no partner and contributes no rows. The number of customers does not decide the row count; the number of matching pairs does.
+verify: { rows: 3 }

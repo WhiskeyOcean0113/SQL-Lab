@@ -38,6 +38,7 @@ export const strings = {
     'lesson.notFound': '找不到这篇讲解。',
 
     'runner.editable': '可以直接修改',
+    'runner.expectError': '这个例子会报错，运行看看数据库怎么说',
     'runner.run': '运行',
     'runner.reset': '还原',
     'runner.starting': '正在启动 PostgreSQL…',
@@ -192,6 +193,7 @@ export const strings = {
     'lesson.notFound': 'That lesson does not exist.',
 
     'runner.editable': 'Edit freely',
+    'runner.expectError': 'This one fails on purpose. Run it and read the error',
     'runner.run': 'Run',
     'runner.reset': 'Reset',
     'runner.starting': 'Starting PostgreSQL…',

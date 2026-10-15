@@ -1,0 +1,15 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 列出 shop 里最贵的 3 件商品，列依次为商品名和价格，按价格从高到低排列。
+  en: List the 3 most expensive products in shop, with the columns name and price, most expensive first.
+hint:
+  zh: 照着示例的写法：先 `ORDER BY price DESC`，再 `LIMIT 3`。
+  en: "Follow the example: `ORDER BY price DESC`, then `LIMIT 3`."
+solution: |
+  SELECT name, price
+  FROM products
+  ORDER BY price DESC
+  LIMIT 3;
+check: { order_matters: true }

@@ -1,0 +1,11 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想查看全部顾客，但它报错了。读一读错误信息，然后修好它。
+  en: This query should show every customer, but it fails. Read the error message, then fix it.
+hint:
+  zh: "`relation ... does not exist` 说的是表不存在。shop 的表名都是复数。"
+  en: "`relation ... does not exist` means the table does not exist. Every shop table name is plural."
+starter: SELECT * FROM customer;
+solution: SELECT * FROM customers;

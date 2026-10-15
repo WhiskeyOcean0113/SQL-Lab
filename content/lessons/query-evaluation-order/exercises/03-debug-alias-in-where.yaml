@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: |
+    下面这条查询想列出九折后低于 20 美元的商品，列依次为 `name` 和 `sale_price`（九折价）。它报错了。修好它，保留 `sale_price` 这个列名。
+  en: |
+    This query should list the products that cost under 20 dollars after a 10% discount, with the columns `name` and `sale_price` (the discounted price). It fails. Fix it, keeping the column name `sale_price`.
+hint:
+  zh: "`WHERE` 在 `SELECT` 之前执行，那时还没有 `sale_price` 这个名字。在 `WHERE` 里把计算式写出来。"
+  en: "`WHERE` runs before `SELECT`, when the name `sale_price` does not exist yet. Write out the calculation in `WHERE`."
+starter: |
+  SELECT name, price * 0.9 AS sale_price
+  FROM products
+  WHERE sale_price < 20;
+solution: |
+  SELECT name, price * 0.9 AS sale_price
+  FROM products
+  WHERE price * 0.9 < 20;
+check: { column_names: true }

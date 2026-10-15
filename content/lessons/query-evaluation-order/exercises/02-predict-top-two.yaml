@@ -1,0 +1,25 @@
+kind: predict
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 下面这条查询会返回哪两件商品？先按逻辑顺序在脑子里走一遍，再选。
+  en: Which two products does this query return? Walk through the logical order in your head before you choose.
+hint:
+  zh: 先筛选出 Electronics 的 4 件商品，再按价格从高到低排，最后取前两行。
+  en: First filter down to the 4 Electronics products, then sort by price from high to low, then keep the first two rows.
+query: |
+  SELECT name, price
+  FROM products
+  WHERE category_id = 2
+  ORDER BY price DESC
+  LIMIT 2;
+choices:
+  - 4K Monitor, Noise-Cancelling Headphones
+  - Noise-Cancelling Headphones, Mechanical Keyboard
+  - USB-C Hub, Mechanical Keyboard
+  - 4K Monitor, Folding Chair
+answer: 0
+verify: { rows: 2 }
+explain:
+  zh: "`WHERE` 先留下 Electronics 的 4 件商品，`ORDER BY price DESC` 把 4K Monitor（399.00）和 Noise-Cancelling Headphones（249.00）排到最前，`LIMIT 2` 最后取这两行。第二个选项是表里恰好排在前面的两件，只有不写 `ORDER BY` 时才可能出现。"
+  en: "`WHERE` keeps the 4 Electronics products, `ORDER BY price DESC` puts 4K Monitor (399.00) and Noise-Cancelling Headphones (249.00) first, and `LIMIT 2` keeps those two. The second choice is the two that happen to come first in the table, which you might get only without `ORDER BY`."

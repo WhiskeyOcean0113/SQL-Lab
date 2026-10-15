@@ -1,0 +1,15 @@
+kind: parsons
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 用下面的片段拼出一条查询，查看 `products` 表的全部内容。有两个片段是多余的。
+  en: Arrange the pieces into a query that shows everything in `products`. Two pieces are not needed.
+hint:
+  zh: 先说要哪些列，再说从哪张表取。注意表名的拼写和引号。
+  en: First say which columns, then which table. Watch the spelling and the quotes.
+solution: |
+  SELECT *
+  FROM products;
+distractors:
+  - FROM product;
+  - FROM "Products";

@@ -33,7 +33,7 @@ export function errorBlock(err: SqlError, sql: string, lang: Lang): Raw {
     where = t(lang, 'error.position', { line, col })
   }
   const showRaw = !err.code?.startsWith('SQLLAB')
-  return html`<div class="sql-err" role="alert"><div class="friendly">${raw(friendly)}</div>${showRaw ? html`<div class="raw">${err.message}${where ? raw(` · ${where}`) : ''}${err.hint ? html`<br>HINT: ${err.hint}` : ''}</div>` : ''}</div>`
+  return html`<div class="sql-err" role="alert"><div class="friendly">${raw(friendly)}</div>${showRaw ? html`<div class="raw">${err.message}${where ? raw(` · ${where}`) : ''}${err.detail ? html`<br>DETAIL: ${err.detail}` : ''}${err.hint ? html`<br>HINT: ${err.hint}` : ''}</div>` : ''}</div>`
 }
 
 /** What a Run shows: the error, or the last statement's result. */

@@ -1,0 +1,17 @@
+kind: parsons
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 用下面的片段拼出一条查询：列出价格低于 30 美元的商品名和价格，按价格从低到高排列。有一个片段是多余的。
+  en: Arrange the pieces into a query that lists the name and price of every product under 30 dollars, cheapest first. One piece is not needed.
+hint:
+  zh: 书写顺序是固定的：SELECT、FROM、WHERE、ORDER BY。
+  en: "The written order is fixed: SELECT, FROM, WHERE, ORDER BY."
+solution: |
+  SELECT name, price
+  FROM products
+  WHERE price < 30
+  ORDER BY price;
+distractors:
+  - WHERE sale_price < 30
+check: { order_matters: true }

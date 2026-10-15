@@ -64,6 +64,8 @@ export interface PredictExercise extends ExerciseBase {
   answer: number
   /** Why the answer is right, shown after answering. */
   explain: Bi
+  /** Row count `query` must return; validate checks it so the answer key cannot drift from the data. */
+  verifyRows?: number
 }
 
 export type Exercise = QueryExercise | PredictExercise

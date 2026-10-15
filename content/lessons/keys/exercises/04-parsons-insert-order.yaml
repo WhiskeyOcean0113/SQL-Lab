@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: |
+    Lucas Silva（顾客 11）下了第一笔订单。用下面的片段拼出一条语句，记录这笔订单：编号 25，下单时间 2024-07-01 10:00，状态 pending。有两个片段会被数据库拒绝。
+  en: |
+    Lucas Silva (customer 11) has placed a first order. Arrange the pieces into a statement that records it: id 25, placed at 2024-07-01 10:00, status pending. Two of the pieces would be refused by the database.
+hint:
+  zh: 订单编号 24 已经存在；顾客 13 并不存在。哪一个违反主键，哪一个违反外键？
+  en: Order 24 already exists, and there is no customer 13. Which breaks the primary key and which the foreign key?
+solution: |
+  INSERT INTO orders (id, customer_id, ordered_at, status)
+  VALUES (25, 11, '2024-07-01 10:00', 'pending');
+distractors:
+  - VALUES (24, 11, '2024-07-01 10:00', 'pending');
+  - VALUES (25, 13, '2024-07-01 10:00', 'pending');
+check: { mode: tables, tables: [orders] }

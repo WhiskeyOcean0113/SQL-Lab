@@ -1,0 +1,14 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: |
+    shop 要新增一个分类 Garden，下面这条语句会报错。读懂错误信息，然后修好它：新分类应该使用下一个还没被用过的编号（现有分类的编号是 1 到 5）。
+  en: |
+    shop is adding a category called Garden, and this statement fails. Read the error, then fix it: the new category should take the next unused number (the existing categories are numbered 1 to 5).
+hint:
+  zh: "`duplicate key value` 说的是主键重复了。编号 1 已经属于 Books。"
+  en: "`duplicate key value` means the primary key already exists. Number 1 belongs to Books."
+starter: INSERT INTO categories (id, name) VALUES (1, 'Garden');
+solution: INSERT INTO categories (id, name) VALUES (6, 'Garden');
+check: { mode: tables, tables: [categories] }

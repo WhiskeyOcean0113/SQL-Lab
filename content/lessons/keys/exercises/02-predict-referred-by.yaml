@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 运行下面的查询。Kenji Sato 这一行的 `referred_by` 是 1，它表示什么？
+  en: Run the query below. Kenji Sato's row has `referred_by` = 1. What does that mean?
+hint:
+  zh: "`referred_by` 是一个外键，它引用的是哪张表的主键？"
+  en: "`referred_by` is a foreign key. Which table's primary key does it reference?"
+query: SELECT id, name, referred_by FROM customers;
+choices:
+  - { zh: Kenji Sato 推荐了 1 位顾客, en: Kenji Sato referred one customer }
+  - { zh: Kenji Sato 是被编号为 1 的顾客（Lin Wei）推荐的, en: Kenji Sato was referred by customer 1 (Lin Wei) }
+  - { zh: Kenji Sato 是第一位注册的顾客, en: Kenji Sato was the first customer to sign up }
+  - { zh: Kenji Sato 下过 1 笔订单, en: Kenji Sato has placed one order }
+answer: 1
+explain:
+  zh: "`referred_by` 是引用 `customers.id` 的自引用外键，它的值是另一位顾客的编号，不是一个数量。编号为 1 的顾客是 Lin Wei，所以 Kenji Sato 是 Lin Wei 推荐来的。"
+  en: "`referred_by` is a self-referencing foreign key to `customers.id`. Its value is another customer's id, not a count. Customer 1 is Lin Wei, so Lin Wei referred Kenji Sato."

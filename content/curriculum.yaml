@@ -12,11 +12,8 @@ modules:
     summary:
       zh: 在写第一条 query 之前，先弄清楚数据长什么样，以及数据库是按什么顺序理解一条 query 的。
       en: Before the first query, learn what the data looks like and the order in which the database reads a query.
-    lessons: []
-    planned:
-      - { zh: 表、行与列, en: Tables, rows and columns }
-      - { zh: 主键与外键, en: Primary and foreign keys }
-      - { zh: 一条 query 的逻辑执行顺序, en: How a query is evaluated }
+    lessons: [tables-rows-columns, keys, query-evaluation-order]
+    planned: []
 
   - id: m1
     title: { zh: 单表查询, en: Querying one table }

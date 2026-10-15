@@ -58,13 +58,14 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
     // Runnable examples are code, so both languages must carry identical copies.
     const zhRuns = runnableBlocks(sources[id]?.zh ?? '')
     const enRuns = runnableBlocks(sources[id]?.en ?? '')
-    if (zhRuns.join('\n;;\n') !== enRuns.join('\n;;\n')) problems.push(where('`sql run` blocks differ between zh and en'))
+    if (JSON.stringify(zhRuns) !== JSON.stringify(enRuns)) problems.push(where('`sql run` blocks differ between zh and en'))
 
     if (!course.datasets[lesson.dataset]) continue
     const db = await dbFor(lesson.dataset)
-    for (const [i, sql] of enRuns.entries()) {
-      const r = await db.run(sql)
-      if (!r.ok) problems.push(where(`runnable example ${i + 1} fails: ${r.error?.message}`))
+    for (const [i, block] of enRuns.entries()) {
+      const r = await db.run(block.sql)
+      if (block.expectError && r.ok) problems.push(where(`runnable example ${i + 1} is marked \`error\` but runs without one`))
+      if (!block.expectError && !r.ok) problems.push(where(`runnable example ${i + 1} fails: ${r.error?.message}`))
     }
 
     const kinds = new Set(lesson.exercises.map(e => e.kind))
@@ -77,8 +78,12 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       if (!enIds.includes(ex.lessonRef)) problems.push(at(`lesson_ref "${ex.lessonRef}" is not a section of ${id}`))
 
       if (ex.kind === 'predict') {
-        const r = await db.run(ex.query)
+        const r = await db.run(ex.query, { limit: Infinity })
         if (!r.ok) problems.push(at(`query fails: ${r.error?.message}`))
+        else if (ex.verifyRows !== undefined) {
+          const n = finalResult(r)?.rows.length
+          if (n !== ex.verifyRows) problems.push(at(`verify.rows is ${ex.verifyRows} but the query returns ${n} rows`))
+        }
         continue
       }
 

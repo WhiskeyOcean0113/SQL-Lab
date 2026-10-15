@@ -40,3 +40,27 @@ view:             { en: view, zh: 视图 }
 query-plan:       { en: query plan, zh: 执行计划 }
 natural-join:     { en: natural join, zh: 自然连接 }
 one-to-many:      { en: one-to-many relationship, zh: 一对多关系 }
+record:           { en: record, zh: 记录 }
+composite-key:    { en: composite key, zh: 复合键 }
+unique-constraint: { en: unique constraint, zh: 唯一约束 }
+referential-integrity: { en: referential integrity, zh: 参照完整性 }
+self-reference:   { en: self-referencing foreign key, zh: 自引用外键 }
+junction-table:   { en: junction table, zh: 关联表 }
+many-to-many:     { en: many-to-many relationship, zh: 多对多关系 }
+surrogate-key:    { en: surrogate key, zh: 代理键 }
+natural-key:      { en: natural key, zh: 自然键 }
+identifier:       { en: identifier, zh: 标识符 }
+literal:          { en: literal, zh: 字面量 }
+operator:         { en: operator, zh: 运算符 }
+comparison-operator: { en: comparison operator, zh: 比较运算符 }
+boolean:          { en: Boolean value, zh: 布尔值 }
+operator-precedence: { en: operator precedence, zh: 运算符优先级 }
+wildcard:         { en: wildcard, zh: 通配符 }
+pattern-matching: { en: pattern matching, zh: 模式匹配 }
+truth-table:      { en: truth table, zh: 真值表 }
+ascending:        { en: ascending order, zh: 升序 }
+descending:       { en: descending order, zh: 降序 }
+pagination:       { en: pagination, zh: 分页 }
+duplicate-row:    { en: duplicate row, zh: 重复行 }
+intermediate-table: { en: intermediate table, zh: 中间表 }
+select-list:      { en: select list, zh: 选择列表 }

@@ -1,0 +1,10 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 写一条查询，查看 `orders` 表的全部内容。
+  en: Write a query that shows everything in `orders`.
+hint:
+  zh: "`SELECT * FROM 表名;`"
+  en: "`SELECT * FROM table_name;`"
+solution: SELECT * FROM orders;

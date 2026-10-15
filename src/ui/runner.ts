@@ -26,7 +26,7 @@ export async function hydrateRunner(el: HTMLElement, ctx: Ctx, dataset: string) 
   el.className = 'runner'
   mount(el, html`
     <div class="runner-top">
-      <span class="ds">${dataset}</span><span>${raw(t(lang, 'runner.editable'))}</span>
+      <span class="ds">${dataset}</span><span>${raw(t(lang, el.dataset.expectError ? 'runner.expectError' : 'runner.editable'))}</span>
       <span class="sp"></span>
       <button type="button" class="btn ghost small" data-reset hidden>${raw(t(lang, 'runner.reset'))}</button>
       <kbd aria-hidden="true">⌘ ↵</kbd>

@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 对于下面这条查询，数据库在逻辑上最先处理的是哪一个子句？
+  en: For this query, which clause does the database logically handle first?
+hint:
+  zh: 在筛选、计算和排序之前，数据库得先知道数据从哪里来。
+  en: Before it can filter, compute or sort anything, the database needs to know where the data comes from.
+query: |
+  SELECT name AS customer
+  FROM customers
+  WHERE country = 'Japan'
+  ORDER BY customer;
+choices: ['SELECT', 'FROM', 'WHERE', 'ORDER BY']
+answer: 1
+explain:
+  zh: "`FROM`。逻辑顺序是 `FROM` → `WHERE` → `SELECT` → `ORDER BY`。`SELECT` 写在最前面，却要到第三步才执行，所以它起的别名 `customer` 能在 `ORDER BY` 里用，却不能在 `WHERE` 里用。"
+  en: "`FROM`. The logical order is `FROM` → `WHERE` → `SELECT` → `ORDER BY`. `SELECT` is written first but runs third, which is why its alias `customer` works in `ORDER BY` but not in `WHERE`."

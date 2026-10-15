@@ -133,7 +133,9 @@ function buildExercise(lesson: string, stem: string, raw: Raw, glossary: Map<str
     const answer = Number(raw.answer)
     if (choices.length < 2) problems.push(where('predict needs at least two choices'))
     if (!(answer >= 0 && answer < choices.length)) problems.push(where('answer must index into choices'))
-    return { ...base, kind, query: String(raw.query ?? '').trim(), choices, answer, explain: snippet(raw.explain, 'explain') }
+    const verify = (raw.verify ?? {}) as Raw
+    const verifyRows = verify.rows === undefined ? undefined : Number(verify.rows)
+    return { ...base, kind, query: String(raw.query ?? '').trim(), choices, answer, explain: snippet(raw.explain, 'explain'), verifyRows }
   }
 
   if (!['write', 'debug', 'parsons'].includes(kind)) problems.push(where(`unknown kind "${kind}"`))

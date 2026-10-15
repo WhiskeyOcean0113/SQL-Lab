@@ -1,0 +1,16 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: shop 一共有 5 个商品分类。下面这条查询会返回几行？
+  en: shop has 5 product categories. How many rows does this query return?
+hint:
+  zh: 每一行代表一个分类，`SELECT *` 不会增加也不会删掉行。
+  en: Each row is one category, and `SELECT *` neither adds nor removes rows.
+query: SELECT * FROM categories;
+choices: ['2', '5', '10', '16']
+answer: 1
+verify: { rows: 5 }
+explain:
+  zh: 5 行。`categories` 的每一行是一个分类，`SELECT *` 只是把所有列都显示出来，行数就是分类的个数。结果有 2 列（`id` 和 `name`），别把列数和行数弄混。
+  en: 5 rows. Each row of `categories` is one category, and `SELECT *` only shows every column, so the row count is the number of categories. The result has 2 columns (`id` and `name`); do not confuse columns with rows.

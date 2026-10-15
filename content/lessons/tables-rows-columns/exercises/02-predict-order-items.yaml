@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 运行下面的查询，看看 `order_items` 的内容。它的每一行代表什么？
+  en: Run the query below to look at `order_items`. What does each of its rows stand for?
+hint:
+  zh: 看看 `order_id` 这一列：同一个订单编号会出现几次？
+  en: Look at the `order_id` column. How many times can the same order number appear?
+query: SELECT * FROM order_items;
+choices:
+  - { zh: 一笔订单, en: An order }
+  - { zh: 某笔订单里的一种商品，以及买了几件, en: One product within an order, and how many were bought }
+  - { zh: 一件商品, en: A product }
+  - { zh: 一位顾客的购物车, en: A customer's shopping cart }
+answer: 1
+explain:
+  zh: 每一行是"某笔订单里的某种商品"。同一个 `order_id` 可以出现好几次，因为一笔订单可以包含多种商品；同一个 `product_id` 也可以出现好几次，因为同一件商品可以被不同的订单买走。
+  en: Each row is "this product in that order". The same `order_id` can appear several times because an order can contain several products, and the same `product_id` can appear several times because many orders can buy the same product.

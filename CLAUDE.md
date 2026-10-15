@@ -111,6 +111,8 @@ Markdown extensions:
   letter. `{{term:row|rows}}` overrides the primary-language text (plurals).
 - ` ```sql run `: an editable, runnable example. The zh and en files must
   contain identical `sql run` blocks in the same order, and each must run.
+- ` ```sql run error `: a runnable example that is meant to fail, so the learner
+  can read the real error. validate checks that it does fail.
 - ` ```sql `: a static snippet, e.g. a deliberately wrong query.
 
 ### Exercises
@@ -137,7 +139,9 @@ check:                 # all optional
 - `parsons`: the solution's lines become pieces; add `distractors: [ … ]`.
   Graded by running the assembled query, so any valid order passes.
 - `predict`: no `solution`; instead `query`, `choices` (list of strings or
-  `{ zh, en }`), `answer` (0-based index) and `explain`.
+  `{ zh, en }`), `answer` (0-based index) and `explain`. When the question is
+  about how many rows come back, add `verify: { rows: N }` so validate checks
+  the answer key against the data.
 - Prompts must state everything the grader checks: the columns, their order,
   whether rows must be sorted. If the prompt does not say it, do not check it.
 - At least four exercises per lesson, covering at least three kinds.

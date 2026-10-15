@@ -7,3 +7,4 @@ query: SELECT * FROM pets WHERE age > 2
 choices: ['1', '2', '3']
 answer: 1
 explain: { zh: "`NULL > 2` 不是 true。", en: "`NULL > 2` is not true." }
+verify: { rows: 2 }

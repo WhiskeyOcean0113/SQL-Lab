@@ -10,6 +10,7 @@ import { highlightSql } from '../../src/content/highlight.ts'
 //   {{Term:inner-join}}     same, first letter capitalised
 //   {{term:row|rows}}       same, with display text overriding the primary-language form
 //   ```sql run              an editable, runnable example
+//   ```sql run error        the same, but it is meant to fail (validate checks that it does)
 //   ```sql                  a static, highlighted snippet
 
 export type RenderEnv = {
@@ -72,7 +73,10 @@ export function createMarkdown() {
     const lang = info[0] ?? ''
     if (lang === 'sql') {
       const pre = `<pre class="sql-static"><code>${highlightSql(code)}</code></pre>`
-      if (info.includes('run')) return `<div class="sql-run" data-sql="${escapeHtml(code)}">${pre}</div>\n`
+      if (info.includes('run')) {
+        const expect = info.includes('error') ? ' data-expect-error="1"' : ''
+        return `<div class="sql-run" data-sql="${escapeHtml(code)}"${expect}>${pre}</div>\n`
+      }
       return pre + '\n'
     }
     return `<pre><code>${escapeHtml(code)}</code></pre>\n`
@@ -135,9 +139,13 @@ export function renderSnippet(src: string, env: RenderEnv): string {
   return md.render(src, { ...env, seen: new Set<string>() })
 }
 
+export interface RunnableBlock { sql: string; expectError: boolean }
+
 /** The `sql run` blocks of a lesson body, in order. Both languages must have the same list. */
-export function runnableBlocks(src: string): string[] {
-  return md.parse(src, {}).filter(t => t.type === 'fence' && /^sql\s+run\b/.test(t.info.trim())).map(t => t.content.trim())
+export function runnableBlocks(src: string): RunnableBlock[] {
+  return md.parse(src, {})
+    .filter(t => t.type === 'fence' && /^sql\s+run\b/.test(t.info.trim()))
+    .map(t => ({ sql: t.content.trim(), expectError: /\berror\b/.test(t.info) }))
 }
 
 /** One line of inline Markdown, e.g. a multiple-choice option. */

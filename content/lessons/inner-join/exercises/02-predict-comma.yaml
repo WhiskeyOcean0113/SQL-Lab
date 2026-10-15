@@ -18,3 +18,4 @@ explain:
     48 行。没有连接条件，24 笔订单和 12 位顾客组成 288 个配对，`WHERE` 只留下顾客来自 Canada 的配对：每笔订单配两位加拿大顾客，24 × 2 = 48。每个订单编号都出现两次，而且大部分订单根本不是这两位顾客下的。正确的结果是 5 行。
   en: |
     48 rows. Without a join condition, 24 orders and 12 customers make 288 pairs, and `WHERE` keeps the pairs whose customer is from Canada: every order with each of the two Canadian customers, 24 × 2 = 48. Every order id appears twice, and most of those orders were not placed by either customer. The correct answer has 5 rows.
+verify: { rows: 48 }

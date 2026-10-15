@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: "`order_items` 有 42 行，`orders` 有 24 行，每行明细都对应一件存在的商品。下面这条查询会返回几行？"
+  en: "`order_items` has 42 rows and `orders` has 24, and every order line refers to an existing product. How many rows does this query return?"
+hint:
+  zh: "`orders` 是用逗号接上的，它有连接条件吗？"
+  en: "`orders` is added with a comma. Does it have a join condition?"
+query: |
+  SELECT p.name, o.ordered_at
+  FROM products AS p
+  JOIN order_items AS i ON i.product_id = p.id, orders AS o;
+choices: ['24', '42', '66', '1008']
+answer: 3
+verify: { rows: 1008 }
+explain:
+  zh: 1008 行。前两张表正确地连成 42 行，但 `orders` 没有任何条件，每一行都和 24 笔订单各配一次：42 × 24 = 1008。
+  en: |
+    1008 rows. The first two tables join correctly into 42 rows, but `orders` has no condition, so each of those rows pairs with all 24 orders: 42 × 24 = 1008.

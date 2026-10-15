@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 列出每一位顾客的名字和推荐人的名字，列名依次为 `customer` 和 `referrer`。没有推荐人的顾客也要列出，`referrer` 显示为 NULL。
+  en: List every customer's name with the name of their referrer, in columns called `customer` and `referrer`. Customers nobody referred must appear too, with a NULL `referrer`.
+hint:
+  zh: 给 `customers` 起两个别名，用 `LEFT JOIN` 保留每一位顾客。
+  en: Give `customers` two aliases, and keep every customer with `LEFT JOIN`.
+solution: |
+  SELECT c.name AS customer, r.name AS referrer
+  FROM customers AS c
+  LEFT JOIN customers AS r ON r.id = c.referred_by;
+check: { column_names: true }

@@ -1,0 +1,15 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 把每两个不同的商品分类组合成一组，每组只出现一次。列名依次为 `first` 和 `second`，`first` 是两者中编号较小的那个分类的名字。
+  en: Pair every two different product categories, each pair once. Name the columns `first` and `second`, where `first` is the name of the category with the smaller id.
+hint:
+  zh: "`categories` 和自己 `CROSS JOIN`，再用 `a.id < b.id` 去掉自己和自己，并让每组只出现一次。"
+  en: "`CROSS JOIN` `categories` with itself, then use `a.id < b.id` to drop self-pairs and keep each pair once."
+solution: |
+  SELECT a.name AS first, b.name AS second
+  FROM categories AS a
+  CROSS JOIN categories AS b
+  WHERE a.id < b.id;
+check: { column_names: true }

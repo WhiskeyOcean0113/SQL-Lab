@@ -1,0 +1,16 @@
+kind: write
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: |
+    列出每一位顾客的名字和其待处理（`pending`）订单的编号，列名依次为 `name` 和 `order_id`。没有待处理订单的顾客也要列出，`order_id` 显示为 NULL。
+  en: |
+    List every customer's name with the id of any pending (`pending`) order, in columns called `name` and `order_id`. Customers with no pending order must appear too, with a NULL `order_id`.
+hint:
+  zh: 对右表 `orders` 的条件如果写在 `WHERE` 里，没配上的顾客会被去掉。把它写进 `ON`。
+  en: If the condition on the right table, `orders`, goes in `WHERE`, unmatched customers are removed. Put it in `ON`.
+solution: |
+  SELECT c.name, o.id AS order_id
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id AND o.status = 'pending';
+check: { column_names: true }

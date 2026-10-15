@@ -1,0 +1,15 @@
+kind: write
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: 找出和推荐人住在同一个国家的顾客，列名依次为 `customer`、`referrer` 和 `country`。
+  en: Find the customers who live in the same country as their referrer, with the columns `customer`, `referrer` and `country`.
+hint:
+  zh: 先用自连接把每位顾客和推荐人配对，再在 `WHERE` 里比较两边的 `country`。
+  en: Pair each customer with their referrer in a self join, then compare the two `country` columns in `WHERE`.
+solution: |
+  SELECT c.name AS customer, r.name AS referrer, c.country
+  FROM customers AS c
+  JOIN customers AS r ON r.id = c.referred_by
+  WHERE c.country = r.country;
+check: { column_names: true }

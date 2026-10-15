@@ -1,0 +1,6 @@
+title:   { zh: "{{term:outer-join}}：LEFT、RIGHT 与 FULL JOIN", en: "{{Term:outer-join|Outer joins}}: LEFT, RIGHT and FULL" }
+summary:
+  zh: 用外连接保留找不到配对的行，用它找出“没有”的东西，并知道条件该写在 ON 还是 WHERE。
+  en: Keep the rows that find no match, use that to find what is missing, and know whether a condition belongs in ON or WHERE.
+dataset: shop
+prereqs: [inner-join]

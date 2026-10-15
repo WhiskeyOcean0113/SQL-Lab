@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 有 4 笔订单处于 pending 状态，分别属于 4 位不同的顾客。下面这条查询会返回几行？
+  en: Four orders are pending, each from a different customer. How many rows does this query return?
+hint:
+  zh: 对没配上的顾客，`o.status` 是什么？`WHERE` 会怎样处理这些行？
+  en: What is `o.status` for an unmatched customer? What does `WHERE` do with those rows?
+query: |
+  SELECT c.name, o.id
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id
+  WHERE o.status = 'pending';
+choices: ['4', '12', '16', '26']
+answer: 0
+verify: { rows: 4 }
+explain:
+  zh: 4 行。`WHERE` 在连接之后筛选：没有 pending 订单的顾客，`o.status` 要么是别的状态，要么是 NULL，都不满足条件，被去掉了。结果和内连接一样。想保留所有顾客，要把条件写进 `ON`。
+  en: Four rows. `WHERE` filters after the join; for customers without a pending order, `o.status` is either another status or NULL, neither passes, and those rows go. The result equals an inner join's. To keep every customer, put the condition in `ON`.

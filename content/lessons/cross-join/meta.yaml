@@ -1,0 +1,6 @@
+title:   { zh: "CROSS JOIN 与{{term:cartesian-product}}", en: "CROSS JOIN and the {{term:cartesian-product}}" }
+summary:
+  zh: 用 CROSS JOIN 生成所有组合，并学会预估连接的行数，发现漏写连接条件造成的行数暴增。
+  en: Generate every combination with CROSS JOIN, estimate how many rows a join should return, and catch the row explosion a missing join condition causes.
+dataset: shop
+prereqs: [self-joins]

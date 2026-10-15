@@ -29,6 +29,7 @@ export function resultTable(rs: ResultSet): Raw {
 const REFINE: Array<[code: string, pattern: RegExp, suffix: string]> = [
   ['42803', /not allowed in WHERE/, 'where'],
   ['42803', /cannot be nested/, 'nested'],
+  ['42P01', /invalid reference to FROM-clause entry/, 'scope'],
 ]
 
 function errorKey(err: SqlError): string {

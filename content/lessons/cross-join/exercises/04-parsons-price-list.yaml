@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询：为 Books 分类（`category_id` 为 1）的每本书列出买 1、2、3 本的总价，列名依次为 `name`、`qty` 和 `total`。有两个片段是多余的。
+  en: Arrange the pieces into a query listing, for every book in Books (`category_id` 1), the total for 1, 2 and 3 copies, with the columns `name`, `qty` and `total`. Two pieces are not needed.
+hint:
+  zh: 要的是所有组合，所以不需要连接条件。PostgreSQL 里普通的 `JOIN` 必须带 `ON`。
+  en: You want every combination, so there is no join condition. In PostgreSQL a plain `JOIN` must have `ON`.
+solution: |
+  SELECT p.name, n.qty, p.price * n.qty AS total
+  FROM products AS p
+  CROSS JOIN generate_series(1, 3) AS n(qty)
+  WHERE p.category_id = 1;
+distractors:
+  - JOIN generate_series(1, 3) AS n(qty)
+  - WHERE n.qty = p.id
+check: { column_names: true }

@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出从没下过订单的顾客名字，结果却多出了很多人。修好它。
+  en: This query should list the names of the customers who have never placed an order, but far too many names come back. Fix it.
+hint:
+  zh: 还没发货的订单，`shipped_at` 本来就是 NULL。检查哪一列，才能保证只有“没配上”时才是 NULL？
+  en: Orders that have not shipped already have a NULL `shipped_at`. Which column is NULL only when nothing matched?
+starter: |
+  SELECT c.name
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id
+  WHERE o.shipped_at IS NULL;
+solution: |
+  SELECT c.name
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id
+  WHERE o.id IS NULL;

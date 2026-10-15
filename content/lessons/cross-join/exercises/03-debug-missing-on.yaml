@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想给每一行订单明细配上商品名和下单时间，列依次为商品名和下单时间。它返回了 1008 行，远多于 42 行明细。修好它。
+  en: This query should give each order line its product name and order time, in that order. It returns 1008 rows, far more than the 42 order lines. Fix it.
+hint:
+  zh: 每张表都应该有自己的连接条件。明细和订单靠哪一列对上？
+  en: Every table needs its own join condition. Which column links an order line to its order?
+starter: |
+  SELECT p.name, o.ordered_at
+  FROM products AS p
+  JOIN order_items AS i ON i.product_id = p.id, orders AS o;
+solution: |
+  SELECT p.name, o.ordered_at
+  FROM products AS p
+  JOIN order_items AS i ON i.product_id = p.id
+  JOIN orders AS o ON o.id = i.order_id;

@@ -1,0 +1,17 @@
+kind: write
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: |
+    统计每一位顾客已送达（`delivered`）的订单数，没有已送达订单的顾客也要列出并显示 0。列名依次为 `name` 和 `delivered`。
+  en: |
+    Count each customer's delivered (`delivered`) orders, listing customers with no delivered order too, with 0. Name the columns `name` and `delivered`.
+hint:
+  zh: 对 `orders` 的条件要写进 `ON`，否则没有已送达订单的顾客会消失；计数用 `count(o.id)`。
+  en: The condition on `orders` must go in `ON`, or customers without a delivered order disappear; count with `count(o.id)`.
+solution: |
+  SELECT c.name, count(o.id) AS delivered
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id AND o.status = 'delivered'
+  GROUP BY c.id, c.name;
+check: { column_names: true }

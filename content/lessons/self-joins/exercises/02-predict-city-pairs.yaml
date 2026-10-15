@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: Shanghai、Toronto 和 Osaka 各住着两位顾客，另有 4 位顾客各自住在不同的城市，还有 2 位顾客的城市是 NULL。下面这条查询会返回几行？
+  en: Shanghai, Toronto and Osaka each have two customers, 4 more customers live in 4 other cities, and 2 customers have a NULL city. How many rows does this query return?
+hint:
+  zh: "`a.id < b.id` 去掉了哪些配对？NULL 和 NULL 配得上吗？"
+  en: Which pairs does `a.id < b.id` remove? Can NULL match NULL?
+query: |
+  SELECT a.name, b.name
+  FROM customers AS a
+  JOIN customers AS b ON a.city = b.city AND a.id < b.id;
+choices: ['3', '6', '16']
+answer: 0
+verify: { rows: 3 }
+explain:
+  zh: 3 行，每座有两位顾客的城市一对。`a.id < b.id` 去掉了自己和自己的配对，也让每一对只出现一次；城市为 NULL 的顾客配不上任何人，因为 `NULL = NULL` 不是 true。
+  en: Three rows, one pair per city with two customers. `a.id < b.id` removes the self-pairs and keeps each pair once; customers with a NULL city match nobody, because `NULL = NULL` is not true.

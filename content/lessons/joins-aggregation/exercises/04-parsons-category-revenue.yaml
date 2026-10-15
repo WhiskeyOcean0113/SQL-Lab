@@ -1,0 +1,19 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：每个分类的销售额是多少？只看有分类的商品，列名依次为 `category` 和 `revenue`。有两个片段是多余的。
+  en: Arrange the pieces into a query showing each category's sales, counting only products that have a category, with the columns `category` and `revenue`. Two pieces are not needed.
+hint:
+  zh: 销售额是每行明细的数量乘单价之和。明细连到商品，商品再连到分类，然后按分类分组。
+  en: Sales are the sum of quantity times unit price over the lines. Join lines to products, products to categories, then group by category.
+solution: |
+  SELECT cat.name AS category, sum(i.quantity * i.unit_price) AS revenue
+  FROM order_items AS i
+  JOIN products AS p ON p.id = i.product_id
+  JOIN categories AS cat ON cat.id = p.category_id
+  GROUP BY cat.id, cat.name;
+distractors:
+  - SELECT cat.name AS category, count(*) AS revenue
+  - GROUP BY i.product_id
+check: { column_names: true }

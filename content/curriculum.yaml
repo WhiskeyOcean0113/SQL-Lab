@@ -44,12 +44,8 @@ modules:
     summary:
       zh: 用共同的列把多张表拼起来，并理解每种 join 会保留哪些行。
       en: Combine tables through shared columns, and know which rows each kind of join keeps.
-    lessons: [inner-join]
-    planned:
-      - { zh: LEFT、RIGHT 与 FULL JOIN, en: "LEFT, RIGHT and FULL JOIN" }
-      - { zh: "{{term:self-join}}", en: "{{Term:self-join|Self joins}}" }
-      - { zh: "CROSS JOIN 与{{term:cartesian-product}}", en: "CROSS JOIN and the {{term:cartesian-product}}" }
-      - { zh: 多表 join 与聚合, en: Joining several tables and aggregating }
+    lessons: [inner-join, outer-joins, self-joins, cross-join, joins-aggregation]
+    planned: []
 
   - id: m5
     title: { zh: "{{term:subquery}}与{{term:set-operation}}", en: "{{Term:subquery|Subqueries}} and {{term:set-operation|set operations}}" }

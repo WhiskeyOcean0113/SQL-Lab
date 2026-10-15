@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：每位推荐过别人的顾客推荐了几位顾客？列名依次为 `referrer` 和 `referrals`。有两个片段是多余的。
+  en: Arrange the pieces into a query showing how many customers each referrer brought in, with the columns `referrer` and `referrals`. Two pieces are not needed.
+hint:
+  zh: "`c` 是被推荐的顾客，`r` 是推荐人，所以条件是 `r.id = c.referred_by`，再按推荐人分组。"
+  en: "`c` is the referred customer and `r` the referrer, so the condition is `r.id = c.referred_by`; then group by the referrer."
+solution: |
+  SELECT r.name AS referrer, count(*) AS referrals
+  FROM customers AS c
+  JOIN customers AS r ON r.id = c.referred_by
+  GROUP BY r.id, r.name;
+distractors:
+  - JOIN customers AS r ON r.referred_by = c.id
+  - GROUP BY c.id, c.name
+check: { column_names: true }

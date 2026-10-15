@@ -1,0 +1,17 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：列出从没被订购过的商品名字。有两个片段是多余的。
+  en: Arrange the pieces into a query listing the names of the products that have never been ordered. Two pieces are not needed.
+hint:
+  zh: 要保留所有商品，用哪种连接？判断 NULL 要用 `IS NULL`。
+  en: Which join keeps every product? Test for NULL with `IS NULL`.
+solution: |
+  SELECT p.name
+  FROM products AS p
+  LEFT JOIN order_items AS i ON i.product_id = p.id
+  WHERE i.product_id IS NULL;
+distractors:
+  - JOIN order_items AS i ON i.product_id = p.id
+  - WHERE i.product_id = NULL

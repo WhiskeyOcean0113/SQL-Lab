@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: example
+prompt:
+  zh: Lucas Silva 从没下过订单。下面这条查询里，Lucas Silva 那一行的 `n` 是多少？
+  en: Lucas Silva has never placed an order. In this query, what is `n` on Lucas Silva's row?
+hint:
+  zh: 左连接之后，没配上的顾客还剩几行？`count(*)` 数的是什么？
+  en: After the left join, how many rows does an unmatched customer still have? What does `count(*)` count?
+query: |
+  SELECT c.name, count(*) AS n
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id
+  GROUP BY c.id, c.name;
+choices: ['0', '1', 'NULL']
+answer: 1
+explain:
+  zh: 1。左连接给没下过单的顾客保留了一行，订单一侧全是 NULL。`count(*)` 数行，所以是 1；`count(o.id)` 跳过 NULL，才会是 0。
+  en: One. The left join keeps one row for a customer who never ordered, with NULL on the orders side. `count(*)` counts rows, so it is 1; `count(o.id)` skips NULL and would give 0.

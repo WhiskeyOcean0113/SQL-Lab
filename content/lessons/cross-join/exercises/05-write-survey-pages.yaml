@@ -1,0 +1,15 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: 列出住在日本（`country` 为 Japan）的每位顾客和每个商品分类的所有组合，列名依次为 `customer` 和 `category`。
+  en: List every combination of a customer living in Japan (`country` is Japan) and a product category, in columns called `customer` and `category`.
+hint:
+  zh: "`customers` 和 `categories` 用 `CROSS JOIN` 组合，再用 `WHERE` 只留下日本的顾客。两张表都有 `name`。"
+  en: Combine `customers` and `categories` with `CROSS JOIN`, then keep only Japanese customers with `WHERE`. Both tables have `name`.
+solution: |
+  SELECT u.name AS customer, c.name AS category
+  FROM customers AS u
+  CROSS JOIN categories AS c
+  WHERE u.country = 'Japan';
+check: { column_names: true }

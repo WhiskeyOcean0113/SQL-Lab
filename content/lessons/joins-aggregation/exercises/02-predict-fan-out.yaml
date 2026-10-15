@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: Lin Wei 有 4 笔订单，分别有 2、2、3、3 行明细。下面这条查询里，Lin Wei 那一行的 `n` 是多少？
+  en: Lin Wei has 4 orders, with 2, 2, 3 and 3 lines. In this query, what is `n` on Lin Wei's row?
+hint:
+  zh: 连上 `order_items` 之后，每一行代表什么？
+  en: After joining `order_items`, what does each row represent?
+query: |
+  SELECT c.name, count(*) AS n
+  FROM customers AS c
+  JOIN orders AS o ON o.customer_id = c.id
+  JOIN order_items AS i ON i.order_id = o.id
+  GROUP BY c.id, c.name;
+choices: ['4', '10', '36']
+answer: 1
+explain:
+  zh: 10。连接之后每一行是一行明细，Lin Wei 一共有 2 + 2 + 3 + 3 = 10 行。想数订单，要用 `count(DISTINCT o.id)`，结果才是 4。
+  en: Ten. After the join each row is one order line, and Lin Wei has 2 + 2 + 3 + 3 = 10 of them. To count orders, use `count(DISTINCT o.id)`, which gives 4.

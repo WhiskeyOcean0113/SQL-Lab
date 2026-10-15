@@ -1,0 +1,6 @@
+title:   { zh: "{{term:self-join}}", en: "{{Term:self-join|Self joins}}" }
+summary:
+  zh: 把一张表和它自己连接，查出推荐关系，或者找出同一张表里互相关联的两行。
+  en: Join a table to itself to follow who referred whom, or to pair up related rows of the same table.
+dataset: shop
+prereqs: [outer-joins]

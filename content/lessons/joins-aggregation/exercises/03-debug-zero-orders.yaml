@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想统计每位顾客的订单数，没下过单的顾客显示 0，列依次为名字和订单数。它能运行，但从没下过单的两位顾客显示的是 1。修好它。
+  en: This query should count each customer's orders, showing 0 for customers who never ordered, with the name and the count as the columns. It runs, but the two customers who never ordered show 1. Fix it.
+hint:
+  zh: 没配上的顾客还有一行，只是订单一侧是 NULL。数哪一列能跳过这行？
+  en: An unmatched customer still has one row, with NULL on the orders side. Which column, if counted, skips that row?
+starter: |
+  SELECT c.name, count(*) AS orders
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id
+  GROUP BY c.id, c.name;
+solution: |
+  SELECT c.name, count(o.id) AS orders
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id
+  GROUP BY c.id, c.name;

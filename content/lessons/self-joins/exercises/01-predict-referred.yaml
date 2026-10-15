@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 12 位顾客中有 4 位的 `referred_by` 是 NULL，其余每位都恰好有一位推荐人。下面这条查询会返回几行？
+  en: Four of the 12 customers have a NULL `referred_by`; each of the others has exactly one referrer. How many rows does this query return?
+hint:
+  zh: 内连接会怎样处理 `referred_by` 为 NULL 的行？
+  en: What does an inner join do with rows whose `referred_by` is NULL?
+query: |
+  SELECT c.name, r.name
+  FROM customers AS c
+  JOIN customers AS r ON r.id = c.referred_by;
+choices: ['4', '8', '12', '144']
+answer: 1
+verify: { rows: 8 }
+explain:
+  zh: 8 行。每位有推荐人的顾客和推荐人配对一次；`referred_by` 为 NULL 的 4 位顾客配不上任何一行，被内连接丢掉了。
+  en: Eight rows. Each customer with a referrer pairs once with that referrer; the 4 customers with a NULL `referred_by` match nothing and the inner join drops them.

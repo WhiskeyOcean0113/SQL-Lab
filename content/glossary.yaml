@@ -87,3 +87,10 @@ scalar-subquery:  { en: scalar subquery, zh: 标量子查询 }
 recursive-cte:    { en: recursive CTE, zh: 递归 CTE }
 grouping-column:  { en: grouping column, zh: 分组列 }
 functional-dependency: { en: functional dependency, zh: 函数依赖 }
+right-join:       { en: right join, zh: 右连接 }
+full-join:        { en: full outer join, zh: 全外连接 }
+anti-join:        { en: anti-join, zh: 反连接 }
+preserved-table:  { en: preserved table, zh: 保留表 }
+set-returning-function: { en: set-returning function, zh: 集合返回函数 }
+row-explosion:    { en: row explosion, zh: 行数暴增 }
+fan-trap:         { en: fan trap, zh: 扇形陷阱 }

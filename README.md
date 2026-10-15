@@ -25,14 +25,14 @@ The mistakes each lesson covers are drawn from research on novice SQL errors (Ta
 | 1 | Querying one table | 7 lessons |
 | 2 | Expressions and functions | 5 lessons |
 | 3 | Aggregation | 4 lessons |
-| 4 | Joining tables | 1 of 5 lessons |
+| 4 | Joining tables | 5 lessons |
 | 5 | Subqueries and set operations | planned |
 | 6 | Advanced queries (CTEs, window functions) | planned |
 | 7 | Changing data and transactions | planned |
 | 8 | Database design | planned |
 | 9 | Performance basics | planned |
 
-So far: 20 lessons and 116 exercises, all on `shop`, a small online-store dataset designed to surface the classic traps (customers without orders, a product without a category, NULL cities, a self-referencing column).
+So far: 24 lessons and 140 exercises, all on `shop`, a small online-store dataset designed to surface the classic traps (customers without orders, a product without a category, NULL cities, a self-referencing column).
 
 ## Getting started
 

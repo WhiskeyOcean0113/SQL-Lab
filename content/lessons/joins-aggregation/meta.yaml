@@ -1,0 +1,6 @@
+title:   { zh: "多表{{term:join}}与{{term:aggregation}}", en: "Joining several tables and aggregating" }
+summary:
+  zh: 先连接再分组，回答“每位顾客花了多少钱”这类问题，并避开计数为 1 和行数被放大这两个陷阱。
+  en: Join first and group second to answer questions like "how much did each customer spend", avoiding the count-of-one and inflated-row traps.
+dataset: shop
+prereqs: [cross-join]

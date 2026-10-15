@@ -1,0 +1,14 @@
+kind: write
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 列出每件商品和它所属分类的名字，列名依次为 `product` 和 `category`。没有分类的商品也要列出，分类显示为 NULL。
+  en: List every product with the name of its category, in columns called `product` and `category`. Products without a category must appear too, with a NULL category.
+hint:
+  zh: "`products` 在左边，`LEFT JOIN categories`。两张表都有 `name` 列，记得用别名区分。"
+  en: Put `products` on the left and `LEFT JOIN categories`. Both tables have a `name` column, so tell them apart with aliases.
+solution: |
+  SELECT p.name AS product, c.name AS category
+  FROM products AS p
+  LEFT JOIN categories AS c ON c.id = p.category_id;
+check: { column_names: true }

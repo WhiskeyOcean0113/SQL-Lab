@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: shop 有 5 个分类和 12 位顾客。下面这条查询会返回几行？
+  en: shop has 5 categories and 12 customers. How many rows does this query return?
+hint:
+  zh: 没有连接条件时，每一行和另一边的每一行都配成一对。
+  en: With no join condition, every row pairs with every row on the other side.
+query: |
+  SELECT c.name, u.name
+  FROM categories AS c
+  CROSS JOIN customers AS u;
+choices: ['12', '17', '60']
+answer: 2
+verify: { rows: 60 }
+explain:
+  zh: 60 行，5 × 12。`CROSS JOIN` 返回笛卡尔积，行数是两边行数的乘积。
+  en: Sixty rows, 5 × 12. `CROSS JOIN` returns the Cartesian product, whose row count is the product of both sides' row counts.

@@ -1,0 +1,19 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: |
+    每位下过单的顾客一共花了多少钱？只算没有取消的订单，每行明细的金额是数量乘单价。列名依次为 `name` 和 `spent`。
+  en: |
+    How much has each customer who has ordered spent in total? Count only orders that were not cancelled; each line is worth its quantity times its unit price. Name the columns `name` and `spent`.
+hint:
+  zh: 连接 `customers`、`orders`、`order_items`，用 `WHERE` 去掉取消的订单，再按顾客的主键和名字分组。
+  en: Join `customers`, `orders` and `order_items`, remove cancelled orders with `WHERE`, then group by the customer's primary key and name.
+solution: |
+  SELECT c.name, sum(i.quantity * i.unit_price) AS spent
+  FROM customers AS c
+  JOIN orders AS o ON o.customer_id = c.id
+  JOIN order_items AS i ON i.order_id = o.id
+  WHERE o.status <> 'cancelled'
+  GROUP BY c.id, c.name;
+check: { column_names: true }

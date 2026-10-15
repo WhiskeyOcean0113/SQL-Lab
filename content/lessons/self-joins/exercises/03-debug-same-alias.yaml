@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出每位被推荐的顾客和推荐人的名字，列名依次为 `customer` 和 `referrer`。它能运行，却一行都没有返回。修好它。
+  en: This query should list each referred customer with the name of their referrer, in columns called `customer` and `referrer`. It runs but returns no rows. Fix it.
+hint:
+  zh: 连接条件的两边都用了 `c`，这是在问“谁推荐了自己”。推荐人是哪个别名？
+  en: Both sides of the join condition use `c`, which asks "who referred themselves". Which alias is the referrer?
+starter: |
+  SELECT c.name AS customer, r.name AS referrer
+  FROM customers AS c
+  JOIN customers AS r ON c.id = c.referred_by;
+solution: |
+  SELECT c.name AS customer, r.name AS referrer
+  FROM customers AS c
+  JOIN customers AS r ON r.id = c.referred_by;
+check: { column_names: true }

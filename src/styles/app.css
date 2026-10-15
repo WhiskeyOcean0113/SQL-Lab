@@ -94,7 +94,11 @@ a { color: var(--accent-ink); }
 .nav a { padding: 7px 12px; border-radius: 6px; color: var(--ink-2); font-size: var(--fs-sm); text-decoration: none; white-space: nowrap; }
 .nav a:hover { color: var(--ink); background: var(--well); }
 .nav a[aria-current="page"] { color: var(--ink); background: var(--sheet); box-shadow: 0 0 0 1px var(--line); }
-.lang-pick { margin-left: auto; position: relative; display: inline-flex; align-items: center; flex: none; color: var(--ink-2); }
+.top-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; }
+.theme-btn { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--sheet); color: var(--ink-2); cursor: pointer; }
+.theme-btn:hover { color: var(--ink); border-color: var(--ink-3); }
+.theme-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.lang-pick { position: relative; display: inline-flex; align-items: center; flex: none; color: var(--ink-2); }
 .lang-pick select { appearance: none; -webkit-appearance: none; height: 32px; padding: 0 30px 0 12px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--sheet); color: var(--ink); font-size: var(--fs-sm); cursor: pointer; }
 .lang-pick select:hover { border-color: var(--ink-3); }
 /* Chevron in currentColor, so it follows the theme. */

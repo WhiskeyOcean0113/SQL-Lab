@@ -6,6 +6,7 @@ import { setGlossary, t, tText } from './i18n/index.ts'
 import { Progress } from './state/progress.ts'
 import { REVIEW, createCtx, parseRoute, renderTop, type Ctx } from './ui/app.ts'
 import { $, html, mount, raw } from './ui/dom.ts'
+import { onSystemThemeChange } from './ui/theme.ts'
 import { renderBank } from './ui/views/bank.ts'
 import { renderExercise } from './ui/views/exercise.ts'
 import { renderGlossary } from './ui/views/glossary.ts'
@@ -56,6 +57,7 @@ async function boot() {
   }
 
   window.addEventListener('hashchange', route)
+  onSystemThemeChange(top)
   route()
 }
 

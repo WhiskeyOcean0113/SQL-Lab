@@ -248,6 +248,9 @@ ring). Text on a tint uses the matching `--ok-ink` / `--bad-ink`. Latin text in 
 in SimSun (fallbacks: Songti SC, STSong). SimSun has no bold, so never use bold
 where Chinese can appear; build hierarchy from size, colour and space. Colours
 are CSS variables with a dark-mode set; never hard-code a colour in a view.
+The theme follows the system until the learner uses the top-bar toggle
+(`src/ui/theme.ts`); the choice is kept in localStorage and applied by an
+inline script in `index.html` before first paint.
 The verdict's diff table is the signature element: missing rows in the accent
 tint, extra rows struck through in red.
 

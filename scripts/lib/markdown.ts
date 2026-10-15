@@ -1,6 +1,6 @@
 import MarkdownIt, { type Token } from 'markdown-it'
 import type { Lang, Section, Term } from '../../src/content/types.ts'
-import { highlightSql } from '../../src/content/highlight.ts'
+import { highlightSql, highlightSyntax } from '../../src/content/highlight.ts'
 
 // Lesson Markdown → HTML, at build time.
 //
@@ -12,6 +12,7 @@ import { highlightSql } from '../../src/content/highlight.ts'
 //   ```sql run              an editable, runnable example
 //   ```sql run error        the same, but it is meant to fail (validate checks that it does)
 //   ```sql                  a static, highlighted snippet
+//   ```syntax               a syntax template in the manual's notation (see highlightSyntax)
 
 export type RenderEnv = {
   lang: Lang
@@ -79,6 +80,7 @@ export function createMarkdown() {
       }
       return pre + '\n'
     }
+    if (lang === 'syntax') return `<pre class="syntax"><code>${highlightSyntax(code)}</code></pre>\n`
     return `<pre><code>${escapeHtml(code)}</code></pre>\n`
   }
 
@@ -146,6 +148,13 @@ export function runnableBlocks(src: string): RunnableBlock[] {
   return md.parse(src, {})
     .filter(t => t.type === 'fence' && /^sql\s+run\b/.test(t.info.trim()))
     .map(t => ({ sql: t.content.trim(), expectError: /\berror\b/.test(t.info) }))
+}
+
+/** The ```syntax blocks of a lesson body, in order. Like `sql run` blocks, they are code and identical in both languages. */
+export function syntaxBlocks(src: string): string[] {
+  return md.parse(src, {})
+    .filter(t => t.type === 'fence' && t.info.trim() === 'syntax')
+    .map(t => t.content.trim())
 }
 
 /** Rendered inline HTML → plain text, e.g. a title for document.title or a breadcrumb. */

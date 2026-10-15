@@ -1,0 +1,6 @@
+title:   { zh: "SQL {{term:statement}}的写法", en: "How SQL {{term:statement|statements}} are written" }
+summary:
+  zh: 认识一条 SQL 语句由哪些部分组成，分清名字和值的写法，并学会读每一课的语法格式。
+  en: Learn what a SQL statement is made of, how names and values are written, and how to read the syntax blocks in every lesson.
+dataset: shop
+prereqs: [tables-rows-columns]

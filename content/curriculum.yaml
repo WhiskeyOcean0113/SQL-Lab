@@ -10,9 +10,9 @@ modules:
   - id: m0
     title: { zh: "{{term:relational-model}}", en: "The {{term:relational-model}}" }
     summary:
-      zh: 在写第一条 query 之前，先弄清楚数据长什么样，以及数据库是按什么顺序理解一条 query 的。
-      en: Before the first query, learn what the data looks like and the order in which the database reads a query.
-    lessons: [tables-rows-columns, keys, query-evaluation-order]
+      zh: 在写第一条 query 之前，先弄清楚数据长什么样、一条 SQL 语句怎么写，以及数据库是按什么顺序理解它的。
+      en: Before the first query, learn what the data looks like, how a SQL statement is written, and the order in which the database reads it.
+    lessons: [tables-rows-columns, keys, sql-syntax, query-evaluation-order]
     planned: []
 
   - id: m1

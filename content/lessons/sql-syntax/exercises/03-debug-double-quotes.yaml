@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询想列出国家是 Japan 的顾客的名字和邮箱，却报错了。修好它。
+  en: This query should list the name and email of every customer in Japan, but it fails. Fix it.
+hint:
+  zh: 报错说哪一列不存在？那真的是一列吗？
+  en: Which column does the error say is missing? Is it really a column?
+starter: |
+  SELECT name, email
+  FROM customers
+  WHERE country = "Japan";
+solution: |
+  SELECT name, email
+  FROM customers
+  WHERE country = 'Japan';

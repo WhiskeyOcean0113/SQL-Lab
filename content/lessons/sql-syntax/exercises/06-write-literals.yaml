@@ -1,0 +1,11 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 不读任何表，写一条查询，返回一行三列，依次是：文字 Liam O'Brien、整数 42、日期 2024-05-01。列名随意。
+  en: Without reading any table, write a query that returns one row of three columns, in this order the text Liam O'Brien, the integer 42, and the date 2024-05-01. Any column names will do.
+hint:
+  zh: 这条查询只有 `SELECT`，没有 `FROM`。三个值分别是字符串、数字和日期，各自怎么写？
+  en: The query has a `SELECT` and no `FROM`. The three values are a string, a number and a date; how is each one written?
+solution: |
+  SELECT 'Liam O''Brien', 42, DATE '2024-05-01';

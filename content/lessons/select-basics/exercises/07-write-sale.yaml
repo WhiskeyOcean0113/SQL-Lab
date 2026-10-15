@@ -1,0 +1,15 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 全场打八折。列出每件商品的名字、折后单价，以及按折后单价计算的库存总价，列依次为 `name`、`sale_price`、`sale_value`。不用四舍五入。
+  en: Everything is 20% off. List each product's name, its sale price, and the value of its stock at the sale price, as the columns `name`, `sale_price`, `sale_value`. No rounding needed.
+hint:
+  zh: 折后单价是 `price * 0.8`。第三列能直接用 `sale_price` 吗？
+  en: The sale price is `price * 0.8`. Can the third column use `sale_price` directly?
+solution: |
+  SELECT name,
+         price * 0.8 AS sale_price,
+         price * 0.8 * stock AS sale_value
+  FROM products;
+check: { column_names: true }

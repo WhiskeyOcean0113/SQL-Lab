@@ -71,3 +71,15 @@ describe('validate: predict answers', () => {
     expect(problems).toEqual(['exercise basics/04-predict: verify.rows is 3 but the query returns 2 rows'])
   }, 30_000)
 })
+
+describe('syntax blocks', () => {
+  it('marks keywords, placeholders and notation, and leaves literal symbols alone', async () => {
+    const { highlightSyntax } = await import('../src/content/highlight.ts')
+    expect(highlightSyntax('SELECT { * | expression } [, …]')).toBe(
+      '<span class="tk-keyword">SELECT</span> <span class="syn-meta">{</span> * <span class="syn-meta">|</span> '
+      + '<span class="syn-ph">expression</span> <span class="syn-meta">}</span> <span class="syn-meta">[</span>, '
+      + '<span class="syn-meta">…</span><span class="syn-meta">]</span>',
+    )
+    expect(highlightSyntax('string || string')).toBe('<span class="syn-ph">string</span> || <span class="syn-ph">string</span>')
+  })
+})

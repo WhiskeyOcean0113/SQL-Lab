@@ -93,12 +93,15 @@ prereqs: [select-basics, where-filter]    # must come earlier in curriculum
 
 Every `##` heading ends with a fixed id. Sections appear in this order;
 `variants` and `deeper` are optional, the rest are required. Both languages
-have exactly the same sections.
+have exactly the same sections. `syntax` is being added lesson by lesson
+(`sql-syntax` and `select-basics` are the models); validate warns where it is
+missing, and it becomes required once every lesson has it.
 
 | id         | zh heading    | en heading       | What goes in it |
 |------------|---------------|------------------|-----------------|
 | `why`      | 为什么需要它  | Why you need it  | A concrete question from the dataset that you cannot answer yet. |
 | `core`     | 核心概念      | Core idea        | The concept and the mental model, tied to the logical processing order where relevant. |
+| `syntax`   | 语法          | Syntax           | A ` ```syntax ` block with the lesson's statement shape, then a table: every placeholder, what may go there, whether it can be left out. Then read two or three real queries against the shape. |
 | `example`  | 示例          | Example          | A worked example with labelled steps (subgoals): what each clause contributes. Runnable. |
 | `variants` | 变体          | Variations       | Related forms and options, each with a runnable example. |
 | `deeper`   | 深入          | Going deeper     | Edge cases, NULL behaviour, standard vs. Postgres specifics. |
@@ -115,6 +118,13 @@ Markdown extensions:
 - ` ```sql run error `: a runnable example that is meant to fail, so the learner
   can read the real error. validate checks that it does fail.
 - ` ```sql `: a static snippet, e.g. a deliberately wrong query.
+- ` ```syntax `: a syntax template in the PostgreSQL manual's notation:
+  UPPERCASE keywords, lower-case placeholders (`expression`, `table_name`,
+  `output_name`: the manual's own names), `[ ]` optional, `{ a | b }` pick
+  one, `[, …]` repeat. Like `sql run` blocks, identical in zh and en.
+  Show only the forms the lesson teaches, but never a shape that is wrong;
+  the shape grows lesson by lesson towards the full `SELECT`.
+- `###` subheadings may divide a long section; they carry no id.
 
 ### Exercises
 

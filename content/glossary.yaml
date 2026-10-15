@@ -8,6 +8,14 @@ column:           { en: column, zh: 列 }
 schema:           { en: schema, zh: 模式 }
 query:            { en: query, zh: 查询 }
 clause:           { en: clause, zh: 子句 }
+statement:        { en: statement, zh: 语句 }
+keyword:          { en: keyword, zh: 关键字 }
+token:            { en: token, zh: 词法单元 }
+comment:          { en: comment, zh: 注释 }
+syntax:           { en: syntax, zh: 语法 }
+syntax-error:     { en: syntax error, zh: 语法错误 }
+placeholder:      { en: placeholder, zh: 占位符 }
+quoted-identifier: { en: quoted identifier, zh: 带引号的标识符 }
 result-set:       { en: result set, zh: 结果集 }
 primary-key:      { en: primary key, zh: 主键 }
 foreign-key:      { en: foreign key, zh: 外键 }

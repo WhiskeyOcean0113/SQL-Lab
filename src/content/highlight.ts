@@ -30,3 +30,26 @@ export function highlightSql(code: string): string {
   }
   return out
 }
+
+// Syntax blocks (```syntax) describe the shape of a statement, in the
+// notation of the PostgreSQL manual:
+//   UPPERCASE      a keyword, written as shown
+//   lowercase      a placeholder the learner replaces with their own
+//   [ … ]          optional
+//   { a | b }      exactly one of the alternatives
+//   [, …]          the item before it may repeat, comma-separated
+// Anything else (parentheses, commas, *, ||, operators) is written literally.
+const SYNTAX_TOKEN = /(\|\|)|([[\]{}|]|…|\.\.\.)|([A-Z][A-Z_]*\b)|([a-z_][a-z0-9_]*)|([\s\S])/g
+
+export function highlightSyntax(code: string): string {
+  let out = ''
+  for (const m of code.matchAll(SYNTAX_TOKEN)) {
+    const [text, concat, meta, keyword, placeholder] = m
+    if (concat) out += esc(text)
+    else if (meta) out += `<span class="syn-meta">${esc(text)}</span>`
+    else if (keyword) out += `<span class="tk-keyword">${esc(text)}</span>`
+    else if (placeholder) out += `<span class="syn-ph">${esc(text)}</span>`
+    else out += esc(text)
+  }
+  return out
+}

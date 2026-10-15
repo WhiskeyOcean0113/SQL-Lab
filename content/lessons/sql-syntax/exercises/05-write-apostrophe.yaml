@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 查出名字是 Liam O'Brien 的顾客，列出他的 `id` 和 `joined_on`，列依次为 `id`、`joined_on`。
+  en: Find the customer named Liam O'Brien and list his `id` and `joined_on`, as the columns `id`, `joined_on`.
+hint:
+  zh: 名字里的撇号会提前结束字符串。在单引号字符串里，怎样写一个单引号字符？
+  en: The apostrophe in the name would end the string early. How do you write a quote character inside a single-quoted string?
+solution: |
+  SELECT id, joined_on
+  FROM customers
+  WHERE name = 'Liam O''Brien';
+check: { column_names: true }

@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: shop 里有两位顾客的国家是 Canada。下面这条查询会返回几行？
+  en: Two customers in the shop live in Canada. How many rows does this query return?
+hint:
+  zh: 不分大小写的是关键字和名字。单引号里的值呢？
+  en: Keywords and names ignore case. What about the value in quotes?
+query: |
+  select name
+  from customers
+  where country = 'canada';
+choices:
+  - { zh: 查询会报错, en: The query fails }
+  - '0'
+  - '2'
+  - '12'
+answer: 1
+verify: { rows: 0 }
+explain:
+  zh: 0 行，而且不报错。小写的 `select`、`from`、`where` 没有问题，关键字不分大小写。但值区分大小写：数据里存的是 `'Canada'`，和 `'canada'` 不相等。
+  en: "0 rows, and no error. The lower-case `select`, `from` and `where` are fine, because keywords ignore case. Values do not: the data holds `'Canada'`, which is not equal to `'canada'`."

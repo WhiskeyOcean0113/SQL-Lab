@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 用下面的片段拼出一条查询：列出国家是 Ireland 的顾客的名字和加入日期。有两个片段是多余的。
+  en: Arrange the pieces into a query listing the name and join date of every customer in Ireland. Two pieces are not needed.
+hint:
+  zh: 文字值用哪种引号？
+  en: Which quotes does a text value take?
+solution: |
+  SELECT name, joined_on
+  FROM customers
+  WHERE country = 'Ireland';
+distractors:
+  - WHERE country = "Ireland";
+  - WHERE country = Ireland;

@@ -228,6 +228,8 @@ dfn.term-repeat .term-alt { display: none; }
 .section > h2 .no { color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .prose { font-size: var(--fs-body); line-height: 1.95; }
 .prose p { margin: 0 0 18px; }
+.prose h3 { font-size: var(--fs-lg); line-height: 1.45; font-weight: 400; margin: 36px 0 12px; }
+.prose h3:first-child { margin-top: 0; }
 .prose ul, .prose ol { margin: 0 0 18px; padding-left: 1.4em; }
 .prose li { margin: 4px 0; }
 .prose li::marker { color: var(--ink-3); }
@@ -237,6 +239,11 @@ dfn.term-repeat .term-alt { display: none; }
 .prose strong { font-weight: 400; color: var(--ink); text-decoration: underline 3px color-mix(in srgb, var(--amber) 55%, transparent); text-underline-offset: 5px; text-decoration-skip-ink: none; }
 .prose pre.sql-static { margin: 20px 0; padding: 16px 20px; background: var(--well); border-radius: 10px; font: var(--fs-sm)/1.75 var(--mono); overflow-x: auto; }
 .prose pre.sql-static code { background: none; box-shadow: none; padding: 0; font: inherit; }
+/* A syntax template is a shape to fill in, not code to run: outlined, not filled. */
+.prose pre.syntax { margin: 20px 0; padding: 16px 20px; border: 1px dashed var(--line-2); border-radius: 10px; font: var(--fs-sm)/1.85 var(--mono); overflow-x: auto; }
+.prose pre.syntax code { background: none; box-shadow: none; padding: 0; font: inherit; }
+.syn-ph { font-style: italic; color: var(--ink); }
+.syn-meta { color: var(--ink-3); }
 .prose .table-scroll { overflow-x: auto; margin: 20px 0; }
 .prose table { border-collapse: collapse; font-size: var(--fs-md); line-height: 1.6; min-width: 60%; }
 .prose th { text-align: left; font-weight: 400; color: var(--ink-3); font-size: var(--fs-xs); padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line-2); }

@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询返回一行。`a` 列和 `b` 列分别显示什么？
+  en: This query returns one row. What do the columns `a` and `b` show?
+hint:
+  zh: 单引号里的是值，不加引号的是名字。
+  en: Single quotes make a value; a bare word is a name.
+query: |
+  SELECT 'name' AS a, name AS b
+  FROM products
+  WHERE id = 1;
+choices:
+  - { zh: 两列都是 The Pragmatic Programmer, en: Both show The Pragmatic Programmer }
+  - { zh: "`a` 是文字 name，`b` 是 The Pragmatic Programmer", en: "`a` shows the text name, `b` shows The Pragmatic Programmer" }
+  - { zh: "`a` 是 The Pragmatic Programmer，`b` 是文字 name", en: "`a` shows The Pragmatic Programmer, `b` shows the text name" }
+  - { zh: 查询会报错, en: The query fails }
+answer: 1
+explain:
+  zh: "`'name'` 在单引号里，是一个文字值，每一行都原样显示 name。不加引号的 `name` 是列名，显示这件商品的名字 The Pragmatic Programmer。同一个词，加不加单引号，意思完全不同。"
+  en: "`'name'` is in single quotes, so it is a text value and every row shows the word name. The bare `name` is a column name and shows the product's name, The Pragmatic Programmer. The same word means something entirely different with and without single quotes."

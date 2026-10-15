@@ -30,6 +30,44 @@ FROM customers;
 
 **NULL 遇上 `||`，结果是 NULL。** 和算术一样：任何一段是 NULL，整段拼接结果就是 NULL。
 
+## 语法 {#syntax}
+
+拼接运算符和这一课的字符串函数：
+
+```syntax
+string || string
+upper(string)
+lower(string)
+length(string)
+left(string, n)
+right(string, n)
+substring(string FROM start [ FOR count ])
+position(search IN string)
+split_part(string, delimiter, field)
+replace(string, from_text, to_text)
+trim([ LEADING | TRAILING | BOTH ] [ characters FROM ] string)
+concat(value [, …])
+concat_ws(separator, value [, …])
+```
+
+| 占位符 | 填什么 |
+|---|---|
+| `string` | 一段文字：文字列、字面量，或者另一个返回文字的函数 |
+| `n`、`start`、`count`、`field` | 整数。位置从 1 开始数 |
+| `search` | 要找的文字 |
+| `delimiter` | 分隔符，比如 `'@'` |
+| `from_text`、`to_text` | 被替换的文字和替换成的文字 |
+| `characters` | 要去掉的字符；不写就是空格 |
+| `value` | 任何值，数字也行，会被转成文字 |
+| `separator` | 放在各段之间的分隔符 |
+
+注意 `substring`、`position` 和 `trim` 的格式：括号里用的不是逗号，而是关键字 `FROM`、`FOR`、`IN`、`LEADING` 等。这是 SQL 标准为这几个函数规定的特殊写法，读起来像英语句子：`position('@' in email)` 就是“`@` 在 email 里的位置”。其他函数都是普通的“名字(参数, 参数)”。
+
+格式里的 `string` 可以是另一个函数，所以函数可以嵌套。从里往外读：
+
+- `upper(left(name, 3))`：先取名字的前 3 个字符，再转成大写。
+- `substring(email FROM position('@' IN email) + 1)`：先找到 `@` 的位置，加 1，从那里截到结尾，得到域名。
+
 ## 示例 {#example}
 
 问题：列出每位顾客邮箱的用户名部分（`@` 之前）和域名部分（`@` 之后）。
@@ -70,6 +108,25 @@ SELECT substring('SQL Pocket Guide' from 5 for 6) AS middle,
        replace('SQL Pocket Guide', 'Pocket', 'Field') AS replaced;
 ```
 
+**去掉两端的字符：`trim` 的完整写法。** 默认去掉两端的空格；`LEADING` 只去开头，`TRAILING` 只去结尾；还可以指定要去掉的字符：
+
+```sql run
+SELECT '[' || trim('  a  ') || ']' AS both_ends,
+       '[' || trim(LEADING '  a  ') || ']' AS leading_only,
+       trim(BOTH '-' FROM '--a--') AS dashes;
+```
+
+方括号是拼上去的，用来看清空格还剩在哪里。
+
+**标准写法和逗号写法。** PostgreSQL 也接受普通的逗号写法：`substring('SQL Pocket Guide', 5, 6)` 和 `substring('SQL Pocket Guide' FROM 5 FOR 6)` 相同；`strpos(string, search)` 和 `position(search IN string)` 相同，只是参数顺序相反。只写 `FROM` 不写 `FOR`，就一直截到结尾：
+
+```sql run
+SELECT email,
+       substring(email FROM position('@' IN email) + 1) AS domain,
+       strpos(email, '@') AS at_sign
+FROM customers;
+```
+
 **把数字拼进文字。** `||` 也能连接数字，结果是文字：
 
 ```sql run
@@ -91,7 +148,7 @@ FROM customers;
 
 Liam O'Brien 的城市是 NULL：`||` 的结果是 NULL，`concat` 留下了一个多余的逗号，`concat_ws` 干净地只剩名字。
 
-**空字符串不是 NULL。** 在 PostgreSQL 里，`''` 是一个长度为 0 的字符串，`'' IS NULL` 是 false。Oracle 数据库却把 `''` 当作 NULL，换数据库时要留意。
+**空字符串不是 NULL。** 第 1 章讲 NULL 时说过：`''` 是一个长度为 0 的字符串，`'' IS NULL` 是 false，只有 Oracle 把两者当成一回事。所以 `length('')` 是 0，`length(NULL)` 是 NULL。
 
 **长度按字符算。** `length('数据库')` 是 3；如果要按字节数算，用 `octet_length`，同样三个汉字是 9 个字节。
 
@@ -112,7 +169,9 @@ FROM customers;
 
 **3. 位置从 0 开始数。** `substring(s from 0 for 3)` 只会得到 2 个字符。SQL 的字符串位置从 1 开始。
 
-**4. 只把一边转成小写。** `lower(country) = 'China'` 永远找不到任何行，因为左边已经全是小写。两边要一致。
+**4. 把标准写法里的关键字换成了逗号。** `position('@', email)` 报 `syntax error at or near ","`。`position` 的格式是 `position(search IN string)`；想用逗号，就换成 `strpos(email, '@')`，注意参数顺序也反过来了。
+
+**5. 只把一边转成小写。** `lower(country) = 'China'` 永远找不到任何行，因为左边已经全是小写。两边要一致。
 
 ## 小结 {#summary}
 

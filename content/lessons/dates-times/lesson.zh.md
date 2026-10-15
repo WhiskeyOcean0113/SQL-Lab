@@ -30,6 +30,44 @@ WHERE shipped_at IS NOT NULL;
 
 shop 的数据停在 2024 年 6 月底。为了让结果固定不变，这门课把“今天”当作 `DATE '2024-07-01'`。真实查询里，`current_date` 是今天的日期，`now()` 是现在的{{term:timestamp}}。
 
+## 语法 {#syntax}
+
+时间字面量、时间运算和这一课的函数：
+
+```syntax
+{ DATE | TIMESTAMP | INTERVAL } 'text'
+date - date
+date { + | - } integer
+timestamp - timestamp
+timestamp { + | - } interval
+extract(field FROM source)
+date_trunc('field', source)
+age(end_value, start_value)
+to_char(value, 'format')
+```
+
+| 形状 | 结果的类型 | 例子 |
+|---|---|---|
+| `DATE 'text'` 等 | 带类型的时间字面量 | `DATE '2024-07-01'`、`INTERVAL '2 days'` |
+| `date - date` | 整数，相差的天数 | `DATE '2024-07-01' - joined_on` |
+| `date + integer` | 日期，往后数几天 | `joined_on + 30` |
+| `timestamp - timestamp` | `interval` | `shipped_at - ordered_at` |
+| `timestamp + interval` | 时间戳 | `ordered_at + INTERVAL '2 days'` |
+
+| 占位符 | 填什么 |
+|---|---|
+| `text`（`INTERVAL` 后面） | 数字加单位，可以组合：`'90 minutes'`、`'1 day 6 hours'`、`'1 month'` |
+| `field` | 要取出或截到的部分：`year`、`month`、`day`、`hour`、`minute`、`dow`（星期几）、`epoch`（秒数）等 |
+| `source` | 日期、时间戳或时长 |
+| `format` | 显示格式的模板：`YYYY` 年、`MM` 月、`DD` 日、`HH24` 小时、`MI` 分钟、`Mon` 月份缩写 |
+
+最容易混的是 `field` 的写法：`extract(month FROM …)` 里的 `month` 不加引号，是关键字式的写法；`date_trunc('month', …)` 里的 `'month'` 是普通参数，是一段文字，必须加单引号。格式里已经把引号写出来了。
+
+对照格式读两个表达式：
+
+- `DATE '2024-07-01' - joined_on`：`date - date`，结果是整数。
+- `date_trunc('month', ordered_at)`：第一个参数是文字 `'month'`，第二个是时间戳，结果是当月 1 日零点的时间戳。
+
 ## 示例 {#example}
 
 问题：每位顾客到 2024 年 7 月 1 日为止，注册了多少天？
@@ -76,6 +114,26 @@ FROM customers
 WHERE joined_on < DATE '2024-07-01' - INTERVAL '1 year';
 ```
 
+**时长也能比较、能运算。** `interval` 可以和另一个 `interval` 比较，可以乘以一个数。发货用时超过 1 天半的订单：
+
+```sql run
+SELECT id, shipped_at - ordered_at AS shipping_time
+FROM orders
+WHERE shipped_at - ordered_at > INTERVAL '1 day 12 hours';
+```
+
+**把时长换算成小时。** `extract(epoch FROM …)` 把时长换成秒数，除以 3600 就是小时数，便于排序和计算：
+
+```sql run
+SELECT id,
+       shipped_at - ordered_at AS shipping_time,
+       round(extract(epoch FROM shipped_at - ordered_at) / 3600, 1) AS hours
+FROM orders
+WHERE shipped_at IS NOT NULL;
+```
+
+订单 1 用了 `1 day 04:48:00`，也就是 28.8 小时。
+
 **格式化输出：`to_char`。**
 
 ```sql run
@@ -100,6 +158,10 @@ SELECT DATE '2024-01-31' + INTERVAL '1 month' AS jan31_plus_month,
 
 **时区。** `timestamp` 不带时区信息，shop 约定所有时间都是 UTC。`timestamptz`（timestamp with time zone）会记住一个确定的时刻，显示时再按会话的{{term:time-zone}}换算。`now()` 返回的就是 `timestamptz`。存放“真实发生的时刻”时，实际项目通常用 `timestamptz`。
 
+**`to_char` 的名字会补空格。** `to_char(DATE '2024-07-01', 'Day')` 得到的是 `Monday` 后面再跟三个空格，因为星期名被补齐到 9 个字符。在模板前面加 `FM`（fill mode），写成 `'FMDay'`，就不补空格了。
+
+**其他数据库的时间函数差别很大。** 时间是各数据库差异最大的地方之一。MySQL 用 `DATEDIFF(a, b)` 求天数差，SQLite 甚至没有专门的日期类型，把时间存成文字或数字。`extract`、`INTERVAL` 和 `current_date` 是标准 SQL，到哪里都最可能通用。
+
 **用范围筛选，而不是 `extract`。** `WHERE extract(month from ordered_at) = 3` 能找到 3 月的订单，但它会把每一年的 3 月都算进来，而且数据库没法用索引加速（第 9 章）。更好的写法是第 1 章学过的左闭右开范围：`ordered_at >= '2024-03-01' AND ordered_at < '2024-04-01'`。
 
 ## 常见错误 {#mistakes}
@@ -121,6 +183,15 @@ WHERE id = 1;
 **4. 用非 ISO 格式写日期。** `'05/03/2024'` 含义不明确，`'2024-03-05'` 永远不会被误读。
 
 **5. 用 `BETWEEN` 处理时间戳的终点。** 第 1 章讲过：`BETWEEN '2024-06-01' AND '2024-06-28'` 不包含 28 日零点以后的时刻。
+
+**6. `date_trunc` 的第一个参数忘了加引号。**
+
+```sql run error
+SELECT date_trunc(month, ordered_at)
+FROM orders;
+```
+
+报 `column "month" does not exist`：不加引号的 `month` 被当成了列名。`date_trunc` 要的是一段文字 `'month'`。`extract(month FROM …)` 的写法则不需要引号，两者正好相反，对照语法格式写最稳妥。
 
 ## 小结 {#summary}
 

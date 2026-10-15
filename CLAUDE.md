@@ -121,8 +121,9 @@ Markdown extensions:
 - ` ```sql `: a static snippet, e.g. a deliberately wrong query.
 - ` ```syntax `: a syntax template in the PostgreSQL manual's notation:
   UPPERCASE keywords, lower-case placeholders (`expression`, `table_name`,
-  `output_name`: the manual's own names), `[ ]` optional, `{ a | b }` pick
-  one, `[, …]` repeat. Like `sql run` blocks, identical in zh and en.
+  `output_name`: the manual's own names), function names in lower case
+  with no space before the parenthesis (`round(number)`), `[ ]` optional,
+  `{ a | b }` pick one, `[, …]` repeat. Like `sql run` blocks, identical in zh and en.
   Show only the forms the lesson teaches, but never a shape that is wrong;
   the shape grows lesson by lesson towards the full `SELECT`.
 - `###` subheadings may divide a long section; they carry no id.

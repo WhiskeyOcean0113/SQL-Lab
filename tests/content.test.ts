@@ -81,5 +81,7 @@ describe('syntax blocks', () => {
       + '<span class="syn-meta">…</span><span class="syn-meta">]</span>',
     )
     expect(highlightSyntax('string || string')).toBe('<span class="syn-ph">string</span> || <span class="syn-ph">string</span>')
+    expect(highlightSyntax('round(number)')).toBe('<span class="tk-fn">round</span>(<span class="syn-ph">number</span>)')
+    expect(highlightSyntax('function_name ( x )')).toBe('<span class="syn-ph">function_name</span> ( <span class="syn-ph">x</span> )')
   })
 })

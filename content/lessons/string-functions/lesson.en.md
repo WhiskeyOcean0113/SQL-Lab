@@ -30,6 +30,44 @@ Positions count from 1, not 0.
 
 **NULL meets `||`, and the result is NULL.** Just as in arithmetic: if any piece is NULL, the whole concatenation is NULL.
 
+## Syntax {#syntax}
+
+The concatenation operator and this lesson's string functions:
+
+```syntax
+string || string
+upper(string)
+lower(string)
+length(string)
+left(string, n)
+right(string, n)
+substring(string FROM start [ FOR count ])
+position(search IN string)
+split_part(string, delimiter, field)
+replace(string, from_text, to_text)
+trim([ LEADING | TRAILING | BOTH ] [ characters FROM ] string)
+concat(value [, …])
+concat_ws(separator, value [, …])
+```
+
+| Placeholder | What goes there |
+|---|---|
+| `string` | A piece of text: a text column, a literal, or another function that returns text |
+| `n`, `start`, `count`, `field` | Integers. Positions count from 1 |
+| `search` | The text to look for |
+| `delimiter` | The separator to split on, such as `'@'` |
+| `from_text`, `to_text` | The text to replace and its replacement |
+| `characters` | The characters to strip; spaces if omitted |
+| `value` | Any value; numbers are turned into text |
+| `separator` | What goes between the pieces |
+
+Look closely at `substring`, `position` and `trim`: inside the parentheses they use keywords such as `FROM`, `FOR`, `IN` and `LEADING` instead of commas. The SQL standard gives these few functions their own shape, which reads like an English phrase: `position('@' in email)` is "the position of @ in email". Every other function is a plain "name(argument, argument)".
+
+Because a `string` can be another function, functions nest. Read them from the inside out:
+
+- `upper(left(name, 3))`: take the first 3 characters of the name, then capitalise them.
+- `substring(email FROM position('@' IN email) + 1)`: find the `@`, add 1, and cut from there to the end, which leaves the domain.
+
 ## Example {#example}
 
 Task: list the username part (before `@`) and the domain part (after `@`) of each customer's email.
@@ -70,6 +108,25 @@ SELECT substring('SQL Pocket Guide' from 5 for 6) AS middle,
        replace('SQL Pocket Guide', 'Pocket', 'Field') AS replaced;
 ```
 
+**Stripping characters: `trim` in full.** By default it strips spaces from both ends; `LEADING` strips only the start and `TRAILING` only the end; and you can name the characters to strip:
+
+```sql run
+SELECT '[' || trim('  a  ') || ']' AS both_ends,
+       '[' || trim(LEADING '  a  ') || ']' AS leading_only,
+       trim(BOTH '-' FROM '--a--') AS dashes;
+```
+
+The brackets are concatenated on so you can see where spaces remain.
+
+**Standard forms and comma forms.** PostgreSQL also accepts plain comma forms: `substring('SQL Pocket Guide', 5, 6)` equals `substring('SQL Pocket Guide' FROM 5 FOR 6)`, and `strpos(string, search)` equals `position(search IN string)`, with the arguments the other way round. With `FROM` and no `FOR`, the cut runs to the end:
+
+```sql run
+SELECT email,
+       substring(email FROM position('@' IN email) + 1) AS domain,
+       strpos(email, '@') AS at_sign
+FROM customers;
+```
+
 **Putting numbers into text.** `||` also joins numbers, and the result is text:
 
 ```sql run
@@ -91,7 +148,7 @@ FROM customers;
 
 Liam O'Brien's city is NULL: `||` gives NULL, `concat` leaves a dangling comma, and `concat_ws` cleanly leaves just the name.
 
-**An empty string is not NULL.** In PostgreSQL, `''` is a string of length 0, and `'' IS NULL` is false. Oracle treats `''` as NULL; watch for this when moving between databases.
+**An empty string is not NULL.** As the NULL lesson in Chapter 1 noted, `''` is a string of length 0 and `'' IS NULL` is false; only Oracle treats the two as one. So `length('')` is 0, while `length(NULL)` is NULL.
 
 **Length counts characters.** `length('数据库')` is 3. For bytes use `octet_length`, which gives 9 for those same three Chinese characters.
 
@@ -112,7 +169,9 @@ FROM customers;
 
 **3. Counting positions from 0.** `substring(s from 0 for 3)` returns only 2 characters. SQL string positions start at 1.
 
-**4. Lower-casing only one side.** `lower(country) = 'China'` never matches, because the left side is now all lower case. Both sides must agree.
+**4. A comma where the standard form wants a keyword.** `position('@', email)` fails with `syntax error at or near ","`. The shape of `position` is `position(search IN string)`; for commas, use `strpos(email, '@')`, and note that the arguments swap places too.
+
+**5. Lower-casing only one side.** `lower(country) = 'China'` never matches, because the left side is now all lower case. Both sides must agree.
 
 ## Summary {#summary}
 

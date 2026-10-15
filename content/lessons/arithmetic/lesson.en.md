@@ -31,6 +31,56 @@ SELECT 7 / 2 AS a, 7 / 2.0 AS b, 7 % 2 AS c, -7 / 2 AS d;
 
 `7 / 2` is 3, and only `7 / 2.0` is 3.5. As soon as one side has a decimal point (or is `numeric`), the result is an exact decimal.
 
+## Syntax {#syntax}
+
+Arithmetic expressions can go anywhere an expression can: the select list, `WHERE`, `ORDER BY`.
+
+```syntax
+expression { + | - | * | / | % | ^ } expression
+- expression
+( expression )
+function_name ( [ argument [, …] ] )
+```
+
+| Shape | Meaning | Example |
+|---|---|---|
+| `expression + expression` and so on | Add, subtract, multiply, divide, take the remainder, raise to a power | `quantity * unit_price` |
+| `- expression` | Negate | `-price` |
+| `( expression )` | Evaluate the inside first | `(price - 5) * stock` |
+| `function_name ( … )` | Call a {{term:function}}, with comma-separated arguments in the parentheses | `round(price, 1)` |
+
+As with `condition`, each shape **is itself an `expression`**, so they nest: in `round(price * 1.1, 2)`, `price * 1.1` is an expression that becomes `round`'s first argument.
+
+The numeric functions in this lesson look like this. A name right before a parenthesis is written as shown:
+
+```syntax
+round(number [, decimal_places ])
+trunc(number [, decimal_places ])
+ceil(number)
+floor(number)
+abs(number)
+power(base, exponent)
+mod(dividend, divisor)
+```
+
+| Placeholder | What goes there |
+|---|---|
+| `number` | Any numeric expression |
+| `decimal_places` | How many decimals to keep, as an integer; 0 if omitted; negative values round to tens, hundreds and so on |
+| `base`, `exponent` | The base and the power |
+| `dividend`, `divisor` | What is divided and what it is divided by; `mod(a, b)` is the same as `a % b` |
+
+Operators are evaluated in this order, highest first:
+
+| Precedence | Operators |
+|---|---|
+| 1 | `-` (negation) |
+| 2 | `^` (power) |
+| 3 | `*`, `/`, `%` |
+| 4 | `+`, `-` |
+
+Operators of the same level are evaluated left to right. That differs from school mathematics in two places; see Going deeper.
+
 ## Example {#example}
 
 Task: what is every product's price after a 10% increase? Round to two decimal places and name the column `new_price`.
@@ -64,6 +114,21 @@ FROM products;
 
 Here integer division is exactly what we want: The Pragmatic Programmer has 25 units, filling 6 boxes with 1 left over.
 
+**Powers and remainders as functions.** `power(2, 10)` is the same as `2 ^ 10`, and `mod(17, 5)` the same as `17 % 5`:
+
+```sql run
+SELECT power(2, 10) AS power, mod(17, 5) AS mod, sqrt(16) AS sqrt;
+```
+
+**Rounding to tens or hundreds.** `round`'s second argument can be negative:
+
+```sql run
+SELECT name, price * stock AS stock_value, round(price * stock, -2) AS rounded
+FROM products;
+```
+
+The Pragmatic Programmer's stock value of 1050.00, rounded to hundreds, is exactly half-way and rounds away from zero to 1100.
+
 **Combining columns of the same row.** Stock value `price * stock`, profit per unit, discounted price: all of them combine columns from one row.
 
 ## Going deeper {#deeper}
@@ -84,6 +149,16 @@ So money always belongs in `numeric`, never `real` or `double precision`. (`::fl
 
 **NULL in arithmetic.** NULL plus, minus, times or divided by anything is NULL.
 
+**Two precedence rules that differ from school.** First, negation comes before powers, so `-2 ^ 2` is (−2)² = 4, where mathematics reads −2² as −4. Second, `^` is evaluated left to right, so `2 ^ 3 ^ 2` is (2³)² = 64, where mathematics gives 2⁹ = 512:
+
+```sql run
+SELECT -2 ^ 2 AS a, 2 ^ 3 ^ 2 AS b, -(2 ^ 2) AS c, 2 ^ (3 ^ 2) AS d;
+```
+
+With powers, parentheses that state the intent are the safe choice. Note too that in MySQL `^` means bitwise exclusive or, not a power; for portable SQL use `power`.
+
+**Decimal places in `numeric` division.** `7.0 / 2` gives 3.5000000000000000: when dividing `numeric` values, PostgreSQL keeps enough decimal places to stay precise. For a fixed number of places, `round` at the end.
+
 ## Common mistakes {#mistakes}
 
 **1. Missing integer division.** Splitting the stock into three equal parts:
@@ -99,7 +174,15 @@ In column `a`, 25 / 3 gives 8.00, because integer division dropped the fraction 
 
 **3. Money in floating point.** See Going deeper: floating point produces errors like 0.30000000000000004, and they add up until the books do not balance.
 
-**4. Rounding too early.** Rounding every row and then adding can differ by a few cents from adding and then rounding. Round as the last step.
+**4. Floating point into two-argument `round`.** With integer arguments, `sqrt`, `^` and `power` return floating-point numbers, but `round(x, n)` only accepts `numeric`:
+
+```sql run error
+SELECT round(sqrt(2), 2);
+```
+
+The error is `function round(double precision, integer) does not exist`. Convert the value to `numeric` first: `round(sqrt(2)::numeric, 2)`. `::` is explained in this chapter's last lesson.
+
+**5. Rounding too early.** Rounding every row and then adding can differ by a few cents from adding and then rounding. Round as the last step.
 
 ## Summary {#summary}
 

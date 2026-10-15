@@ -31,6 +31,56 @@ SELECT 7 / 2 AS a, 7 / 2.0 AS b, 7 % 2 AS c, -7 / 2 AS d;
 
 `7 / 2` 是 3，`7 / 2.0` 才是 3.5。只要有一边带小数（或是 `numeric` 类型），结果就是精确小数。
 
+## 语法 {#syntax}
+
+算术表达式可以写在任何能写表达式的地方：选择列表、`WHERE`、`ORDER BY`。
+
+```syntax
+expression { + | - | * | / | % | ^ } expression
+- expression
+( expression )
+function_name ( [ argument [, …] ] )
+```
+
+| 形状 | 意思 | 例子 |
+|---|---|---|
+| `expression + expression` 等 | 两个数相加、减、乘、除、取余、乘方 | `quantity * unit_price` |
+| `- expression` | 取相反数 | `-price` |
+| `( expression )` | 先算括号里的 | `(price - 5) * stock` |
+| `function_name ( … )` | 调用一个{{term:function}}，括号里是参数，用逗号隔开 | `round(price, 1)` |
+
+和 `condition` 一样，每个形状的结果**本身又是一个 `expression`**，所以可以层层嵌套：`round(price * 1.1, 2)` 里，`price * 1.1` 是一个表达式，它又成了 `round` 的第一个参数。
+
+这一课用到的数值函数，格式如下。函数名紧跟着括号，表示照原样写：
+
+```syntax
+round(number [, decimal_places ])
+trunc(number [, decimal_places ])
+ceil(number)
+floor(number)
+abs(number)
+power(base, exponent)
+mod(dividend, divisor)
+```
+
+| 占位符 | 填什么 |
+|---|---|
+| `number` | 任何数值表达式 |
+| `decimal_places` | 保留几位小数，整数；不写就是 0；可以是负数，表示取整到十位、百位 |
+| `base`、`exponent` | 底数和指数 |
+| `dividend`、`divisor` | 被除数和除数；`mod(a, b)` 和 `a % b` 相同 |
+
+运算的先后，从高到低：
+
+| 优先级 | 运算符 |
+|---|---|
+| 1 | `-`（取相反数） |
+| 2 | `^`（乘方） |
+| 3 | `*`、`/`、`%` |
+| 4 | `+`、`-` |
+
+同一级的运算从左往右算。这和数学课上的规则有两处不同，见“深入”。
+
 ## 示例 {#example}
 
 问题：所有商品加价 10% 以后，新价格是多少？保留两位小数，列命名为 `new_price`。
@@ -64,6 +114,21 @@ FROM products;
 
 这里的整数除法正好是我们想要的：The Pragmatic Programmer 有 25 件，装满 6 箱，剩 1 件。
 
+**乘方、取余的函数写法。** `power(2, 10)` 和 `2 ^ 10` 相同，`mod(17, 5)` 和 `17 % 5` 相同：
+
+```sql run
+SELECT power(2, 10) AS power, mod(17, 5) AS mod, sqrt(16) AS sqrt;
+```
+
+**取整到十位、百位。** `round` 的第二个参数可以是负数：
+
+```sql run
+SELECT name, price * stock AS stock_value, round(price * stock, -2) AS rounded
+FROM products;
+```
+
+The Pragmatic Programmer 的库存总价 1050.00 取整到百位，正好一半，远离零取整成 1100。
+
 **同一行的几列一起算。** 库存总价 `price * stock`、单件利润、折后价，都是把同一行里的列组合起来。
 
 ## 深入 {#deeper}
@@ -84,6 +149,16 @@ SELECT 0.1 + 0.2 = 0.3 AS numeric_equal,
 
 **NULL 参与运算。** NULL 加、减、乘、除任何数，结果都是 NULL。
 
+**和数学课不一样的两处优先级。** 第一，取相反数比乘方先算，所以 `-2 ^ 2` 是 (-2)² = 4，而数学里 −2² 是 −4。第二，`^` 从左往右算，`2 ^ 3 ^ 2` 是 (2³)² = 64，而数学里是 2⁹ = 512：
+
+```sql run
+SELECT -2 ^ 2 AS a, 2 ^ 3 ^ 2 AS b, -(2 ^ 2) AS c, 2 ^ (3 ^ 2) AS d;
+```
+
+遇到乘方，加括号写明意图最稳妥。另外，`^` 在 MySQL 里是按位异或，不是乘方；需要可移植的写法时用 `power`。
+
+**`numeric` 除法的小数位数。** `7.0 / 2` 的结果是 3.5000000000000000：`numeric` 相除时，PostgreSQL 会保留足够多的小数位，保证精度。需要固定位数时，在最后用 `round`。
+
 ## 常见错误 {#mistakes}
 
 **1. 没注意到整数除法。** 想把库存平均分成 3 份：
@@ -99,7 +174,15 @@ FROM products;
 
 **3. 用浮点数存金额。** 见“深入”：浮点数会产生 0.30000000000000004 这样的误差，累计起来就对不上账。
 
-**4. 过早取整。** 先把每一行四舍五入再相加，和先相加再四舍五入，结果可能差几分钱。一般在最后一步再 `round`。
+**4. 把浮点数交给两个参数的 `round`。** `sqrt`、`^` 和 `power` 对整数参数返回浮点数，而 `round(x, n)` 只接受 `numeric`：
+
+```sql run error
+SELECT round(sqrt(2), 2);
+```
+
+报错是 `function round(double precision, integer) does not exist`。先把值转换成 `numeric`：`round(sqrt(2)::numeric, 2)`。`::` 的用法在本章最后一篇讲。
+
+**5. 过早取整。** 先把每一行四舍五入再相加，和先相加再四舍五入，结果可能差几分钱。一般在最后一步再 `round`。
 
 ## 小结 {#summary}
 

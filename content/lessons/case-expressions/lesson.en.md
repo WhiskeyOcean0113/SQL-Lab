@@ -6,13 +6,7 @@ Marketing wants products in three tiers: premium from 100 dollars up, standard f
 
 ## Core idea {#core}
 
-```sql
-CASE
-  WHEN condition1 THEN value1
-  WHEN condition2 THEN value2
-  ELSE default_value
-END
-```
+A {{term:case-expression}} is made of `WHEN … THEN …` branches, optionally followed by an `ELSE`, and closed by `END`. The full shape is in the Syntax section below; first, how it is evaluated:
 
 - The database tests the `WHEN` conditions **from top to bottom**, and the **first** one that is true supplies the result; the rest are not looked at.
 - When no condition holds, the `ELSE` value is returned; **without an `ELSE`, the result is NULL**.
@@ -28,6 +22,59 @@ SELECT name, price,
 FROM products
 ORDER BY price DESC;
 ```
+
+## Syntax {#syntax}
+
+CASE comes in two forms. The first, the searched CASE, gives every branch a complete condition of its own:
+
+```syntax
+CASE WHEN condition THEN result
+     [ WHEN … ]
+     [ ELSE result ]
+END
+```
+
+The second, the simple CASE, puts a value after `CASE`, and each branch gives only the value to compare it with:
+
+```syntax
+CASE expression
+     WHEN value THEN result
+     [ WHEN … ]
+     [ ELSE result ]
+END
+```
+
+`[ WHEN … ]` means any number of further `WHEN` branches of the same shape. This is how the PostgreSQL manual writes it: a repeat, like `[, …]`, but with no commas between branches.
+
+| Part | What goes there | Optional? |
+|---|---|---|
+| `condition` | Any condition from Chapter 1: a comparison, `AND`/`OR`, `IS NULL`, `IN`, `LIKE`… | No |
+| `result` | The value this branch returns; every branch's `result` must have the same type | No |
+| `expression` (simple CASE) | The value to compare, usually a column | No |
+| `value` (simple CASE) | A value compared with `expression` for equality | No |
+| `WHEN`s after the first | More branches | Yes |
+| `ELSE result` | The value when no branch holds | Yes; without it, NULL |
+
+A simple CASE's `WHEN value` is the same as a searched CASE's `WHEN expression = value`. So a simple CASE can only test equality; ranges and NULL tests need the searched form.
+
+Some functions closely related to CASE:
+
+```syntax
+coalesce(value [, …])
+nullif(value1, value2)
+greatest(value [, …])
+least(value [, …])
+```
+
+| Function | Returns |
+|---|---|
+| `coalesce` | The first argument that is not NULL; NULL if all are |
+| `nullif` | NULL if the two arguments are equal, otherwise the first |
+| `greatest` / `least` | The largest / smallest of its arguments |
+
+Function names ignore case: this lesson's queries write `COALESCE` and `NULLIF` in capitals, and they are the same functions as the lower-case names in the shapes.
+
+Read against the shapes, the tier query in Core idea is a searched CASE with two `WHEN` branches and an `ELSE`; the whole `CASE … END` is one item in the select list, followed by the alias `AS tier`.
 
 ## Example {#example}
 
@@ -85,6 +132,19 @@ SELECT name, COALESCE(city, 'unknown') AS city
 FROM customers;
 ```
 
+**`COALESCE` with several fallbacks.** It looks left to right for the first value that is not NULL. To reach a customer, use the city, or the email if there is no city, or say `no contact`:
+
+```sql run
+SELECT name, city, email, COALESCE(city, email, 'no contact') AS reach
+FROM customers;
+```
+
+**`greatest` and `least`: the largest and smallest.** They compare several values within one row, not across rows (that takes the aggregate functions of Chapter 3):
+
+```sql run
+SELECT greatest(3, 7, 5) AS largest, least(3, 7, 5) AS smallest;
+```
+
 **`NULLIF`: NULL when equal.** `NULLIF(stock, 0)` returns NULL when the stock is 0. Its most common use is guarding against division by zero:
 
 ```sql run
@@ -117,6 +177,18 @@ FROM products;
 
 PostgreSQL tries to turn `'sold out'` into an integer and cannot. Converting the number to text as well, `stock::text`, makes it work (type casts are the last lesson of this chapter).
 
+**CASE evaluates only the chosen branch.** Unlike `AND` and `OR`, CASE is guaranteed to test its conditions in order and evaluate only the `result` of the first branch that holds. That makes this a safe way to avoid division by zero:
+
+```sql run
+SELECT name, stock,
+       CASE WHEN stock = 0 THEN NULL ELSE 100 / stock END AS per_hundred
+FROM products;
+```
+
+Chapter 1's `AND` lesson noted that `stock <> 0 AND 100 / stock > 5` does not promise to test the left side first; when the order of evaluation matters, use CASE. (The exception is constants: something like `100 / 0`, which depends on no column, may be computed before the query starts and fail.)
+
+**`greatest` and `least` with NULL.** In PostgreSQL, `greatest(1, NULL)` is 1: NULLs are skipped. MySQL's function of the same name returns NULL. Neither is standard SQL, so check again when you switch databases.
+
 **Standard and dialects.** `CASE`, `COALESCE` and `NULLIF` are standard SQL and work in every major database. MySQL's `IF()` and SQL Server's `IIF()` are their own extensions.
 
 ## Common mistakes {#mistakes}
@@ -142,7 +214,17 @@ All three products over 100 dollars come out as standard, because `price >= 30` 
 
 **4. Branches of different types.** Mixing text and numbers is an error; make the types agree first.
 
-**5. A missing `END`.** `CASE` must close with `END`, and the alias goes after `END`.
+**5. Mixing the two forms.** A value after `CASE`, and full conditions after `WHEN`:
+
+```sql run error
+SELECT name,
+       CASE price WHEN price >= 100 THEN 'premium' ELSE 'other' END AS tier
+FROM products;
+```
+
+That fails with `operator does not exist: numeric = boolean`. Read as a simple CASE, it compares `price = (price >= 100)`: a number on the left, true or false on the right. To test a range, drop the `price` after `CASE` and write the searched form.
+
+**6. A missing `END`.** `CASE` must close with `END`, and the alias goes after `END`.
 
 ## Summary {#summary}
 

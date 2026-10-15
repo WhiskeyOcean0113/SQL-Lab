@@ -91,6 +91,7 @@ Read the notation like this:
 |---|---|---|
 | Upper-case words | Keywords: write them as shown | `SELECT`, `FROM` |
 | Lower-case italic words | {{Term:placeholder|Placeholders}}: replace them with your own | `table_name` becomes `products` |
+| A lower-case word right before a parenthesis | A {{term:function}} name: write it as shown (from Chapter 2 on) | `round` in `round(number)` |
 | `[ … ]` | The part in brackets may be left out | `[, …]` can be absent |
 | `{ a \| b }` | Pick exactly one of the alternatives | Either `*` or an `expression` |
 | `[, …]` | The item before may repeat, separated by commas | The select list can hold several items |

@@ -30,6 +30,44 @@ WHERE shipped_at IS NOT NULL;
 
 shop's data ends in late June 2024. To keep results fixed, this course treats "today" as `DATE '2024-07-01'`. In real queries, `current_date` is today's date and `now()` is the current {{term:timestamp}}.
 
+## Syntax {#syntax}
+
+Time literals, time arithmetic and this lesson's functions:
+
+```syntax
+{ DATE | TIMESTAMP | INTERVAL } 'text'
+date - date
+date { + | - } integer
+timestamp - timestamp
+timestamp { + | - } interval
+extract(field FROM source)
+date_trunc('field', source)
+age(end_value, start_value)
+to_char(value, 'format')
+```
+
+| Shape | Result type | Example |
+|---|---|---|
+| `DATE 'text'` and the like | A typed time literal | `DATE '2024-07-01'`, `INTERVAL '2 days'` |
+| `date - date` | An integer: the days between | `DATE '2024-07-01' - joined_on` |
+| `date + integer` | A date, that many days later | `joined_on + 30` |
+| `timestamp - timestamp` | An `interval` | `shipped_at - ordered_at` |
+| `timestamp + interval` | A timestamp | `ordered_at + INTERVAL '2 days'` |
+
+| Placeholder | What goes there |
+|---|---|
+| `text` (after `INTERVAL`) | Numbers with units, which can be combined: `'90 minutes'`, `'1 day 6 hours'`, `'1 month'` |
+| `field` | The part to extract or truncate to: `year`, `month`, `day`, `hour`, `minute`, `dow` (day of week), `epoch` (seconds) and others |
+| `source` | A date, a timestamp or an interval |
+| `format` | A display template: `YYYY` year, `MM` month, `DD` day, `HH24` hour, `MI` minute, `Mon` abbreviated month |
+
+The easiest thing to mix up is how `field` is written. In `extract(month FROM …)`, `month` takes no quotes; it works like a keyword. In `date_trunc('month', …)`, `'month'` is an ordinary argument, a piece of text, so it needs single quotes. The shapes above show the quotes where they belong.
+
+Two expressions, read against the shapes:
+
+- `DATE '2024-07-01' - joined_on`: `date - date`, giving an integer.
+- `date_trunc('month', ordered_at)`: the text `'month'`, then a timestamp; the result is midnight on the 1st of that month.
+
 ## Example {#example}
 
 Task: how many days had each customer been a member as of 1 July 2024?
@@ -76,6 +114,26 @@ FROM customers
 WHERE joined_on < DATE '2024-07-01' - INTERVAL '1 year';
 ```
 
+**Intervals compare and calculate too.** An `interval` can be compared with another `interval`, or multiplied by a number. Orders that took more than a day and a half to ship:
+
+```sql run
+SELECT id, shipped_at - ordered_at AS shipping_time
+FROM orders
+WHERE shipped_at - ordered_at > INTERVAL '1 day 12 hours';
+```
+
+**Converting an interval to hours.** `extract(epoch FROM …)` turns an interval into seconds; dividing by 3600 gives hours, which are easier to sort and calculate with:
+
+```sql run
+SELECT id,
+       shipped_at - ordered_at AS shipping_time,
+       round(extract(epoch FROM shipped_at - ordered_at) / 3600, 1) AS hours
+FROM orders
+WHERE shipped_at IS NOT NULL;
+```
+
+Order 1 took `1 day 04:48:00`, which is 28.8 hours.
+
 **Formatting for display: `to_char`.**
 
 ```sql run
@@ -100,6 +158,10 @@ SELECT DATE '2024-01-31' + INTERVAL '1 month' AS jan31_plus_month,
 
 **Time zones.** `timestamp` carries no time zone, and shop's convention is that every time is UTC. `timestamptz` (timestamp with time zone) records an exact instant and converts it to the session's {{term:time-zone}} for display; `now()` returns a `timestamptz`. Real projects usually store moments that actually happened as `timestamptz`.
 
+**`to_char` pads names with spaces.** `to_char(DATE '2024-07-01', 'Day')` returns `Monday` followed by three spaces, because day names are padded to 9 characters. Prefix the template with `FM` (fill mode), as in `'FMDay'`, and the padding goes.
+
+**Other databases differ a lot on time.** Dates and times are among the least portable parts of SQL. MySQL counts days with `DATEDIFF(a, b)`, and SQLite has no date type at all, storing times as text or numbers. `extract`, `INTERVAL` and `current_date` are standard SQL and the most likely to work everywhere.
+
 **Filter with a range, not `extract`.** `WHERE extract(month from ordered_at) = 3` finds March orders, but it includes March of every year, and the database cannot use an index for it (chapter 9). Prefer the half-open range from chapter 1: `ordered_at >= '2024-03-01' AND ordered_at < '2024-04-01'`.
 
 ## Common mistakes {#mistakes}
@@ -121,6 +183,15 @@ WHERE id = 1;
 **4. Non-ISO date formats.** `'05/03/2024'` is ambiguous; `'2024-03-05'` can never be misread.
 
 **5. `BETWEEN` for the end of a timestamp range.** As chapter 1 showed, `BETWEEN '2024-06-01' AND '2024-06-28'` excludes every moment after midnight on the 28th.
+
+**6. No quotes around `date_trunc`'s first argument.**
+
+```sql run error
+SELECT date_trunc(month, ordered_at)
+FROM orders;
+```
+
+That fails with `column "month" does not exist`: the unquoted `month` was read as a column name. `date_trunc` wants the text `'month'`. `extract(month FROM …)` takes no quotes, the exact opposite, so write from the syntax shapes.
 
 ## Summary {#summary}
 

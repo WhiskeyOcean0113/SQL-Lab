@@ -3,5 +3,4 @@ summary:
   zh: 把每一笔订单和下单的顾客对上号，只保留两边都能匹配上的行。
   en: Match every order to the customer who placed it, keeping only the rows that match on both sides.
 dataset: shop
-# Will become [select-basics, where-filter] once those lessons exist.
-prereqs: []
+prereqs: [select-basics, where-comparisons]

@@ -1,0 +1,15 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: |
+    列出所有不住在 Toronto 的顾客，城市未知的顾客也要算进去。列依次为顾客名字和城市。
+  en: |
+    List every customer who does not live in Toronto, counting customers whose city is unknown as well. Use the columns name and city.
+hint:
+  zh: "`city <> 'Toronto'` 会漏掉城市为 NULL 的顾客。把这些顾客补回来有两种写法。"
+  en: "`city <> 'Toronto'` misses customers with a NULL city. There are two ways to bring them back."
+solution: |
+  SELECT name, city
+  FROM customers
+  WHERE city IS DISTINCT FROM 'Toronto';

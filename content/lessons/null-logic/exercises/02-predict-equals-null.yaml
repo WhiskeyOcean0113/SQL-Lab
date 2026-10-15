@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 有 2 位顾客没有填写邮箱（`email` 为 NULL）。下面这条查询会返回几行？
+  en: Two customers have no email address (`email` is NULL). How many rows does this query return?
+hint:
+  zh: "`NULL = NULL` 的结果是什么？"
+  en: What is `NULL = NULL`?
+query: |
+  SELECT name
+  FROM customers
+  WHERE email = NULL;
+choices:
+  - '2'
+  - '0'
+  - { zh: 查询会报错, en: The query fails }
+answer: 1
+verify: { rows: 0 }
+explain:
+  zh: 0 行，而且不报错。任何值和 NULL 用 `=` 比较，结果都是 unknown，包括 NULL 自己。找空值要用 `WHERE email IS NULL`，那样会返回 Noah Martin 和 Mei Tanaka。
+  en: 0 rows, and no error. Comparing anything with NULL using `=` gives unknown, NULL itself included. To find missing values use `WHERE email IS NULL`, which returns Noah Martin and Mei Tanaka.

@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: |
+    下面这条查询想列出顾客 1 的所有已发货（shipped）或已送达（delivered）的订单，列依次为订单编号、顾客编号和状态。它多返回了很多别人的订单。修好它。
+  en: |
+    This query should list customer 1's orders that are shipped or delivered, as the columns order id, customer id and status. It returns many orders that belong to other customers. Fix it.
+hint:
+  zh: "`AND` 先算。现在这条查询实际的意思是\"顾客 1 的已发货订单，或者任何人的已送达订单\"。"
+  en: '`AND` comes first. As written, it means "customer 1''s shipped orders, or anyone''s delivered orders".'
+starter: |
+  SELECT id, customer_id, status
+  FROM orders
+  WHERE customer_id = 1 AND status = 'shipped' OR status = 'delivered';
+solution: |
+  SELECT id, customer_id, status
+  FROM orders
+  WHERE customer_id = 1 AND (status = 'shipped' OR status = 'delivered');

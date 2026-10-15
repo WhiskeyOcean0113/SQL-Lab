@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 最便宜的四件商品依次是 Dot Grid Notebook、Ceramic Mug、SQL Pocket Guide、Trail Water Bottle。下面这条查询返回哪两件？
+  en: The four cheapest products, in order, are Dot Grid Notebook, Ceramic Mug, SQL Pocket Guide and Trail Water Bottle. Which two does this query return?
+hint:
+  zh: "`OFFSET 2` 先跳过两行，`LIMIT 2` 再取两行。"
+  en: "`OFFSET 2` skips two rows first, then `LIMIT 2` takes two."
+query: |
+  SELECT name, price
+  FROM products
+  ORDER BY price
+  LIMIT 2 OFFSET 2;
+choices:
+  - Dot Grid Notebook, Ceramic Mug
+  - Ceramic Mug, SQL Pocket Guide
+  - SQL Pocket Guide, Trail Water Bottle
+answer: 2
+verify: { rows: 2 }
+explain:
+  zh: SQL Pocket Guide 和 Trail Water Bottle。`OFFSET 2` 跳过最便宜的两件，`LIMIT 2` 取接下来的两件。这正是每页 2 行时的第 2 页。
+  en: SQL Pocket Guide and Trail Water Bottle. `OFFSET 2` skips the two cheapest and `LIMIT 2` takes the next two. That is page 2 at two rows per page.

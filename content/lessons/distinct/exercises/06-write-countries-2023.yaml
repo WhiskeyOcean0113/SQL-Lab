@@ -1,0 +1,17 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: |
+    列出 2023 年注册的顾客来自哪些国家，每个国家只出现一次，按国家名的字母顺序排列。
+  en: |
+    List the countries of the customers who joined in 2023, each country once, in alphabetical order.
+hint:
+  zh: 先用 `WHERE` 筛出 2023 年注册的顾客（大于等于 2023-01-01，小于 2024-01-01），再 `DISTINCT`，最后 `ORDER BY`。
+  en: Filter with `WHERE` to customers who joined in 2023 (on or after 2023-01-01, before 2024-01-01), then `DISTINCT`, then `ORDER BY`.
+solution: |
+  SELECT DISTINCT country
+  FROM customers
+  WHERE joined_on >= '2023-01-01' AND joined_on < '2024-01-01'
+  ORDER BY country;
+check: { order_matters: true }

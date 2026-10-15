@@ -1,0 +1,6 @@
+title:   { zh: NULL 与三值逻辑, en: NULL and three-valued logic }
+summary:
+  zh: 理解"未知"如何参与比较和逻辑运算，并学会正确地找出、排除和比较 NULL。
+  en: See how "unknown" takes part in comparisons and logic, and learn to find, exclude and compare NULLs correctly.
+dataset: shop
+prereqs: [in-between-like]

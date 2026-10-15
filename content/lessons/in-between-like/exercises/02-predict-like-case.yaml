@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: shop 有一件商品叫 Fountain Pen。下面这条查询会返回几行？
+  en: shop sells a product called Fountain Pen. How many rows does this query return?
+hint:
+  zh: 在 PostgreSQL 里，`LIKE` 区分大小写吗？
+  en: Is `LIKE` case-sensitive in PostgreSQL?
+query: |
+  SELECT name
+  FROM products
+  WHERE name LIKE '%pen%';
+choices:
+  - '1'
+  - '0'
+  - { zh: 查询会报错, en: The query fails }
+answer: 1
+verify: { rows: 0 }
+explain:
+  zh: 0 行。PostgreSQL 的 `LIKE` 区分大小写，`'%pen%'` 要求小写的 pen，而商品名里是大写开头的 Pen。改用 `ILIKE '%pen%'` 就能找到它。在 MySQL 或 SQLite 里，同样的查询会返回 1 行。
+  en: 0 rows. PostgreSQL's `LIKE` is case-sensitive, and `'%pen%'` asks for lower-case pen while the name has Pen with a capital. `ILIKE '%pen%'` finds it. In MySQL or SQLite the same query returns 1 row.

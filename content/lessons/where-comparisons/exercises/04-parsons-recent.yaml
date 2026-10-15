@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: 用下面的片段拼出一条查询：列出 2024 年 1 月 1 日当天或之后注册的顾客的名字和注册日期。有两个片段是多余的。
+  en: Arrange the pieces into a query listing the name and sign-up date of customers who joined on or after 1 January 2024. Two pieces are not needed.
+hint:
+  zh: 日期字面量用单引号，写成年-月-日。"当天或之后"包含 1 月 1 日。
+  en: Date literals take single quotes, as year-month-day. "On or after" includes 1 January.
+solution: |
+  SELECT name, joined_on
+  FROM customers
+  WHERE joined_on >= '2024-01-01';
+distractors:
+  - WHERE joined_on >= "2024-01-01";
+  - WHERE joined_on => '2024-01-01';

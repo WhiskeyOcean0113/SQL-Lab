@@ -1,0 +1,12 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 列出 `products` 表里出现过的所有不同的分类编号（`category_id`），没有分类的情况也算一种。
+  en: List every distinct category id (`category_id`) that appears in `products`, counting "no category" as one of them.
+hint:
+  zh: "`DISTINCT` 会把 NULL 保留为一行。"
+  en: "`DISTINCT` keeps NULL as one row."
+solution: |
+  SELECT DISTINCT category_id
+  FROM products;

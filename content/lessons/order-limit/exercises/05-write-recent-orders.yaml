@@ -1,0 +1,15 @@
+kind: write
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 列出最近下的 5 笔订单，列依次为订单编号和下单时间，最新的排在最前。
+  en: List the 5 most recently placed orders, as the columns order id and order time, newest first.
+hint:
+  zh: 按下单时间降序排列，再取前 5 行。
+  en: Sort by order time descending, then keep the first 5 rows.
+solution: |
+  SELECT id, ordered_at
+  FROM orders
+  ORDER BY ordered_at DESC
+  LIMIT 5;
+check: { order_matters: true }

@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 用下面的片段拼出一条查询：列出既不来自 China、也不来自 Japan 的顾客的名字和国家。有一个片段是多余的。
+  en: Arrange the pieces into a query listing the name and country of customers from neither China nor Japan. One piece is not needed.
+hint:
+  zh: "\"既不是 A 也不是 B\"要求两个\"不等于\"同时成立。"
+  en: '"Neither A nor B" needs both "not equal" tests to hold at once.'
+solution: |
+  SELECT name, country
+  FROM customers
+  WHERE country <> 'China'
+  AND country <> 'Japan';
+distractors:
+  - OR country <> 'Japan';

@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 顾客来自 8 个国家。下面这条查询会返回几行？
+  en: Customers come from 8 countries. How many rows does this query return?
+hint:
+  zh: 括号会让 `DISTINCT` 只作用于 `country` 吗？China 的顾客住在几个不同的城市？
+  en: Do the parentheses make `DISTINCT` apply to `country` only? How many different cities do the Chinese customers live in?
+query: |
+  SELECT DISTINCT (country), city
+  FROM customers;
+choices: ['8', '9', '12']
+answer: 1
+verify: { rows: 9 }
+explain:
+  zh: 9 行。`DISTINCT` 永远作用于整个选择列表，`(country)` 只是给一列加了括号。所以它对"国家 + 城市"的组合去重：China 有 Shanghai 和 Beijing 两个组合，因此比国家数多一行。
+  en: 9 rows. `DISTINCT` always applies to the whole select list; `(country)` is just one column in parentheses. So it deduplicates country + city combinations, and China has two of them, Shanghai and Beijing, one more than the number of countries.

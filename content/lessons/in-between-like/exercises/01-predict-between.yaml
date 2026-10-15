@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: Trail Water Bottle 正好 22.00，The Pragmatic Programmer 正好 42.00。下面这条查询会返回几行？
+  en: Trail Water Bottle costs exactly 22.00 and The Pragmatic Programmer exactly 42.00. How many rows does this query return?
+hint:
+  zh: "`BETWEEN` 包含两端吗？"
+  en: Does `BETWEEN` include its ends?
+query: |
+  SELECT name, price
+  FROM products
+  WHERE price BETWEEN 22 AND 42;
+choices: ['3', '4', '5']
+answer: 2
+verify: { rows: 5 }
+explain:
+  zh: 5 行：除了 Fountain Pen（28.00）、USB-C Hub（35.00）、Camping Lantern（39.00），两端的 22.00 和 42.00 也都包含在内。`BETWEEN 22 AND 42` 等于 `price >= 22 AND price <= 42`。
+  en: 5 rows. Besides Fountain Pen (28.00), USB-C Hub (35.00) and Camping Lantern (39.00), both ends, 22.00 and 42.00, are included. `BETWEEN 22 AND 42` equals `price >= 22 AND price <= 42`.

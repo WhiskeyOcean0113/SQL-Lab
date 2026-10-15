@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 列出所有状态不是 `cancelled` 的订单，列依次为订单编号和状态。
+  en: List every order whose status is not `cancelled`, as the columns order id and status.
+hint:
+  zh: 不等于用 `<>` 或 `!=`；状态值是小写的文字。
+  en: Not equal is `<>` or `!=`, and the status values are lower-case text.
+solution: |
+  SELECT id, status
+  FROM orders
+  WHERE status <> 'cancelled';

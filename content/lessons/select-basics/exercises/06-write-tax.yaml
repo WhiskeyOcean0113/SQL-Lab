@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 列出每件商品的名字、单价，以及加上 10% 税之后的价格，列依次为 `name`、`price`、`price_with_tax`。不用四舍五入。
+  en: List each product's name, price, and price including 10% tax, as the columns `name`, `price`, `price_with_tax`. No rounding needed.
+hint:
+  zh: 加 10% 税就是乘以 1.1。计算列要用 `AS` 起名。
+  en: Adding 10% tax means multiplying by 1.1. Name the computed column with `AS`.
+solution: |
+  SELECT name, price, price * 1.1 AS price_with_tax
+  FROM products;
+check: { column_names: true }

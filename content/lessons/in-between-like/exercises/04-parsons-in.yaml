@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 用下面的片段拼出一条查询：列出来自 Canada、France 或 Italy 的顾客的名字和国家。有两个片段是多余的。
+  en: Arrange the pieces into a query listing the name and country of customers from Canada, France or Italy. Two pieces are not needed.
+hint:
+  zh: "`IN` 后面跟一个用括号包起来的列表，每个文字值都加单引号。"
+  en: "`IN` is followed by a list in parentheses, with each text value in single quotes."
+solution: |
+  SELECT name, country
+  FROM customers
+  WHERE country IN ('Canada', 'France', 'Italy');
+distractors:
+  - WHERE country = ('Canada', 'France', 'Italy');
+  - WHERE country IN 'Canada', 'France', 'Italy';

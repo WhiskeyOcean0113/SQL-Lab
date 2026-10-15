@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出所有来自 Canada 的顾客的名字，但它报错了。修好它。
+  en: This query should list the names of all customers from Canada, but it fails. Fix it.
+hint:
+  zh: 错误说 `column "Canada" does not exist`。在 SQL 里，什么引号包的是名字，什么引号包的是文字？
+  en: The error says `column "Canada" does not exist`. In SQL, which quotes wrap names and which wrap text?
+starter: |
+  SELECT name
+  FROM customers
+  WHERE country = "Canada";
+solution: |
+  SELECT name
+  FROM customers
+  WHERE country = 'Canada';

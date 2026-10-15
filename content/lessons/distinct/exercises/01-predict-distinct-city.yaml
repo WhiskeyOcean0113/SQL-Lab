@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 1
+lesson_ref: example
+prompt:
+  zh: 12 位顾客住在 7 个已知的城市里，另有 2 位顾客的城市是 NULL。下面这条查询会返回几行？
+  en: The 12 customers live in 7 known cities, and 2 more have a NULL city. How many rows does this query return?
+hint:
+  zh: 去重时，两个 NULL 算一个值还是两个值？
+  en: When removing duplicates, do two NULLs count as one value or two?
+query: |
+  SELECT DISTINCT city
+  FROM customers;
+choices: ['7', '8', '9', '12']
+answer: 1
+verify: { rows: 8 }
+explain:
+  zh: 8 行：7 个已知城市，再加一行 NULL。虽然 `NULL = NULL` 的结果是 unknown，但 `DISTINCT` 去重时把所有 NULL 看作同一个值，所以两位城市未知的顾客只占一行。
+  en: 8 rows, the 7 known cities plus one NULL row. Although `NULL = NULL` is unknown, `DISTINCT` treats all NULLs as one value when removing duplicates, so the two customers with an unknown city share one row.

@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: Mechanical Keyboard 的单价正好是 129.00。下面这条查询会返回几行？
+  en: Mechanical Keyboard costs exactly 129.00. How many rows does this query return?
+hint:
+  zh: "`>=` 包含边界值吗？还有哪些商品比 129 更贵？"
+  en: Does `>=` include the boundary? Which products cost more than 129?
+query: |
+  SELECT name, price
+  FROM products
+  WHERE price >= 129;
+choices: ['2', '3', '4']
+answer: 1
+verify: { rows: 3 }
+explain:
+  zh: 3 行：4K Monitor（399.00）、Noise-Cancelling Headphones（249.00），以及正好等于 129.00 的 Mechanical Keyboard。`>=` 包含边界值；如果写成 `>`，结果就只剩 2 行。
+  en: 3 rows, 4K Monitor (399.00), Noise-Cancelling Headphones (249.00) and Mechanical Keyboard at exactly 129.00. `>=` includes the boundary; with `>` only 2 rows would remain.

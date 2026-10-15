@@ -1,0 +1,19 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 商品按名字排序、每页显示 5 件。用下面的片段拼出一条查询，取出第 2 页的商品名。有两个片段是多余的。
+  en: Products are sorted by name, 5 per page. Arrange the pieces into a query that returns the product names on page 2. Two pieces are not needed.
+hint:
+  zh: 第 n 页的 `OFFSET` 是 `(n − 1) × 每页行数`。
+  en: For page n, `OFFSET` is `(n − 1) × rows per page`.
+solution: |
+  SELECT name
+  FROM products
+  ORDER BY name
+  LIMIT 5
+  OFFSET 5;
+distractors:
+  - OFFSET 10;
+  - OFFSET 6;
+check: { order_matters: true }

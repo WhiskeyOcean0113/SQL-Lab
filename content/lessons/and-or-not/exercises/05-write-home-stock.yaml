@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: 列出 Home 分类（`category_id` 为 3）里库存超过 10 件的商品，列依次为商品名和库存数量。
+  en: List the products in the Home category (`category_id` 3) with more than 10 units in stock, as the columns name and stock.
+hint:
+  zh: 两个条件必须同时满足。
+  en: Both conditions must hold at once.
+solution: |
+  SELECT name, stock
+  FROM products
+  WHERE category_id = 3 AND stock > 10;

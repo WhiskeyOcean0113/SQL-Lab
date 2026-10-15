@@ -1,0 +1,21 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: shop 有 12 位顾客，其中 2 位住在 Shanghai，还有 2 位的城市未知（NULL）。下面这条查询会返回几行？
+  en: shop has 12 customers; 2 live in Shanghai and 2 have an unknown city (NULL). How many rows does this query return?
+hint:
+  zh: "`NULL <> 'Shanghai'` 的结果是 true、false 还是 unknown？`WHERE` 会留下 unknown 的行吗？"
+  en: Is `NULL <> 'Shanghai'` true, false or unknown, and does `WHERE` keep unknown rows?
+query: |
+  SELECT name, city
+  FROM customers
+  WHERE city <> 'Shanghai';
+choices: ['8', '10', '12']
+answer: 0
+verify: { rows: 8 }
+explain:
+  zh: |
+    8 行。城市为 NULL 的两位顾客，`city <> 'Shanghai'` 的结果是 unknown，而 `WHERE` 只留下 true 的行，所以这两位和住在 Shanghai 的两位一起被排除了：12 − 2 − 2 = 8。
+  en: |
+    8 rows. For the two customers with a NULL city, `city <> 'Shanghai'` is unknown, and `WHERE` keeps only true, so they are excluded along with the two Shanghai customers: 12 − 2 − 2 = 8.

@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: |
+    下面这条查询想列出 2024 年 6 月 1 日到 6 月 28 日（含 28 日全天）下的所有订单，列依次为订单编号和下单时间。它漏掉了一笔订单。修好它。
+  en: |
+    This query should list every order placed from 1 June to 28 June 2024, including all of 28 June, as the columns order id and order time. It misses one order. Fix it.
+hint:
+  zh: "`'2024-06-28'` 作为时间戳表示 28 日零点。换成\"大于等于起点，小于 6 月 29 日\"。"
+  en: As a timestamp, `'2024-06-28'` means midnight at the start of the 28th. Use "at or after the start, before 29 June" instead.
+starter: |
+  SELECT id, ordered_at
+  FROM orders
+  WHERE ordered_at BETWEEN '2024-06-01' AND '2024-06-28';
+solution: |
+  SELECT id, ordered_at
+  FROM orders
+  WHERE ordered_at >= '2024-06-01' AND ordered_at < '2024-06-29';

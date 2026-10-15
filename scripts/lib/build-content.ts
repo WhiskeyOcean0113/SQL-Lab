@@ -18,7 +18,13 @@ export interface BuildResult {
 
 type Raw = Record<string, unknown>
 
-const readYaml = (path: string) => parseYaml(readFileSync(path, 'utf8')) as Raw
+function readYaml(path: string): Raw {
+  try {
+    return parseYaml(readFileSync(path, 'utf8')) as Raw
+  } catch (e) {
+    throw new Error(`${path}: ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
 
 function bi(value: unknown, where: string, problems: string[]): Bi {
   if (typeof value === 'string') return { zh: value, en: value }

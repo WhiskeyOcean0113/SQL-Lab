@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询：列出每件商品的名字，以及它的库存总价（单价乘以库存），第二列命名为 `stock_value`。有一个片段是多余的。
+  en: Arrange the pieces into a query listing each product's name and the total value of its stock (price times stock), with the second column named `stock_value`. One piece is not needed.
+hint:
+  zh: 别名是名字，不是文字。名字可以不加引号，或者加双引号；单引号是给文字用的。
+  en: An alias is a name, not text. Names go unquoted or in double quotes; single quotes are for text.
+solution: |
+  SELECT name,
+  price * stock AS stock_value
+  FROM products;
+distractors:
+  - price * stock AS 'stock_value'
+check: { column_names: true }

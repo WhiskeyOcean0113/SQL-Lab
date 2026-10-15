@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 下面这条查询想把顾客按国家排列，同一个国家的顾客再按名字排列，列依次为名字和国家。顺序不对。修好它。
+  en: This query should sort customers by country, and by name within each country, with the columns name and country. The order is wrong. Fix it.
+hint:
+  zh: 排序键从左到右依次生效，最左边的优先。
+  en: Sort keys apply left to right, and the leftmost has priority.
+starter: |
+  SELECT name, country
+  FROM customers
+  ORDER BY name, country;
+solution: |
+  SELECT name, country
+  FROM customers
+  ORDER BY country, name;
+check: { order_matters: true }

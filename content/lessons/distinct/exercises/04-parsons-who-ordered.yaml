@@ -1,0 +1,15 @@
+kind: parsons
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：列出所有下过订单的顾客编号，每位顾客只出现一次。有两个片段是多余的。
+  en: Arrange the pieces into a query listing the id of every customer who has placed an order, each customer once. Two pieces are not needed.
+hint:
+  zh: 只把需要去重的列放进选择列表。
+  en: Put only the column you want to deduplicate in the select list.
+solution: |
+  SELECT DISTINCT customer_id
+  FROM orders;
+distractors:
+  - SELECT customer_id
+  - SELECT DISTINCT customer_id, id

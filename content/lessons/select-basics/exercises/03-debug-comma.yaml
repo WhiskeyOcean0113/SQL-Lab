@@ -1,0 +1,15 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出每件商品的名字和单价两列，但结果只有一列。找出原因并修好它。
+  en: This query should list two columns, each product's name and price, but the result has only one. Find out why and fix it.
+hint:
+  zh: 两列之间需要什么符号？
+  en: What has to go between two columns?
+starter: |
+  SELECT name price
+  FROM products;
+solution: |
+  SELECT name, price
+  FROM products;

@@ -1,0 +1,13 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 列出每位顾客的名字、所在城市和国家，列依次为 `name`、`city`、`country`。
+  en: List every customer's name, city and country, as the columns `name`, `city`, `country`.
+hint:
+  zh: 按题目要求的顺序写选择列表。
+  en: Write the select list in the order the task asks for.
+solution: |
+  SELECT name, city, country
+  FROM customers;
+check: { column_names: true }

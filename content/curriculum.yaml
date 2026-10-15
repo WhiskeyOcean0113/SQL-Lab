@@ -20,15 +20,8 @@ modules:
     summary:
       zh: 从一张表里取出你要的列和行，并按需要排序。
       en: Pick the columns and rows you need from one table, in the order you need them.
-    lessons: []
-    planned:
-      - { zh: SELECT 与列别名, en: SELECT and column aliases }
-      - { zh: WHERE 与比较运算, en: WHERE and comparisons }
-      - { zh: AND、OR、NOT 与优先级, en: AND, OR, NOT and precedence }
-      - { zh: IN、BETWEEN 与 LIKE, en: IN, BETWEEN and LIKE }
-      - { zh: NULL 与三值逻辑, en: NULL and three-valued logic }
-      - { zh: ORDER BY、LIMIT 与 OFFSET, en: ORDER BY, LIMIT and OFFSET }
-      - { zh: DISTINCT, en: DISTINCT }
+    lessons: [select-basics, where-comparisons, and-or-not, in-between-like, null-logic, order-limit, distinct]
+    planned: []
 
   - id: m2
     title: { zh: 表达式与函数, en: Expressions and functions }

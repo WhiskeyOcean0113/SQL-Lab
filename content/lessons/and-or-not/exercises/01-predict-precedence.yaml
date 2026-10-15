@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: Books（分类 1）有 3 件商品，Electronics（分类 2）有 4 件。下面这条查询没有括号，它会返回几行？
+  en: Books (category 1) has 3 products and Electronics (category 2) has 4. This query has no parentheses. How many rows does it return?
+hint:
+  zh: "`AND` 比 `OR` 先算。把隐含的括号补出来再数。"
+  en: "`AND` is evaluated before `OR`. Write in the hidden parentheses, then count."
+query: |
+  SELECT name, category_id, price
+  FROM products
+  WHERE category_id = 1 OR category_id = 2 AND price < 50;
+choices: ['3', '4', '7']
+answer: 1
+verify: { rows: 4 }
+explain:
+  zh: 4 行。它的真正含义是 `category_id = 1 OR (category_id = 2 AND price < 50)`：Books 的 3 件全部保留，Electronics 里只有 USB-C Hub 低于 50。想要"两个分类里 50 以下的商品"，得给 `OR` 加括号，结果是 3 行。
+  en: 4 rows. It really means `category_id = 1 OR (category_id = 2 AND price < 50)`, so all 3 books stay, plus USB-C Hub, the only electronics item under 50. To get "products under 50 in either category", wrap the `OR` in parentheses, which gives 3 rows.

@@ -1,0 +1,15 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: |
+    列出 Home 或 Outdoor 分类（`category_id` 为 3 或 5）里，价格在 30 到 60 美元之间（含两端）的商品，列依次为商品名和价格。
+  en: |
+    List the products in the Home or Outdoor category (`category_id` 3 or 5) priced from 30 to 60 dollars inclusive, as the columns name and price.
+hint:
+  zh: 分类用 `IN`，价格用 `BETWEEN`，两者用 `AND` 连接。
+  en: Use `IN` for the category, `BETWEEN` for the price, and join them with `AND`.
+solution: |
+  SELECT name, price
+  FROM products
+  WHERE category_id IN (3, 5) AND price BETWEEN 30 AND 60;

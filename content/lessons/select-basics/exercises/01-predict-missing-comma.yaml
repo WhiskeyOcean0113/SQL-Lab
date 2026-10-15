@@ -1,0 +1,21 @@
+kind: predict
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询的结果有几列？
+  en: How many columns does this query's result have?
+hint:
+  zh: "`name` 和 `price` 之间少了什么？少了它，数据库会怎样理解 `price`？"
+  en: What is missing between `name` and `price`, and how does the database read `price` without it?
+query: |
+  SELECT name price
+  FROM products;
+choices:
+  - { zh: 查询会报错, en: The query fails }
+  - '1'
+  - '2'
+  - '16'
+answer: 1
+explain:
+  zh: 1 列。少了逗号，`price` 就成了 `name` 的别名（`AS` 可以省略），所以结果只有一列，列名叫 `price`，内容却是商品名。它不报错，这正是它危险的地方。
+  en: 1 column. Without the comma, `price` becomes an alias for `name` (`AS` is optional), so the result has a single column called `price` that holds product names. It raises no error, which is exactly why it is dangerous.

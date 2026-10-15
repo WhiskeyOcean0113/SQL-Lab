@@ -1,0 +1,16 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: |
+    列出顾客 2 或顾客 6 下的、状态为 `paid` 或 `pending` 的订单，列依次为订单编号、顾客编号和状态。
+  en: |
+    List the orders placed by customer 2 or customer 6 whose status is `paid` or `pending`, as the columns order id, customer id and status.
+hint:
+  zh: 这里有两组"二选一"，每组都要用括号包起来，再用 `AND` 连接。
+  en: There are two either/or groups. Wrap each in parentheses and join them with `AND`.
+solution: |
+  SELECT id, customer_id, status
+  FROM orders
+  WHERE (customer_id = 2 OR customer_id = 6)
+    AND (status = 'paid' OR status = 'pending');

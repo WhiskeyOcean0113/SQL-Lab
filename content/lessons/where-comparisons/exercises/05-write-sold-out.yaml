@@ -1,0 +1,13 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 列出库存少于 10 件的商品，列依次为商品名和库存数量。
+  en: List the products with fewer than 10 units in stock, as the columns name and stock.
+hint:
+  zh: "\"少于 10\" 不包含 10 本身。"
+  en: '"Fewer than 10" does not include 10 itself.'
+solution: |
+  SELECT name, stock
+  FROM products
+  WHERE stock < 10;

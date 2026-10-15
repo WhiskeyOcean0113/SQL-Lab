@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 下面这条查询想列出订单出现过的所有不同状态，并按状态名的字母顺序排列。它报错了。修好它。
+  en: This query should list every distinct order status, in alphabetical order of the status name. It fails. Fix it.
+hint:
+  zh: 用了 `SELECT DISTINCT` 时，`ORDER BY` 只能使用选出来的列。题目要按什么排序？
+  en: With `SELECT DISTINCT`, `ORDER BY` can only use selected columns. What does the task ask you to sort by?
+starter: |
+  SELECT DISTINCT status
+  FROM orders
+  ORDER BY ordered_at;
+solution: |
+  SELECT DISTINCT status
+  FROM orders
+  ORDER BY status;
+check: { order_matters: true }

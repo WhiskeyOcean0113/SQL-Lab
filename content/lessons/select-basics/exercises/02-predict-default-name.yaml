@@ -1,0 +1,17 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询的第二列叫什么名字？先想一想，再运行看看。
+  en: What is the second column of this query called? Think first, then run it.
+hint:
+  zh: 第二列是算出来的，而且没有用 `AS` 起名。
+  en: The second column is computed, and nobody named it with `AS`.
+query: |
+  SELECT name, price * stock
+  FROM products;
+choices: ['price', 'stock', '?column?', 'price * stock']
+answer: 2
+explain:
+  zh: "`?column?`。计算出来的列如果不用 `AS` 起名，PostgreSQL 就给它这个默认名。养成习惯：每个计算列都用 `AS` 起一个说明含义的名字，比如 `AS stock_value`。"
+  en: "`?column?`. When a computed column has no alias, PostgreSQL gives it that default name. Make it a habit to name every computed column with `AS`, for example `AS stock_value`."

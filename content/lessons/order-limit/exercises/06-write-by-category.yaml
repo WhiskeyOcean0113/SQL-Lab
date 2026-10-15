@@ -1,0 +1,16 @@
+kind: write
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: |
+    列出所有商品，列依次为商品名、分类编号和价格。按分类编号升序排列，没有分类的商品排在最前；同一分类内按价格从高到低排列。
+  en: |
+    List every product as the columns name, category id and price. Sort by category id ascending with uncategorised products first, and within each category by price from highest to lowest.
+hint:
+  zh: 两个排序键各有自己的方向；NULL 的位置用 `NULLS FIRST` 指定。
+  en: Each of the two keys has its own direction, and `NULLS FIRST` sets where the NULL goes.
+solution: |
+  SELECT name, category_id, price
+  FROM products
+  ORDER BY category_id NULLS FIRST, price DESC;
+check: { order_matters: true }

@@ -1,0 +1,13 @@
+kind: write
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 列出所有已经归入某个分类的商品的名字（也就是 `category_id` 有值的商品）。
+  en: List the names of all products that belong to a category (that is, whose `category_id` has a value).
+hint:
+  zh: "\"有值\"的反面是 NULL。"
+  en: The opposite of "has a value" is NULL.
+solution: |
+  SELECT name
+  FROM products
+  WHERE category_id IS NOT NULL;

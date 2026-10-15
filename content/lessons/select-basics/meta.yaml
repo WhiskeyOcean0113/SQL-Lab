@@ -1,0 +1,6 @@
+title:   { zh: SELECT 与列别名, en: SELECT and column aliases }
+summary:
+  zh: 只取你需要的列，在查询里计算新的列，并给结果的列起清楚的名字。
+  en: Pick only the columns you need, compute new ones in the query, and give result columns clear names.
+dataset: shop
+prereqs: [query-evaluation-order]

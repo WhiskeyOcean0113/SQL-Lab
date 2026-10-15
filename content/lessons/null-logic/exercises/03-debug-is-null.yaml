@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询想列出没有邮箱的顾客的名字，但它一行都没返回。修好它。
+  en: This query should list the names of customers without an email address, but it returns nothing. Fix it.
+hint:
+  zh: 判断 NULL 有专门的写法。
+  en: There is a dedicated way to test for NULL.
+starter: |
+  SELECT name
+  FROM customers
+  WHERE email = NULL;
+solution: |
+  SELECT name
+  FROM customers
+  WHERE email IS NULL;

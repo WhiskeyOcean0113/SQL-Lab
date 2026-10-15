@@ -1,0 +1,13 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 列出名字以大写字母 D 开头的所有商品的名字。
+  en: List the names of all products whose name starts with a capital D.
+hint:
+  zh: "\"以 D 开头\"的样子是 `'D%'`。"
+  en: The shape "starts with D" is `'D%'`.
+solution: |
+  SELECT name
+  FROM products
+  WHERE name LIKE 'D%';

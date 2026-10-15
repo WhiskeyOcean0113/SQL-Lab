@@ -1,0 +1,21 @@
+kind: predict
+difficulty: 1
+lesson_ref: deeper
+prompt:
+  zh: 下面这条查询按城市升序排列顾客。结果的最后两行是谁？
+  en: This query sorts customers by city, ascending. Who are the last two rows?
+hint:
+  zh: PostgreSQL 把 NULL 当作比任何值都大。
+  en: PostgreSQL treats NULL as larger than any value.
+query: |
+  SELECT name, city
+  FROM customers
+  ORDER BY city;
+choices:
+  - { zh: 城市为 NULL 的两位顾客（Liam O'Brien 和 Lucas Silva）, en: "The two customers with a NULL city (Liam O'Brien and Lucas Silva)" }
+  - { zh: 住在 Toronto 的两位顾客, en: The two customers in Toronto }
+  - { zh: 住在 Beijing 和 Bengaluru 的顾客, en: The customers in Beijing and Bengaluru }
+answer: 0
+explain:
+  zh: 城市为 NULL 的两位顾客。PostgreSQL 在升序时把 NULL 排在最后，降序时排在最前。Toronto 是最后一个有值的城市，所以紧挨在 NULL 前面。MySQL 和 SQLite 的默认规则相反，需要固定位置时写 `NULLS FIRST` 或 `NULLS LAST`。
+  en: The two customers with a NULL city. PostgreSQL puts NULLs last in ascending order and first in descending order. Toronto is the last city with a value, so it comes right before the NULLs. MySQL and SQLite default the other way, so write `NULLS FIRST` or `NULLS LAST` when the position matters.

@@ -22,8 +22,22 @@ export function resultTable(rs: ResultSet): Raw {
   return html`<table class="grid" translate="no">${head(rs)}<tbody>${rs.rows.map(r => html`<tr>${r.map((v, i) => cell(v, numeric[i]!))}</tr>`)}</tbody></table>`
 }
 
+/**
+ * Some SQLSTATEs cover several mistakes (42803 is any grouping error), so the
+ * message picks the more specific explanation where one exists.
+ */
+const REFINE: Array<[code: string, pattern: RegExp, suffix: string]> = [
+  ['42803', /not allowed in WHERE/, 'where'],
+  ['42803', /cannot be nested/, 'nested'],
+]
+
+function errorKey(err: SqlError): string {
+  const refined = REFINE.find(([code, re]) => code === err.code && re.test(err.message))
+  return refined ? `error.${err.code}.${refined[2]}` : `error.${err.code}`
+}
+
 export function errorBlock(err: SqlError, sql: string, lang: Lang): Raw {
-  const key = `error.${err.code}` as StringKey
+  const key = errorKey(err) as StringKey
   const friendly = err.code && key in strings[lang] ? t(lang, key) : t(lang, 'error.generic')
   let where = ''
   if (err.position) {

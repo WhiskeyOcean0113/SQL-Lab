@@ -36,12 +36,8 @@ modules:
     summary:
       zh: 把很多行汇总成一行，再按组汇总，并筛选汇总后的结果。
       en: Collapse many rows into one, then one per group, and filter the groups.
-    lessons: []
-    planned:
-      - { zh: "{{term:aggregate-function}}", en: "{{Term:aggregate-function|Aggregate functions}}" }
-      - { zh: GROUP BY, en: GROUP BY }
-      - { zh: HAVING 与 WHERE 的区别, en: HAVING versus WHERE }
-      - { zh: 聚合与 NULL, en: Aggregates and NULL }
+    lessons: [aggregate-functions, group-by, having-vs-where, aggregates-null]
+    planned: []
 
   - id: m4
     title: { zh: "多表{{term:join}}", en: "{{Term:join|Joining}} tables" }

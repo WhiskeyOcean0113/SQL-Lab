@@ -1,0 +1,6 @@
+title:   { zh: HAVING 与 WHERE 的区别, en: HAVING versus WHERE }
+summary:
+  zh: 用 HAVING 筛选分组，并能判断一个条件该放在 WHERE 还是 HAVING。
+  en: Filter groups with HAVING, and tell whether a condition belongs in WHERE or in HAVING.
+dataset: shop
+prereqs: [group-by]

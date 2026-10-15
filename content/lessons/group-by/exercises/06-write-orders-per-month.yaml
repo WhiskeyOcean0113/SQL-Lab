@@ -1,0 +1,17 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: |
+    统计每个月的订单数。列依次为 `month`（用 `date_trunc` 截到月份的下单时间）和 `orders`，按月份从早到晚排列。
+  en: |
+    Count the orders in each month. The columns are `month` (the order time cut down to the month with `date_trunc`) and `orders`, sorted from the earliest month to the latest.
+hint:
+  zh: "`GROUP BY` 可以按表达式分组：`GROUP BY date_trunc('month', ordered_at)`，再 `ORDER BY month`。"
+  en: "`GROUP BY` accepts an expression: `GROUP BY date_trunc('month', ordered_at)`, then `ORDER BY month`."
+solution: |
+  SELECT date_trunc('month', ordered_at) AS month, count(*) AS orders
+  FROM orders
+  GROUP BY date_trunc('month', ordered_at)
+  ORDER BY month;
+check: { order_matters: true, column_names: true }

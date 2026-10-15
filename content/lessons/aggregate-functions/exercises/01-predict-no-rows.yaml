@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: deeper
+prompt:
+  zh: shop 里没有一件商品的价格超过 1000 美元。下面这条查询会返回几行？
+  en: No product in shop costs more than 1000 dollars. How many rows does this query return?
+hint:
+  zh: 有聚合函数、没有 `GROUP BY` 时，结果有几行？
+  en: With an aggregate and no `GROUP BY`, how many rows does a result have?
+query: |
+  SELECT count(*)
+  FROM products
+  WHERE price > 1000;
+choices: ['0', '1', '16']
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 1 行，值是 0。`WHERE` 把所有行都筛掉了，但只要有聚合函数、又没有 `GROUP BY`，结果就永远是一行：`count` 数到 0 行，于是返回 0。
+  en: One row, holding 0. `WHERE` removes every row, but with an aggregate and no `GROUP BY` the result is always one row; `count` counted zero rows, so it returns 0.

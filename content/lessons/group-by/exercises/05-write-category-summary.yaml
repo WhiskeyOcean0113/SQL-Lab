@@ -1,0 +1,16 @@
+kind: write
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: |
+    按分类统计商品：每个 `category_id` 一行，列依次为 `category_id`、商品数量 `products` 和平均价格 `avg_price`（四舍五入到两位小数）。没有分类的商品也要算作一组。
+  en: |
+    Summarise products by category: one row per `category_id`, with the columns `category_id`, the number of products `products`, and the average price `avg_price` (rounded to two decimal places). Products without a category count as a group too.
+hint:
+  zh: 按 `category_id` 分组就行，NULL 会自动成为一组。
+  en: Group by `category_id`; NULL becomes a group of its own automatically.
+solution: |
+  SELECT category_id, count(*) AS products, round(avg(price), 2) AS avg_price
+  FROM products
+  GROUP BY category_id;
+check: { column_names: true }

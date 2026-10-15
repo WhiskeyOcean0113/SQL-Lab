@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: "`orders` 有 24 笔订单，状态共有 5 种。下面这条查询会返回几行？"
+  en: "`orders` holds 24 orders in 5 different statuses. How many rows does this query return?"
+hint:
+  zh: 分组之后，每组输出几行？
+  en: After grouping, how many rows does each group produce?
+query: |
+  SELECT status, count(*)
+  FROM orders
+  GROUP BY status;
+choices: ['1', '5', '24']
+answer: 1
+verify: { rows: 5 }
+explain:
+  zh: 5 行。`GROUP BY status` 把状态相同的订单分到一组，一共 5 组，每组输出一行，`count(*)` 是这一组的订单数。
+  en: Five rows. `GROUP BY status` puts orders with the same status in one group; there are 5 groups, each yields one row, and `count(*)` is that group's number of orders.

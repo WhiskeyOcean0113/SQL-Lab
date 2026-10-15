@@ -1,0 +1,6 @@
+title:   { zh: 聚合与 NULL, en: Aggregates and NULL }
+summary:
+  zh: 弄清楚聚合函数怎样对待 NULL，以及没有行可汇总时会得到什么，并用 FILTER 做条件计数。
+  en: Know how aggregates treat NULL and what they return when there is nothing to summarise, and count conditionally with FILTER.
+dataset: shop
+prereqs: [having-vs-where]

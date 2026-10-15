@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 用下面的片段拼出一条查询：哪些商品出现在至少 4 行订单明细里？列依次为 `product_id` 和 `times`。有两个片段是多余的。
+  en: Arrange the pieces into a query finding the products that appear in at least 4 order lines, with the columns `product_id` and `times`. Two pieces are not needed.
+hint:
+  zh: 对组的条件放在 `HAVING` 里，而且 `HAVING` 不能用 `SELECT` 的别名。
+  en: Conditions on groups go in `HAVING`, and `HAVING` cannot use `SELECT` aliases.
+solution: |
+  SELECT product_id, count(*) AS times
+  FROM order_items
+  GROUP BY product_id
+  HAVING count(*) >= 4;
+distractors:
+  - WHERE count(*) >= 4
+  - HAVING times >= 4
+check: { column_names: true }

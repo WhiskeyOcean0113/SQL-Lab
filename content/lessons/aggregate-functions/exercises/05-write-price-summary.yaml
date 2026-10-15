@@ -1,0 +1,18 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: |
+    用一条查询汇总所有商品：商品数量、最低价、最高价和平均价（四舍五入到两位小数）。列名依次为 `product_count`、`min_price`、`max_price`、`avg_price`。
+  en: |
+    Summarise all products in one query: how many there are, the lowest price, the highest price and the average price (rounded to two decimal places). Name the columns `product_count`, `min_price`, `max_price` and `avg_price`, in that order.
+hint:
+  zh: 四个聚合函数可以写在同一个 `SELECT` 里。平均值用 `round(avg(price), 2)`。
+  en: All four aggregates can go in the same `SELECT`. For the average use `round(avg(price), 2)`.
+solution: |
+  SELECT count(*) AS product_count,
+         min(price) AS min_price,
+         max(price) AS max_price,
+         round(avg(price), 2) AS avg_price
+  FROM products;
+check: { column_names: true }

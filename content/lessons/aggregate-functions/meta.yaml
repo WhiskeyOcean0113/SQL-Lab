@@ -1,0 +1,6 @@
+title:   { zh: "{{term:aggregate-function}}", en: "{{Term:aggregate-function|Aggregate functions}}" }
+summary:
+  zh: 用 count、sum、avg、min、max 把很多行汇总成一个值，并知道汇总之后哪些列还能选。
+  en: Collapse many rows into one value with count, sum, avg, min and max, and know which columns you can still select afterwards.
+dataset: shop
+prereqs: [arithmetic, null-logic]

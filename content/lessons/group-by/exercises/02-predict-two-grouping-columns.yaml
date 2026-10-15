@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 顾客来自 8 个国家；China 的顾客住在 Shanghai 和 Beijing 两个城市，其他每个国家的顾客都只有一个城市（或者城市为 NULL）。下面这条查询会返回几行？
+  en: Customers come from 8 countries. Chinese customers live in two cities, Shanghai and Beijing; in every other country they share one city (or a NULL city). How many rows does this query return?
+hint:
+  zh: 两个分组列时，什么样的行会进同一组？
+  en: With two grouping columns, which rows end up in the same group?
+query: |
+  SELECT country, city, count(*)
+  FROM customers
+  GROUP BY country, city;
+choices: ['8', '9', '12']
+answer: 1
+verify: { rows: 9 }
+explain:
+  zh: 9 行。分组按“国家 + 城市”的组合进行：China 有两个组合，其他 7 个国家各一个，一共 9 组。城市为 NULL 的顾客也自成一组。
+  en: Nine rows. Groups are formed by the country + city combination; China has two, the other 7 countries one each, so 9 groups. Customers with a NULL city form a group too.

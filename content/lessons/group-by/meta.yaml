@@ -1,0 +1,6 @@
+title:   { zh: GROUP BY, en: GROUP BY }
+summary:
+  zh: 把行按某些列分组，每组汇总出一行，并弄清楚分组之后 SELECT 里能放什么。
+  en: Split rows into groups by some columns, get one summary row per group, and know what SELECT may contain afterwards.
+dataset: shop
+prereqs: [aggregate-functions]

@@ -1,0 +1,17 @@
+kind: parsons
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：商品 3（SQL Pocket Guide）一共卖出了多少件？列名为 `units`。有两个片段是多余的。
+  en: Arrange the pieces into a query answering how many items of product 3 (SQL Pocket Guide) were sold in total, in a column called `units`. Two pieces are not needed.
+hint:
+  zh: “卖出多少件”要把每行的 `quantity` 加起来，而不是数有多少行。筛选单行的条件写在 `WHERE` 里。
+  en: Counting items sold means adding up each row's `quantity`, not counting rows. A condition on single rows goes in `WHERE`.
+solution: |
+  SELECT sum(quantity) AS units
+  FROM order_items
+  WHERE product_id = 3;
+distractors:
+  - SELECT count(quantity) AS units
+  - WHERE sum(quantity) > 0
+check: { column_names: true }

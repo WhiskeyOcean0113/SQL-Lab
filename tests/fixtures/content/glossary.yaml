@@ -1,0 +1,9 @@
+row: { en: row, zh: 行 }
+table: { en: table, zh: 表 }
+column: { en: column, zh: 列 }
+result-set: { en: result set, zh: 结果集 }
+alias: { en: alias, zh: 别名 }
+join: { en: join, zh: 连接 }
+join-condition: { en: join condition, zh: 连接条件 }
+transaction: { en: transaction, zh: 事务 }
+aggregate-function: { en: aggregate function, zh: 聚合函数 }

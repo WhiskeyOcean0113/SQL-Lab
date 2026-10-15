@@ -1,0 +1,4 @@
+title: { zh: 用 WHERE 筛选, en: Filtering with WHERE }
+summary: { zh: 只保留满足条件的行。, en: Keep only the rows that match. }
+dataset: tiny
+prereqs: [basics]

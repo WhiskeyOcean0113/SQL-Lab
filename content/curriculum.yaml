@@ -1,0 +1,130 @@
+# The one learning path. Order here is the only place order is defined:
+# lesson folders are not numbered. A lesson moves from `planned` to `lessons`
+# once its folder under content/lessons/ exists and passes validate.
+#
+# Sources the sequence draws on: Stanford CS145 and CMU 15-445 (SQL lectures),
+# the PostgreSQL manual (Part II, "The SQL Language"), and research on novice
+# SQL errors (Taipalus & Perälä 2019; Miedema et al. 2021).
+
+modules:
+  - id: m0
+    title: { zh: 关系模型, en: The relational model }
+    summary:
+      zh: 在写第一条 query 之前，先弄清楚数据长什么样，以及数据库是按什么顺序理解一条 query 的。
+      en: Before the first query, learn what the data looks like and the order in which the database reads a query.
+    lessons: []
+    planned:
+      - { zh: 表、行与列, en: Tables, rows and columns }
+      - { zh: 主键与外键, en: Primary and foreign keys }
+      - { zh: 一条 query 的逻辑执行顺序, en: How a query is evaluated }
+
+  - id: m1
+    title: { zh: 单表查询, en: Querying one table }
+    summary:
+      zh: 从一张表里取出你要的列和行，并按需要排序。
+      en: Pick the columns and rows you need from one table, in the order you need them.
+    lessons: []
+    planned:
+      - { zh: SELECT 与列别名, en: SELECT and column aliases }
+      - { zh: WHERE 与比较运算, en: WHERE and comparisons }
+      - { zh: AND、OR、NOT 与优先级, en: AND, OR, NOT and precedence }
+      - { zh: IN、BETWEEN 与 LIKE, en: IN, BETWEEN and LIKE }
+      - { zh: NULL 与三值逻辑, en: NULL and three-valued logic }
+      - { zh: ORDER BY、LIMIT 与 OFFSET, en: ORDER BY, LIMIT and OFFSET }
+      - { zh: DISTINCT, en: DISTINCT }
+
+  - id: m2
+    title: { zh: 表达式与函数, en: Expressions and functions }
+    summary:
+      zh: 在查询里计算新值：算术、字符串、日期时间、条件表达式和类型转换。
+      en: Compute new values in a query with arithmetic, strings, dates, conditionals and casts.
+    lessons: []
+    planned:
+      - { zh: 算术与数值类型, en: Arithmetic and numeric types }
+      - { zh: 字符串函数, en: String functions }
+      - { zh: 日期与时间, en: Dates and times }
+      - { zh: CASE 表达式, en: CASE expressions }
+      - { zh: 类型转换 CAST, en: Type casts }
+
+  - id: m3
+    title: { zh: 聚合, en: Aggregation }
+    summary:
+      zh: 把很多行汇总成一行，再按组汇总，并筛选汇总后的结果。
+      en: Collapse many rows into one, then one per group, and filter the groups.
+    lessons: []
+    planned:
+      - { zh: 聚合函数, en: Aggregate functions }
+      - { zh: GROUP BY, en: GROUP BY }
+      - { zh: HAVING 与 WHERE 的区别, en: HAVING versus WHERE }
+      - { zh: 聚合与 NULL, en: Aggregates and NULL }
+
+  - id: m4
+    title: { zh: 多表连接, en: Joining tables }
+    summary:
+      zh: 用共同的列把多张表拼起来，并理解每种 join 会保留哪些行。
+      en: Combine tables through shared columns, and know which rows each kind of join keeps.
+    lessons: []
+    planned:
+      - { zh: INNER JOIN, en: INNER JOIN }
+      - { zh: LEFT、RIGHT 与 FULL JOIN, en: LEFT, RIGHT and FULL JOIN }
+      - { zh: 自连接, en: Self joins }
+      - { zh: CROSS JOIN 与行数暴增, en: CROSS JOIN and row explosion }
+      - { zh: 多表 join 与聚合, en: Joining several tables and aggregating }
+
+  - id: m5
+    title: { zh: 子查询与集合运算, en: Subqueries and set operations }
+    summary:
+      zh: 把一条 query 的结果当作另一条 query 的输入，以及合并、相交、相减结果集。
+      en: Use one query's result inside another, and union, intersect or subtract result sets.
+    lessons: []
+    planned:
+      - { zh: 标量子查询与表子查询, en: Scalar and table subqueries }
+      - { zh: IN 与 EXISTS, en: IN and EXISTS }
+      - { zh: 关联子查询, en: Correlated subqueries }
+      - { zh: UNION、INTERSECT 与 EXCEPT, en: UNION, INTERSECT and EXCEPT }
+
+  - id: m6
+    title: { zh: 进阶查询, en: Advanced queries }
+    summary:
+      zh: 用 CTE 拆解复杂查询，用窗口函数在不合并行的情况下做排名和累计。
+      en: Break complex queries apart with CTEs, and rank or accumulate without collapsing rows using window functions.
+    lessons: []
+    planned:
+      - { zh: CTE（WITH 子句）, en: CTEs (the WITH clause) }
+      - { zh: 递归 CTE, en: Recursive CTEs }
+      - { zh: 窗口函数：排名, en: "Window functions: ranking" }
+      - { zh: 窗口函数：偏移与累计, en: "Window functions: offsets and running totals" }
+
+  - id: m7
+    title: { zh: 修改数据, en: Changing data }
+    summary:
+      zh: 插入、更新、删除数据，以及用事务保证一组修改要么全部生效、要么全部不生效。
+      en: Insert, update and delete rows, and use transactions so a group of changes happens entirely or not at all.
+    lessons: []
+    planned:
+      - { zh: INSERT, en: INSERT }
+      - { zh: UPDATE 与 DELETE, en: UPDATE and DELETE }
+      - { zh: UPSERT（ON CONFLICT）, en: UPSERT (ON CONFLICT) }
+      - { zh: 事务与 ACID, en: Transactions and ACID }
+
+  - id: m8
+    title: { zh: 数据库设计, en: Database design }
+    summary:
+      zh: 设计表结构：选类型、加约束、拆分到合适的范式，以及用视图封装查询。
+      en: Design tables by choosing types, adding constraints, normalizing, and wrapping queries in views.
+    lessons: []
+    planned:
+      - { zh: 数据类型, en: Data types }
+      - { zh: 约束, en: Constraints }
+      - { zh: 范式（到 3NF）, en: Normalization (up to 3NF) }
+      - { zh: 视图, en: Views }
+
+  - id: m9
+    title: { zh: 性能入门, en: Performance basics }
+    summary:
+      zh: 理解索引为什么快，以及怎样读懂执行计划。
+      en: Understand why indexes are fast, and how to read a query plan.
+    lessons: []
+    planned:
+      - { zh: 索引, en: Indexes }
+      - { zh: 用 EXPLAIN 读执行计划, en: Reading plans with EXPLAIN }

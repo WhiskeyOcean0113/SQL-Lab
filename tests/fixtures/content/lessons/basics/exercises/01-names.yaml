@@ -1,0 +1,6 @@
+kind: write
+difficulty: 1
+lesson_ref: example
+prompt: { zh: 列出所有宠物的名字。, en: List every pet's name. }
+hint: { zh: 用 `SELECT`。, en: Use `SELECT`. }
+solution: SELECT name FROM pets

@@ -1,0 +1,7 @@
+kind: debug
+difficulty: 2
+lesson_ref: core
+prompt: { zh: 修好它。, en: Fix it. }
+hint: { zh: 看列名。, en: Check the column name. }
+starter: SELECT nam FROM pets
+solution: SELECT name FROM pets

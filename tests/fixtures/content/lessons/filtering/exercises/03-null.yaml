@@ -1,0 +1,7 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt: { zh: 找出年龄未知的宠物。, en: Find the pets whose age is unknown. }
+hint: { zh: "`= NULL` 永远不是 true。", en: "`= NULL` is never true." }
+starter: SELECT name FROM pets WHERE age = NULL
+solution: SELECT name FROM pets WHERE age IS NULL

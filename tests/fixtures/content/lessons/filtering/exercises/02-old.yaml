@@ -1,0 +1,6 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt: { zh: 列出年龄大于 5 的宠物名字。, en: List the names of pets older than 5. }
+hint: { zh: 用 `WHERE age > 5`。, en: Use `WHERE age > 5`. }
+solution: SELECT name FROM pets WHERE age > 5

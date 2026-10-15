@@ -1,0 +1,9 @@
+kind: predict
+difficulty: 1
+lesson_ref: why
+prompt: { zh: 返回几行？, en: How many rows come back? }
+hint: { zh: 数一数。, en: Count them. }
+query: SELECT * FROM pets WHERE age > 2
+choices: ['1', '2', '3']
+answer: 1
+explain: { zh: "`NULL > 2` 不是 true。", en: "`NULL > 2` is not true." }

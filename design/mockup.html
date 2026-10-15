@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Lab mockup</title>
+<style>
+/* Latin in Arial, Chinese in SimSun. SimSun has no bold, so the type system
+   never asks for bold where Chinese can appear: hierarchy comes from size,
+   colour and space. */
+:root {
+  --page: #F7F8FA;
+  --sheet: #FFFFFF;
+  --well: #EEF1F4;
+  --tk-num: #9A6A2F;
+  --ink: #1C2026;
+  --ink-2: #545C66;
+  --ink-3: #8A929C;
+  --line: #E2E5EA;
+  --line-2: #CDD2D9;
+  --accent: #3A6788;
+  --accent-ink: #2C5370;
+  --accent-tint: #E9EFF5;
+  --ok: #3B7656;
+  --ok-tint: #E7F1EB;
+  --bad: #B4483E;
+  --bad-tint: #F7E9E7;
+  --font: Arial, "Helvetica Neue", SimSun, "宋体", "Songti SC", STSong, serif;
+  --mono: Menlo, "SF Mono", Consolas, SimSun, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #A9B0B8; --ink-3: #78808A;
+    --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #223040;
+    --ok: #7DBA97; --ok-tint: #1F3128; --bad: #E08A80; --bad-tint: #3A2422; --tk-num: #D9A86A;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #A9B0B8; --ink-3: #78808A;
+  --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #223040;
+  --ok: #7DBA97; --ok-tint: #1F3128; --bad: #E08A80; --bad-tint: #3A2422; --tk-num: #D9A86A;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 400 15px/1.6 var(--font); font-synthesis: none; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Top bar */
+.top { position: sticky; top: 0; z-index: 2; background: color-mix(in srgb, var(--page) 88%, transparent); backdrop-filter: saturate(1.2) blur(8px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1200px; margin: 0 auto; height: 56px; padding: 0 32px; display: flex; align-items: center; gap: 40px; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 16px; letter-spacing: -0.01em; }
+.brand-mark { width: 18px; height: 18px; display: grid; grid-template: 1fr 1fr / 1fr 1fr; gap: 2px; }
+.brand-mark i { background: var(--ink); border-radius: 1px; }
+.brand-mark i:nth-child(4) { background: var(--accent); }
+.nav { display: flex; gap: 4px; }
+.nav button { border: 0; background: none; padding: 7px 12px; border-radius: 6px; color: var(--ink-2); cursor: pointer; font-size: 14px; }
+.nav button:hover { color: var(--ink); background: var(--well); }
+.nav button[aria-current="page"] { color: var(--ink); background: var(--sheet); box-shadow: 0 0 0 1px var(--line); }
+.seg { margin-left: auto; display: inline-flex; padding: 3px; background: var(--well); border-radius: 8px; }
+.seg button { border: 0; background: none; padding: 4px 12px; border-radius: 6px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 0 0 1px var(--line); }
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.view { display: none; }
+.view.on { display: block; }
+
+/* Shared type */
+.kicker { font-size: 13px; color: var(--ink-3); margin: 0 0 10px; }
+.display { font-size: 44px; line-height: 1.12; letter-spacing: -0.025em; margin: 0; font-weight: 400; }
+.h2 { font-size: 24px; line-height: 1.3; letter-spacing: -0.01em; margin: 0; font-weight: 400; }
+.muted { color: var(--ink-2); }
+code { font: 0.88em var(--mono); background: var(--well); border-radius: 4px; padding: 1px 5px; }
+
+/* Course map */
+.map-head { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 64px; align-items: end; padding: 72px 0 48px; border-bottom: 1px solid var(--line); }
+.map-head p { font-size: 17px; line-height: 1.8; color: var(--ink-2); margin: 18px 0 0; max-width: 560px; }
+.next { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; }
+.next .label { font-size: 13px; color: var(--ink-3); }
+.next .title { font-size: 19px; margin: 6px 0 2px; }
+.next .meta { font-size: 13px; color: var(--ink-2); margin-bottom: 16px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--sheet); cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
+.btn.primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+.overall { display: flex; align-items: center; gap: 12px; margin-top: 18px; font-size: 13px; color: var(--ink-2); }
+.bar { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+
+.modules { padding: 16px 0 96px; }
+.module { display: grid; grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1.25fr); gap: 32px; padding: 36px 0; border-bottom: 1px solid var(--line); }
+.module .no { font-size: 40px; line-height: 1; letter-spacing: -0.03em; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.module.current .no { color: var(--accent); }
+.module h3 { font-size: 20px; font-weight: 400; margin: 2px 0 8px; }
+.module .sum { color: var(--ink-2); font-size: 14.5px; line-height: 1.75; margin: 0; }
+.lessons { list-style: none; margin: 0; padding: 0; }
+.lessons li { display: flex; align-items: center; gap: 14px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+.lessons li:first-child { border-top: 0; padding-top: 2px; }
+.lessons .state { width: 18px; height: 18px; flex: none; display: grid; place-items: center; border-radius: 50%; }
+.st-done { background: var(--ok); }
+.st-done::after { content: ""; width: 7px; height: 4px; border: solid var(--sheet); border-width: 0 0 1.5px 1.5px; transform: translateY(-1px) rotate(-45deg); }
+.st-now { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.st-now::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.st-lock { box-shadow: inset 0 0 0 1px var(--line-2); }
+.lessons .lock { color: var(--ink-3); }
+.lessons .tag { margin-left: auto; font-size: 12.5px; color: var(--ink-3); }
+.lessons .now-tag { margin-left: auto; font-size: 12.5px; color: var(--accent-ink); background: var(--accent-tint); padding: 2px 8px; border-radius: 10px; }
+.lessons .planned { color: var(--ink-3); }
+
+/* Lesson */
+.lesson { display: grid; grid-template-columns: 200px minmax(0, 720px); gap: 72px; padding: 56px 0 120px; }
+.rail { position: sticky; top: 88px; align-self: start; font-size: 13.5px; }
+.rail .kicker { margin-bottom: 14px; }
+.toc { list-style: none; margin: 0 0 36px; padding: 0; }
+.toc a { display: block; padding: 6px 0 6px 14px; border-left: 1px solid var(--line); color: var(--ink-2); text-decoration: none; }
+.toc a:hover { color: var(--ink); }
+.toc a.on { color: var(--ink); border-left: 2px solid var(--accent); padding-left: 13px; }
+.ex-list { list-style: none; margin: 0; padding: 0; }
+.ex-list li { display: flex; align-items: center; gap: 10px; padding: 5px 0; color: var(--ink-2); }
+.pip { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line-2); }
+.pip.ok { background: var(--ok); box-shadow: none; }
+.pip.bad { box-shadow: inset 0 0 0 1.5px var(--bad); }
+
+.lesson-head { padding-bottom: 36px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.lesson-head .lede { font-size: 18px; line-height: 1.75; color: var(--ink-2); margin: 16px 0 0; }
+.facts { display: flex; gap: 28px; margin-top: 24px; font-size: 13px; color: var(--ink-3); }
+.facts b { font-weight: 400; color: var(--ink); }
+.section { padding-top: 40px; }
+.section h2 { font-size: 22px; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 16px; display: flex; align-items: baseline; gap: 12px; }
+.section h2 small { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.prose { font-size: 16.5px; line-height: 1.95; }
+.prose p { margin: 0 0 18px; }
+dfn { font-style: normal; text-decoration: underline dotted var(--ink-3); text-underline-offset: 4px; }
+dfn .alt { color: var(--ink-3); font-size: 0.86em; }
+dfn .alt::before { content: " ("; } dfn .alt::after { content: ")"; }
+
+.runner { margin: 28px 0; background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.runner-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 18px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
+.runner-top .ds { display: inline-flex; align-items: center; gap: 6px; }
+.runner-top .ds::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+.runner-top .sp { margin-left: auto; }
+.runner pre { margin: 0; padding: 18px 20px; font: 13.5px/1.75 var(--mono); background: var(--well); overflow-x: auto; }
+.kw { color: var(--accent-ink); }
+.str { color: var(--ok); }
+.num { color: var(--tk-num); }
+.btn.run { height: 30px; padding: 0 12px; font-size: 13px; background: var(--ink); border-color: var(--ink); color: var(--sheet); }
+kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--line-2); border-radius: 4px; padding: 1px 5px; }
+.out { padding: 4px 20px 14px; }
+.out-meta { font-size: 12.5px; color: var(--ink-3); padding: 12px 0 6px; }
+
+table.grid { width: 100%; border-collapse: collapse; font: 13px/1.45 var(--mono); font-variant-numeric: tabular-nums; }
+.grid th { text-align: left; font: 400 12.5px var(--font); color: var(--ink-3); padding: 8px 12px; border-bottom: 1px solid var(--line-2); }
+.grid td { padding: 7px 12px; border-bottom: 1px solid var(--line); }
+.grid tr:last-child td { border-bottom: 0; }
+.grid .r { text-align: right; }
+.grid .null { color: var(--ink-3); font-style: italic; }
+
+.callout { margin: 24px 0; padding: 16px 20px; border-radius: 10px; background: var(--well); font-size: 15px; line-height: 1.85; }
+.callout .t { font-size: 13px; color: var(--ink-3); margin-bottom: 4px; }
+
+/* Exercise */
+.exercise { padding: 40px 0 96px; }
+.ex-head { display: flex; align-items: flex-end; gap: 24px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.steps { display: flex; gap: 6px; margin-left: auto; }
+.steps span { width: 28px; height: 4px; border-radius: 2px; background: var(--line-2); }
+.steps .ok { background: var(--ok); } .steps .bad { background: var(--bad); } .steps .now { background: var(--accent); }
+.split { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 40px; padding-top: 32px; }
+.task .type { display: inline-block; font-size: 12.5px; color: var(--accent-ink); background: var(--accent-tint); padding: 2px 10px; border-radius: 10px; margin-bottom: 14px; }
+.task p { font-size: 16.5px; line-height: 1.95; margin: 0 0 16px; }
+.task .req { list-style: none; padding: 16px 0 0; margin: 20px 0 0; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-2); }
+.task .req li { padding: 4px 0 4px 18px; position: relative; }
+.task .req li::before { content: ""; position: absolute; left: 2px; top: 12px; width: 6px; height: 1px; background: var(--ink-3); }
+.editor { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.editor pre { margin: 0; padding: 18px 20px 18px 0; font: 13.5px/1.75 var(--mono); display: grid; grid-template-columns: 44px max-content; background: var(--sheet); min-height: 180px; overflow-x: auto; }
+.editor .ln { color: var(--ink-3); text-align: right; padding-right: 16px; user-select: none; }
+.editor .err-line { background: var(--bad-tint); }
+.editor-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.editor-bar .sp { margin-left: auto; font-size: 12.5px; color: var(--ink-3); }
+
+.verdict { margin-top: 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--sheet); overflow: hidden; }
+.verdict-top { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.badge-bad { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--bad); }
+.badge-bad::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+.verdict-top .sum { font-size: 13px; color: var(--ink-3); margin-left: auto; }
+.verdict .why { padding: 16px 20px 6px; font-size: 15px; line-height: 1.85; margin: 0; }
+.legend { display: flex; gap: 18px; padding: 4px 20px 0; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; }
+.diff { padding: 8px 20px 16px; overflow-x: auto; }
+.diff td.mark { width: 56px; font: 12px var(--font); padding-left: 0; }
+.diff tr.extra td { background: var(--bad-tint); }
+.diff tr.extra td:not(.mark) { color: var(--bad); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 60%, transparent); }
+.diff tr.extra td.mark { color: var(--bad); }
+.diff tr.missing td { background: var(--accent-tint); }
+.diff tr.missing td:not(.mark) { color: var(--accent-ink); }
+.diff tr.missing td.mark { color: var(--accent-ink); }
+.diff tr td.mark { padding-left: 10px; }
+.verdict-foot { display: flex; gap: 10px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--line); background: var(--well); }
+.verdict-foot a { margin-left: auto; font-size: 13.5px; color: var(--accent-ink); text-decoration: none; }
+.verdict-foot a:hover { text-decoration: underline; }
+
+/* Mistake bank */
+.bank { padding: 56px 0 96px; }
+.bank-head { display: flex; align-items: flex-end; gap: 24px; padding-bottom: 32px; }
+.bank-stats { margin-left: auto; display: flex; gap: 40px; }
+.stat .v { font-size: 32px; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 13px; color: var(--ink-3); margin-top: 8px; }
+.filters { display: flex; gap: 6px; margin-bottom: 16px; }
+.chip { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--line-2); background: none; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
+.bank-table { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.bank-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.bank-table th { text-align: left; font-weight: 400; font-size: 12.5px; color: var(--ink-3); padding: 12px 20px; border-bottom: 1px solid var(--line); }
+.bank-table td { padding: 16px 20px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.bank-table tr:last-child td { border-bottom: 0; }
+.bank-table .ex-t { font-size: 15px; }
+.bank-table .ex-l { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+.streak { display: inline-flex; gap: 4px; vertical-align: middle; }
+.streak i { width: 14px; height: 4px; border-radius: 2px; background: var(--line-2); }
+.streak i.on { background: var(--ok); }
+.note { color: var(--ink-2); font-size: 13.5px; line-height: 1.7; max-width: 300px; }
+.note.empty { color: var(--ink-3); }
+
+@media (max-width: 900px) {
+  .top-in { padding: 0 16px; gap: 12px; }
+  .nav { overflow-x: auto; scrollbar-width: none; gap: 0; }
+  .nav button { padding: 7px 8px; white-space: nowrap; }
+  .wrap { padding: 0 16px; }
+  .display { font-size: 32px; }
+  .map-head { grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 40px 0 32px; }
+  .module { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 28px 0; }
+  .module .no { font-size: 28px; }
+  .lesson { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-top: 32px; }
+  .rail { position: static; } .toc { display: none; }
+  .ex-list { display: flex; gap: 16px; flex-wrap: wrap; }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .ex-head, .bank-head { flex-wrap: wrap; }
+  .steps, .bank-stats { margin-left: 0; }
+  .bank-table { overflow-x: auto; }
+  .bank-table table { min-width: 640px; }
+}
+@media (max-width: 560px) {
+  .brand span { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div><span>SQL Lab</span></div>
+    <nav class="nav" aria-label="Main">
+      <button data-view="map" aria-current="page">课程地图</button>
+      <button data-view="lesson">学习</button>
+      <button data-view="exercise">练习</button>
+      <button data-view="bank">错题本</button>
+    </nav>
+    <div class="seg" role="group" aria-label="Language">
+      <button aria-pressed="true">中</button>
+      <button aria-pressed="false">EN</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- Course map -->
+<section class="view on" id="map">
+  <div class="map-head">
+    <div>
+      <p class="kicker">PostgreSQL · 10 个模块 · 43 篇讲解</p>
+      <h1 class="display">从一张表开始，<br>一步一步学会 SQL。</h1>
+      <p>每篇讲解之后都有练习，全部做对才会解锁下一篇。示例可以直接运行，做错的题会自动进入错题本。</p>
+    </div>
+    <div class="next">
+      <div class="label">继续学习</div>
+      <div class="title">INNER JOIN</div>
+      <div class="meta">第 4 章 · 多表连接 · 练习 2 / 4</div>
+      <button class="btn primary" data-go="lesson">继续</button>
+      <div class="overall"><span>已完成 15 篇</span><div class="bar"><i style="width: 35%"></i></div><span>35%</span></div>
+    </div>
+  </div>
+
+  <div class="modules">
+    <div class="module">
+      <div class="no">01</div>
+      <div><h3>单表查询</h3><p class="sum">从一张表里取出你要的列和行，并按需要排序。</p></div>
+      <ul class="lessons">
+        <li><span class="state st-done"></span>SELECT 与列别名<span class="tag">4 / 4</span></li>
+        <li><span class="state st-done"></span>WHERE 与比较运算<span class="tag">5 / 5</span></li>
+        <li><span class="state st-done"></span>NULL 与三值逻辑<span class="tag">6 / 6</span></li>
+        <li><span class="state st-done"></span>ORDER BY、LIMIT 与 OFFSET<span class="tag">4 / 4</span></li>
+      </ul>
+    </div>
+    <div class="module current">
+      <div class="no">04</div>
+      <div><h3>多表连接</h3><p class="sum">用共同的列把多张表拼起来，并理解每种 join 会保留哪些行。</p></div>
+      <ul class="lessons">
+        <li><span class="state st-now"></span>INNER JOIN<span class="now-tag">学习中 · 2 / 4</span></li>
+        <li class="lock"><span class="state st-lock"></span>LEFT、RIGHT 与 FULL JOIN</li>
+        <li class="lock"><span class="state st-lock"></span>自连接</li>
+        <li class="planned"><span class="state st-lock"></span>CROSS JOIN 与行数暴增<span class="tag">编写中</span></li>
+      </ul>
+    </div>
+    <div class="module">
+      <div class="no">05</div>
+      <div><h3>子查询与集合运算</h3><p class="sum">把一条 query 的结果当作另一条 query 的输入，以及合并、相交、相减结果集。</p></div>
+      <ul class="lessons">
+        <li class="lock"><span class="state st-lock"></span>标量子查询与表子查询</li>
+        <li class="lock"><span class="state st-lock"></span>IN 与 EXISTS</li>
+        <li class="lock"><span class="state st-lock"></span>关联子查询</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Lesson -->
+<section class="view" id="lesson">
+  <div class="lesson">
+    <aside class="rail">
+      <p class="kicker">第 4 章 · 多表连接</p>
+      <ol class="toc">
+        <li><a href="#">为什么需要它</a></li>
+        <li><a href="#" class="on">核心概念</a></li>
+        <li><a href="#">示例</a></li>
+        <li><a href="#">常见错误</a></li>
+        <li><a href="#">小结</a></li>
+      </ol>
+      <p class="kicker">练习</p>
+      <ul class="ex-list">
+        <li><span class="pip ok"></span>预测输出</li>
+        <li><span class="pip ok"></span>拼出查询</li>
+        <li><span class="pip bad"></span>找出错误</li>
+        <li><span class="pip"></span>写一条查询</li>
+      </ul>
+    </aside>
+
+    <article>
+      <header class="lesson-head">
+        <p class="kicker">讲解 14 / 43</p>
+        <h1 class="display">INNER JOIN</h1>
+        <p class="lede">把每一笔订单和下单的顾客对上号，只保留两边都能匹配上的行。</p>
+        <div class="facts"><span>数据集 <b>shop</b></span><span>前置 <b>WHERE、NULL</b></span><span>练习 <b>4 道</b></span></div>
+      </header>
+
+      <div class="section">
+        <h2><small>02</small>核心概念</h2>
+        <div class="prose">
+          <p>顾客的名字存在 <code>customers</code> 里，订单存在 <code>orders</code> 里。<dfn>内连接<span class="alt">inner join</span></dfn>用一个共同的<dfn>列<span class="alt">column</span></dfn>把两张<dfn>表<span class="alt">table</span></dfn>拼在一起：对 <code>orders</code> 的每一行，找出 <code>id</code> 等于它的 <code>customer_id</code> 的那位顾客。</p>
+          <p>两边任何一边找不到对应的行，都会被丢掉。这是内连接和下一篇要学的外连接最大的区别。</p>
+        </div>
+
+        <div class="runner">
+          <div class="runner-top"><span class="ds">shop</span><span>可以直接修改</span><span class="sp"></span><kbd>⌘ ↵</kbd><button class="btn run">运行</button></div>
+<pre><span class="kw">SELECT</span> o.id, c.name, o.status
+<span class="kw">FROM</span>   orders <span class="kw">AS</span> o
+<span class="kw">JOIN</span>   customers <span class="kw">AS</span> c <span class="kw">ON</span> c.id = o.customer_id
+<span class="kw">WHERE</span>  o.id &lt;= <span class="num">4</span>;</pre>
+          <div class="out">
+            <div class="out-meta">4 行 · 3 ms</div>
+            <table class="grid">
+              <thead><tr><th class="r">id</th><th>name</th><th>status</th></tr></thead>
+              <tbody>
+                <tr><td class="r">1</td><td>Lin Wei</td><td>delivered</td></tr>
+                <tr><td class="r">2</td><td>Ava Thompson</td><td>delivered</td></tr>
+                <tr><td class="r">3</td><td>Kenji Sato</td><td>delivered</td></tr>
+                <tr><td class="r">4</td><td>Lin Wei</td><td>delivered</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="t">换个角度</div>
+          数据库在逻辑上先执行 <code>FROM</code> 和 <code>JOIN</code>，得到一张拼好的大表，然后才轮到 <code>WHERE</code> 去筛选。所以 <code>WHERE</code> 里可以同时用两张表的列。
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Exercise -->
+<section class="view" id="exercise">
+  <div class="exercise">
+    <div class="ex-head">
+      <div>
+        <p class="kicker">INNER JOIN · 练习 3 / 4</p>
+        <h1 class="h2">找出这条查询的错误</h1>
+      </div>
+      <div class="steps" aria-label="Exercise progress"><span class="ok"></span><span class="ok"></span><span class="now"></span><span></span></div>
+    </div>
+
+    <div class="split">
+      <div class="task">
+        <span class="type">找错</span>
+        <p>下面这条查询想列出每一笔订单的编号、下单顾客的名字和订单金额，但结果不对。找出问题并修好它。</p>
+        <ul class="req">
+          <li>列依次为 <code>id</code>、<code>name</code>、<code>amount</code></li>
+          <li>不要求排序</li>
+          <li>数据集：shop</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="editor">
+<pre><span class="ln">1</span><span><span class="kw">SELECT</span> o.id, c.name, <span class="kw">SUM</span>(i.quantity * i.unit_price) <span class="kw">AS</span> amount</span><span class="ln">2</span><span><span class="kw">FROM</span>   orders o</span><span class="ln err-line">3</span><span class="err-line"><span class="kw">JOIN</span>   customers c <span class="kw">ON</span> c.id = o.id</span><span class="ln">4</span><span><span class="kw">JOIN</span>   order_items i <span class="kw">ON</span> i.order_id = o.id</span><span class="ln">5</span><span><span class="kw">GROUP BY</span> o.id, c.name;</span></pre>
+          <div class="editor-bar"><button class="btn">运行</button><button class="btn primary">提交</button><span class="sp">第 2 次提交</span></div>
+        </div>
+
+        <div class="verdict">
+          <div class="verdict-top"><span class="badge-bad">还不对</span><span class="sum">预期 23 行 · 你的结果 12 行</span></div>
+          <p class="why">只有 3 行完全正确：9 行的顾客名字对不上，另外 11 笔订单没有出现。订单和顾客错配，通常说明 <code>ON</code> 后面比较了错误的列。</p>
+          <div class="legend"><span><i style="background: var(--accent-tint); box-shadow: inset 0 0 0 1px var(--accent)"></i>预期有，你的结果没有</span><span><i style="background: var(--bad-tint); box-shadow: inset 0 0 0 1px var(--bad)"></i>你的结果有，预期没有</span></div>
+          <div class="diff">
+            <table class="grid">
+              <thead><tr><th></th><th class="r">id</th><th>name</th><th class="r">amount</th></tr></thead>
+              <tbody>
+                <tr><td class="mark"></td><td class="r">1</td><td>Lin Wei</td><td class="r">67.00</td></tr>
+                <tr><td class="mark"></td><td class="r">2</td><td>Ava Thompson</td><td class="r">249.00</td></tr>
+                <tr><td class="mark"></td><td class="r">3</td><td>Kenji Sato</td><td class="r">96.48</td></tr>
+                <tr class="extra"><td class="mark">多余</td><td class="r">4</td><td>Sofia Rossi</td><td class="r">199.00</td></tr>
+                <tr class="missing"><td class="mark">缺少</td><td class="r">4</td><td>Lin Wei</td><td class="r">199.00</td></tr>
+                <tr class="missing"><td class="mark">缺少</td><td class="r">13</td><td>Emma Dubois</td><td class="r">103.50</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="verdict-foot"><button class="btn">看提示</button><a href="#" data-go="lesson">回看“核心概念”</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Mistake bank -->
+<section class="view" id="bank">
+  <div class="bank">
+    <div class="bank-head">
+      <div>
+        <p class="kicker">做错过的题会自动收进来</p>
+        <h1 class="display">错题本</h1>
+      </div>
+      <div class="bank-stats">
+        <div class="stat"><div class="v">7</div><div class="k">待巩固</div></div>
+        <div class="stat"><div class="v">12</div><div class="k">已掌握</div></div>
+      </div>
+    </div>
+    <div class="filters">
+      <button class="chip" aria-pressed="true">待巩固</button>
+      <button class="chip" aria-pressed="false">已掌握</button>
+      <button class="chip" aria-pressed="false">全部</button>
+    </div>
+    <div class="bank-table">
+      <table>
+        <thead><tr><th>题目</th><th>做错</th><th>连续做对</th><th>我的笔记</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="ex-t">找出这条查询的错误</div><div class="ex-l">INNER JOIN · 找错</div></td>
+            <td>2 次</td>
+            <td><span class="streak"><i></i><i></i></span></td>
+            <td class="note">ON 里写成了 c.id = o.id，应该比较 customer_id。</td>
+            <td><button class="btn">再做一次</button></td>
+          </tr>
+          <tr>
+            <td><div class="ex-t">没有城市信息的顾客</div><div class="ex-l">NULL 与三值逻辑 · 写查询</div></td>
+            <td>3 次</td>
+            <td><span class="streak"><i class="on"></i><i></i></span></td>
+            <td class="note">city = NULL 永远不是 true，要用 IS NULL。</td>
+            <td><button class="btn">再做一次</button></td>
+          </tr>
+          <tr>
+            <td><div class="ex-t">按价格从高到低的前 3 件商品</div><div class="ex-l">ORDER BY、LIMIT 与 OFFSET · 拼排</div></td>
+            <td>1 次</td>
+            <td><span class="streak"><i class="on"></i><i></i></span></td>
+            <td class="note empty">添加笔记</td>
+            <td><button class="btn">再做一次</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const views = document.querySelectorAll('.view')
+const navButtons = document.querySelectorAll('.nav button')
+function show(id) {
+  views.forEach(v => v.classList.toggle('on', v.id === id))
+  navButtons.forEach(b => b.dataset.view === id ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'))
+  window.scrollTo(0, 0)
+  try { history.replaceState(null, '', '#' + id) } catch {}
+}
+navButtons.forEach(b => b.addEventListener('click', () => show(b.dataset.view)))
+document.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); show(el.dataset.go) }))
+document.querySelectorAll('.seg button, .filters .chip').forEach(b => b.addEventListener('click', () => {
+  b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)))
+}))
+const fromHash = () => { const id = location.hash.slice(1); if (document.getElementById(id)) show(id) }
+window.addEventListener('hashchange', fromHash)
+fromHash()
+</script>
+</body>
+</html>

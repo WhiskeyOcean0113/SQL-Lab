@@ -1,0 +1,36 @@
+{
+  "name": "sql-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run validate && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "validate": "tsx scripts/validate.ts",
+    "typecheck": "tsc --noEmit",
+    "prepare": "git config core.hooksPath .githooks",
+    "dev:fixture": "SQL_LAB_CONTENT=tests/fixtures/content vite"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.14",
+    "@electric-sql/pglite": "^0.5.10",
+    "@lezer/highlight": "^1.2.5",
+    "codemirror": "^6.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "markdown-it": "^15.0.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4",
+    "yaml": "^2.9.1"
+  }
+}

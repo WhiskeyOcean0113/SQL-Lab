@@ -1,0 +1,11 @@
+kind: parsons
+difficulty: 2
+lesson_ref: core
+prompt: { zh: 按年龄排序。, en: Sort by age. }
+hint: { zh: ORDER BY 在最后。, en: ORDER BY goes last. }
+solution: |
+  SELECT name
+  FROM pets
+  ORDER BY age
+distractors: [WHERE age]
+check: { order_matters: true }

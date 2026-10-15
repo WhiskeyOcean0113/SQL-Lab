@@ -1,0 +1,9 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt: { zh: 这条查询返回几行？, en: How many rows does this return? }
+hint: { zh: 注意 NULL。, en: Mind the NULL. }
+query: SELECT name FROM pets WHERE age < 5
+choices: ['1', '2', '3']
+answer: 0
+explain: { zh: 只有 Mochi 满足；Bean 的 age 是 NULL。, en: Only Mochi matches; Bean's age is NULL. }

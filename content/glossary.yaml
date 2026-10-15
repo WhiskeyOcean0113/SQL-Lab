@@ -1,0 +1,40 @@
+# Every term's translation, defined once. Lessons write {{term:id}} and the
+# renderer expands it per language. Change a translation here and it changes
+# everywhere. Keep ids kebab-case and English.
+
+table:            { en: table, zh: 表 }
+row:              { en: row, zh: 行 }
+column:           { en: column, zh: 列 }
+schema:           { en: schema, zh: 模式 }
+query:            { en: query, zh: 查询 }
+clause:           { en: clause, zh: 子句 }
+result-set:       { en: result set, zh: 结果集 }
+primary-key:      { en: primary key, zh: 主键 }
+foreign-key:      { en: foreign key, zh: 外键 }
+data-type:        { en: data type, zh: 数据类型 }
+"null":           { en: "NULL", zh: 空值 }
+three-valued-logic: { en: three-valued logic, zh: 三值逻辑 }
+predicate:        { en: predicate, zh: 谓词 }
+expression:       { en: expression, zh: 表达式 }
+alias:            { en: alias, zh: 别名 }
+logical-order:    { en: logical query processing order, zh: 逻辑执行顺序 }
+aggregate-function: { en: aggregate function, zh: 聚合函数 }
+group:            { en: group, zh: 分组 }
+join:             { en: join, zh: 连接 }
+inner-join:       { en: inner join, zh: 内连接 }
+outer-join:       { en: outer join, zh: 外连接 }
+left-join:        { en: left join, zh: 左连接 }
+self-join:        { en: self join, zh: 自连接 }
+cross-join:       { en: cross join, zh: 交叉连接 }
+cartesian-product: { en: Cartesian product, zh: 笛卡尔积 }
+join-condition:   { en: join condition, zh: 连接条件 }
+subquery:         { en: subquery, zh: 子查询 }
+correlated-subquery: { en: correlated subquery, zh: 关联子查询 }
+cte:              { en: common table expression, zh: 公用表表达式 }
+window-function:  { en: window function, zh: 窗口函数 }
+transaction:      { en: transaction, zh: 事务 }
+constraint:       { en: constraint, zh: 约束 }
+normalization:    { en: normalization, zh: 范式化 }
+index:            { en: index, zh: 索引 }
+view:             { en: view, zh: 视图 }
+query-plan:       { en: query plan, zh: 执行计划 }

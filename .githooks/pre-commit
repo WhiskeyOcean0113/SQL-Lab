@@ -1,0 +1,3 @@
+#!/bin/sh
+# Content and code must be consistent before anything is committed.
+npm run --silent typecheck && npm run --silent validate && npm test --silent

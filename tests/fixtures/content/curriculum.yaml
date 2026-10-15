@@ -1,0 +1,7 @@
+modules:
+  - id: m1
+    title: { zh: 基础, en: Basics }
+    summary: { zh: 第一步。, en: First steps. }
+    lessons: [basics, filtering]
+    planned:
+      - { zh: 以后再写, en: Coming later }

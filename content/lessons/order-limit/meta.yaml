@@ -1,4 +1,4 @@
-title:   { zh: ORDER BY、LIMIT 与 OFFSET, en: ORDER BY, LIMIT and OFFSET }
+title:   { zh: ORDER BY、LIMIT 与 OFFSET, en: "ORDER BY, LIMIT and OFFSET" }
 summary:
   zh: 让结果按你要的顺序排列，处理并列和 NULL，并只取其中的一页。
   en: Put results in the order you want, handle ties and NULLs, and take just one page of them.

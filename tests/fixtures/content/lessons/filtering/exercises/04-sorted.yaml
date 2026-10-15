@@ -1,7 +1,7 @@
 kind: write
 difficulty: 2
 lesson_ref: example
-prompt: { zh: 列出所有已知年龄的宠物的 `name` 和 `age`，按年龄从大到小排序。, en: List `name` and `age` of every pet with a known age, oldest first. }
-hint: { zh: 先 WHERE，再 ORDER BY ... DESC。, en: WHERE first, then ORDER BY ... DESC. }
+prompt: { zh: 列出所有已知年龄的宠物的 `name` 和 `age`，按年龄从大到小排序。, en: "List `name` and `age` of every pet with a known age, oldest first." }
+hint: { zh: 先 WHERE，再 ORDER BY ... DESC。, en: "WHERE first, then ORDER BY ... DESC." }
 solution: SELECT name, age FROM pets WHERE age IS NOT NULL ORDER BY age DESC
 check: { order_matters: true, column_names: true }

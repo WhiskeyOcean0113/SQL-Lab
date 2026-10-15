@@ -1,6 +1,6 @@
 import { t } from '../../i18n/index.ts'
 import { href, notFound, type Ctx } from '../app.ts'
-import { $$, html, mount, pad2, raw } from '../dom.ts'
+import { $$, biTitle, html, mount, pad2, raw } from '../dom.ts'
 import { hydrateRunner } from '../runner.ts'
 import { chapterNo } from './map.ts'
 
@@ -38,7 +38,7 @@ export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: 
         <article>
           <header class="lesson-head">
             <p class="kicker">${raw(t(lang, 'lesson.kicker', { n: index, total: course.path.length }))}</p>
-            <h1 class="display">${lesson.title[lang]}</h1>
+            <h1 class="display">${biTitle(lesson.title, lang)}</h1>
             <p class="lede">${lesson.summary[lang]}</p>
             <div class="facts">
               <span>${raw(t(lang, 'lesson.dataset'))} <b>${lesson.dataset}</b></span>

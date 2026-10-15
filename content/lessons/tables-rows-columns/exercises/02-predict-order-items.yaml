@@ -10,7 +10,7 @@ hint:
 query: SELECT * FROM order_items;
 choices:
   - { zh: 一笔订单, en: An order }
-  - { zh: 某笔订单里的一种商品，以及买了几件, en: One product within an order, and how many were bought }
+  - { zh: 某笔订单里的一种商品，以及买了几件, en: "One product within an order, and how many were bought" }
   - { zh: 一件商品, en: A product }
   - { zh: 一位顾客的购物车, en: A customer's shopping cart }
 answer: 1

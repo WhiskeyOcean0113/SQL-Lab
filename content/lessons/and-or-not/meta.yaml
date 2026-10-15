@@ -1,4 +1,4 @@
-title:   { zh: AND、OR、NOT 与优先级, en: AND, OR, NOT and precedence }
+title:   { zh: AND、OR、NOT 与优先级, en: "AND, OR, NOT and precedence" }
 summary:
   zh: 把几个条件组合起来，并弄清楚没有括号时数据库先算哪一个。
   en: Combine conditions, and know which one the database evaluates first when there are no parentheses.

@@ -30,6 +30,9 @@ function bi(value: unknown, where: string, problems: string[]): Bi {
   if (typeof value === 'string') return { zh: value, en: value }
   const v = (value ?? {}) as Partial<Bi>
   for (const l of LANGS) if (typeof v[l] !== 'string' || !v[l]!.trim()) problems.push(`${where}: missing ${l}`)
+  // `{ en: Tables, rows and columns }` silently becomes en: "Tables" plus stray keys.
+  const extra = Object.keys(v).filter(k => !(LANGS as string[]).includes(k))
+  if (extra.length) problems.push(`${where}: unexpected keys ${extra.join(', ')} (quote values that contain commas)`)
   return { zh: v.zh ?? '', en: v.en ?? '' }
 }
 

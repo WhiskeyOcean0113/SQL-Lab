@@ -1,4 +1,4 @@
-title:   { zh: IN、BETWEEN 与 LIKE, en: IN, BETWEEN and LIKE }
+title:   { zh: IN、BETWEEN 与 LIKE, en: "IN, BETWEEN and LIKE" }
 summary:
   zh: 用更简洁的写法表达"属于这几个值之一"、"落在这个范围里"和"文字符合这个样子"。
   en: Say "one of these values", "within this range" and "text shaped like this" more concisely.

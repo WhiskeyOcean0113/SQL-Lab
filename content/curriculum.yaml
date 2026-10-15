@@ -55,7 +55,7 @@ modules:
       en: Combine tables through shared columns, and know which rows each kind of join keeps.
     lessons: [inner-join]
     planned:
-      - { zh: LEFT、RIGHT 与 FULL JOIN, en: LEFT, RIGHT and FULL JOIN }
+      - { zh: LEFT、RIGHT 与 FULL JOIN, en: "LEFT, RIGHT and FULL JOIN" }
       - { zh: 自连接, en: Self joins }
       - { zh: CROSS JOIN 与行数暴增, en: CROSS JOIN and row explosion }
       - { zh: 多表 join 与聚合, en: Joining several tables and aggregating }
@@ -70,7 +70,7 @@ modules:
       - { zh: 标量子查询与表子查询, en: Scalar and table subqueries }
       - { zh: IN 与 EXISTS, en: IN and EXISTS }
       - { zh: 关联子查询, en: Correlated subqueries }
-      - { zh: UNION、INTERSECT 与 EXCEPT, en: UNION, INTERSECT and EXCEPT }
+      - { zh: UNION、INTERSECT 与 EXCEPT, en: "UNION, INTERSECT and EXCEPT" }
 
   - id: m6
     title: { zh: 进阶查询, en: Advanced queries }

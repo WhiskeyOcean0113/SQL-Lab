@@ -47,10 +47,12 @@ export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n:
           </div>
           <div class="work"></div>
         </div>
+        <nav class="ex-pager" aria-label="${tText(lang, 'lesson.exercises')}"></nav>
       </div>
     </div>`)
 
   renderSteps(root, ctx, lesson, n)
+  renderPager(root, ctx, lesson, n)
   const hintBtn = $<HTMLButtonElement>('[data-hint]', root)
   hintBtn.addEventListener('click', () => {
     const body = $('.hint-body', root)
@@ -76,6 +78,32 @@ function renderSteps(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
   })}`)
 }
 
+/**
+ * Always-visible way on: previous / next exercise, and on the last exercise the
+ * next lesson, open once every exercise here is right (or in review mode).
+ */
+function renderPager(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
+  const lang = ctx.lang
+  const total = lesson.exercises.length
+  const nextId = ctx.course.path[ctx.course.path.indexOf(lesson.id) + 1]
+  const next = nextId ? ctx.course.lessons[nextId] : undefined
+  const left = n > 1
+    ? html`<a class="btn ghost" href="${href.practice(lesson.id, n - 1)}">← ${raw(t(lang, 'ex.prev'))}</a>`
+    : html`<a class="btn ghost" href="${href.lesson(lesson.id)}">← ${raw(t(lang, 'ex.backToLesson'))}</a>`
+  let right: Raw
+  if (n < total) {
+    right = html`<a class="btn" href="${href.practice(lesson.id, n + 1)}">${raw(t(lang, 'ex.next'))} →</a>`
+  } else if (!next) {
+    right = html`<a class="btn" href="${href.map()}">${raw(t(lang, 'ex.backToMap'))}</a>`
+  } else if (ctx.states[next.id] !== 'locked') {
+    right = html`<a class="btn primary" href="${href.lesson(next.id)}">${raw(t(lang, 'ex.nextLessonNamed', { title: next.title[lang] }))} →</a>`
+  } else {
+    const remaining = lesson.exercises.filter(e => !ctx.status.get(e.id)?.solved).length
+    right = html`<span class="pager-note">${raw(t(lang, 'ex.nextLocked', { n: remaining, title: next.title[lang] }))}</span>`
+  }
+  mount($('.ex-pager', root), html`${left}<span class="sp"></span>${right}`)
+}
+
 /** Record a submission, refresh progress, and say whether the lesson just completed. */
 async function record(env: Env, submitted: string, grade: Pick<Grade, 'correct' | 'issues' | 'error'>) {
   const { ctx, ex, lesson } = env
@@ -85,6 +113,7 @@ async function record(env: Env, submitted: string, grade: Pick<Grade, 'correct' 
   }, ctx.course)
   await ctx.refresh()
   renderSteps(env.root, ctx, lesson, env.n)
+  renderPager(env.root, ctx, lesson, env.n)
   env.onProgress()
   return { lessonCompleted, attempts: ctx.status.get(ex.id)?.attempts ?? 1 }
 }

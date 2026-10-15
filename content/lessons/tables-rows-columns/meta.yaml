@@ -1,4 +1,4 @@
-title:   { zh: 表、行与列, en: Tables, rows and columns }
+title:   { zh: 表、行与列, en: "Tables, rows and columns" }
 summary:
   zh: 认识关系数据库最基本的结构，并学会用一条查询看清一张表里有什么。
   en: Learn the basic shape of a relational database, and how to look inside a table with one query.

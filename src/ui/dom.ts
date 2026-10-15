@@ -38,3 +38,13 @@ export function $$<T extends Element = HTMLElement>(sel: string, root: ParentNod
 }
 
 export const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/**
+ * A title in the primary language followed by the other language, quieter.
+ * Neither version of the site is monolingual, so headings carry both too.
+ */
+export function biTitle(title: { zh: string; en: string }, lang: 'zh' | 'en'): Raw {
+  const other = lang === 'zh' ? 'en' : 'zh'
+  const same = title.zh.trim().toLowerCase() === title.en.trim().toLowerCase()
+  return html`${title[lang]}${same ? '' : html`<span class="title-alt" lang="${other === 'zh' ? 'zh-Hans' : 'en'}">${title[other]}</span>`}`
+}

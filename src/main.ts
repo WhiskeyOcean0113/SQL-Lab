@@ -3,7 +3,7 @@ import type { Lang } from './content/types.ts'
 import { Engine } from './engine/client.ts'
 import { setGlossary, t, tText } from './i18n/index.ts'
 import { Progress } from './state/progress.ts'
-import { createCtx, parseRoute, renderTop, type Ctx } from './ui/app.ts'
+import { REVIEW, createCtx, parseRoute, renderTop, type Ctx } from './ui/app.ts'
 import { $, html, mount, raw } from './ui/dom.ts'
 import { renderBank } from './ui/views/bank.ts'
 import { renderExercise } from './ui/views/exercise.ts'
@@ -20,7 +20,8 @@ function applyLang(lang: Lang) {
 
 async function boot() {
   setGlossary(course.glossary)
-  const progress = await Progress.open('idb://sql-lab')
+  // Review mode never touches the real learning record.
+  const progress = await Progress.open(REVIEW ? 'idb://sql-lab-review' : 'idb://sql-lab')
   const lang = ((await progress.getSetting('lang')) as Lang | undefined) ?? 'zh'
   applyLang(lang)
   const engine = new Engine(course.datasets)

@@ -13,6 +13,7 @@ and content written in different sessions consistent.
 ```bash
 npm run dev        # site at http://localhost:5173, reloads on content/ changes
 npm run dev:fixture  # same UI against tests/fixtures/content (a tiny two-lesson course)
+npm run review     # port 5177: every lesson unlocked, separate progress database, for checking content
 npm test           # engine, grader, content pipeline, progress store
 npm run validate   # every content rule below; --verbose lists warnings
 npm run typecheck

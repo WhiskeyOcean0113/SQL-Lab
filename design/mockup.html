@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SQL Lab mockup</title>
 <style>
-/* Latin in Arial, Chinese in SimSun. SimSun has no bold, so the type system
-   never asks for bold where Chinese can appear: hierarchy comes from size,
-   colour and space. */
+/* Latin in Arial, Chinese in Noto Sans SC (思源黑体). Regular weight only:
+   hierarchy comes from size, colour and space. */
 :root {
   --page: #F7F8FA;
   --sheet: #FFFFFF;
@@ -25,8 +24,8 @@
   --ok-tint: #D4EEE1;
   --bad: #CF3F2E;
   --bad-tint: #FCDAD4;
-  --font: Arial, "Helvetica Neue", SimSun, "宋体", "Songti SC", STSong, serif;
-  --mono: Menlo, "SF Mono", Consolas, SimSun, monospace;
+  --font: Arial, "Helvetica Neue", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: Menlo, "SF Mono", Consolas, "Noto Sans SC", monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {

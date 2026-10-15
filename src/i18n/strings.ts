@@ -159,6 +159,7 @@ export const strings = {
     'glossary.en': 'English',
 
     'review.badge': '审阅模式',
+    'theme.dark': '深色模式',
     'theme.toDark': '切换到深色模式',
     'theme.toLight': '切换到浅色模式',
     'boot.loading': '正在加载…',
@@ -320,6 +321,7 @@ export const strings = {
     'glossary.en': 'English',
 
     'review.badge': 'Review mode',
+    'theme.dark': 'Dark mode',
     'theme.toDark': 'Switch to dark mode',
     'theme.toLight': 'Switch to light mode',
     'boot.loading': 'Loading…',

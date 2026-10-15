@@ -1,6 +1,7 @@
 /* SQL Lab — simple, modern, quiet.
-   Latin in Arial, Chinese in SimSun. SimSun has no bold, so nothing that can
-   contain Chinese asks for bold: hierarchy comes from size, colour and space.
+   Latin in Arial, Chinese in Noto Sans SC (思源黑体, bundled, so every device
+   renders the same). Text stays at regular weight: hierarchy comes from size,
+   colour and space.
    The approved mockup is design/mockup.html. */
 
 :root {
@@ -39,9 +40,9 @@
   --tk-string: #93591A;
   /* Inline code: ΔE ≈ 7 from the page (was 2.7, which read as no highlight). */
   --code-bg: #E1E6EE;
-  --font: Arial, "Helvetica Neue", SimSun, "宋体", "Songti SC", STSong, serif;
-  --mono: Menlo, "SF Mono", Consolas, SimSun, monospace;
-  /* Type scale. Nothing below 13px: SimSun breaks up at small sizes. */
+  --font: Arial, "Helvetica Neue", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: Menlo, "SF Mono", Consolas, "Noto Sans SC", monospace;
+  /* Type scale. Nothing below 13px: Chinese glyphs lose detail below that. */
   --fs-2xs: 12px;
   --fs-xs: 13px;
   --fs-sm: 14px;
@@ -95,9 +96,15 @@ a { color: var(--accent-ink); }
 .nav a:hover { color: var(--ink); background: var(--well); }
 .nav a[aria-current="page"] { color: var(--ink); background: var(--sheet); box-shadow: 0 0 0 1px var(--line); }
 .top-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; }
-.theme-btn { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--sheet); color: var(--ink-2); cursor: pointer; }
-.theme-btn:hover { color: var(--ink); border-color: var(--ink-3); }
-.theme-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.theme-switch { position: relative; width: 60px; height: 32px; flex: none; padding: 0; border: 1px solid var(--line-2); border-radius: 16px; background: var(--well); cursor: pointer; }
+.theme-switch:hover { border-color: var(--ink-3); }
+.ts-knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--sheet); box-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 0 0 1px var(--line); transition: transform 0.18s ease; }
+.theme-switch[aria-checked="true"] .ts-knob { transform: translateX(28px); }
+.ts-icon { position: absolute; top: 8px; width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; color: var(--ink-3); transition: color 0.18s ease; }
+.ts-sun { left: 8px; }
+.ts-moon { right: 8px; }
+.theme-switch[aria-checked="false"] .ts-sun, .theme-switch[aria-checked="true"] .ts-moon { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .ts-knob, .ts-icon { transition: none; } }
 .lang-pick { position: relative; display: inline-flex; align-items: center; flex: none; color: var(--ink-2); }
 .lang-pick select { appearance: none; -webkit-appearance: none; height: 32px; padding: 0 30px 0 12px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--sheet); color: var(--ink); font-size: var(--fs-sm); cursor: pointer; }
 .lang-pick select:hover { border-color: var(--ink-3); }
@@ -226,7 +233,7 @@ dfn.term-repeat .term-alt { display: none; }
 .prose li::marker { color: var(--ink-3); }
 .prose blockquote { margin: 24px 0; padding: 16px 20px; border-radius: 10px; background: var(--well); font-size: var(--fs-md); line-height: 1.85; }
 .prose blockquote p:last-child { margin: 0; }
-/* SimSun has no bold, so emphasis is a highlighter stroke, not weight. */
+/* Text stays regular weight, so emphasis is a highlighter stroke. */
 .prose strong { font-weight: 400; color: var(--ink); text-decoration: underline 3px color-mix(in srgb, var(--amber) 55%, transparent); text-underline-offset: 5px; text-decoration-skip-ink: none; }
 .prose pre.sql-static { margin: 20px 0; padding: 16px 20px; background: var(--well); border-radius: 10px; font: var(--fs-sm)/1.75 var(--mono); overflow-x: auto; }
 .prose pre.sql-static code { background: none; box-shadow: none; padding: 0; font: inherit; }

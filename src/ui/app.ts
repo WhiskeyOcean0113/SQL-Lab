@@ -93,7 +93,7 @@ export function renderTop(ctx: Ctx, route: Route, onLang: (l: Lang) => void) {
         ${item('glossary', href.glossary(), tText(lang, 'nav.glossary'))}
       </nav>
       <div class="top-tools">
-      <button type="button" class="theme-btn" data-theme-toggle></button>
+      <button type="button" class="theme-switch" role="switch" data-theme-toggle></button>
       <label class="lang-pick"><span class="sr-only">Language / 语言</span><select data-lang>
         <option value="zh" lang="zh-Hans"${lang === 'zh' ? raw(' selected') : ''}>中文</option>
         <option value="en" lang="en"${lang === 'en' ? raw(' selected') : ''}>English</option>
@@ -103,23 +103,26 @@ export function renderTop(ctx: Ctx, route: Route, onLang: (l: Lang) => void) {
   const pick = $<HTMLSelectElement>('[data-lang]', top)
   pick.addEventListener('change', () => onLang(pick.value as Lang))
   const themeBtn = $<HTMLButtonElement>('[data-theme-toggle]', top)
-  paintThemeButton(themeBtn, lang)
+  paintThemeSwitch(themeBtn, lang)
   themeBtn.addEventListener('click', () => {
     setTheme(currentTheme() === 'dark' ? 'light' : 'dark')
-    paintThemeButton(themeBtn, lang)
+    paintThemeSwitch(themeBtn, lang)
   })
 }
 
-const SUN = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>'
-const MOON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3z"/></svg>'
+const SUN = '<svg class="ts-icon ts-sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/></svg>'
+const MOON = '<svg class="ts-icon ts-moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M12.6 10A5 5 0 0 1 6 3.4a5 5 0 1 0 6.6 6.6z"/></svg>'
 
-/** The button shows where a click takes you: a moon in light mode, a sun in dark. */
-export function paintThemeButton(btn: HTMLButtonElement, lang: Lang) {
-  const toDark = currentTheme() === 'light'
-  const label = tText(lang, toDark ? 'theme.toDark' : 'theme.toLight')
-  btn.innerHTML = toDark ? MOON : SUN
-  btn.setAttribute('aria-label', label)
-  btn.title = label
+/**
+ * A switch, not a button: sun on the left, moon on the right, and the knob
+ * sits under the mode that is on. "Checked" means dark.
+ */
+export function paintThemeSwitch(el: HTMLButtonElement, lang: Lang) {
+  if (!el.firstChild) el.innerHTML = `<span class="ts-knob" aria-hidden="true"></span>${SUN}${MOON}`
+  const dark = currentTheme() === 'dark'
+  el.setAttribute('aria-checked', String(dark))
+  el.setAttribute('aria-label', tText(lang, 'theme.dark'))
+  el.title = tText(lang, dark ? 'theme.toLight' : 'theme.toDark')
 }
 
 /**

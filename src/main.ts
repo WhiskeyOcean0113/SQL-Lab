@@ -12,6 +12,7 @@ import { renderExercise } from './ui/views/exercise.ts'
 import { renderGlossary } from './ui/views/glossary.ts'
 import { renderLesson } from './ui/views/lesson.ts'
 import { renderMap } from './ui/views/map.ts'
+import '@fontsource/noto-sans-sc/400.css'
 import './styles/app.css'
 
 const main = $('#main')

@@ -8,10 +8,13 @@
   --sheet: #FFFFFF;
   --well: #EEF1F4;
   --ink: #1C2026;
-  --ink-2: #545C66;
-  --ink-3: #8A929C;
+  /* Every text colour is at least 4.5:1 on page, sheet and well (WCAG AA). */
+  --ink-2: #424952;
+  --ink-3: #5F6771;
   --line: #E2E5EA;
   --line-2: #CDD2D9;
+  /* Empty progress tracks: a shape that carries meaning, so ≥ 2:1, darker than a border. */
+  --track: #A3ABB5;
   --accent: #3A6788;
   --accent-ink: #2C5370;
   --accent-tint: #D9E7F6;
@@ -21,7 +24,7 @@
   --ok: #126B4E;
   --ok-ink: #0E6447;
   --ok-tint: #D4EEE1;
-  --bad: #CF3F2E;
+  --bad: #C23A2B;
   --bad-ink: #A62A1D;
   --bad-tint: #FCDAD4;
   /* Two quiet secondary hues for content, never for right/wrong:
@@ -55,16 +58,16 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #A9B0B8; --ink-3: #78808A;
-    --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #1B3657;
+    --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #B8BEC6; --ink-3: #949CA6;
+    --line: #2B3138; --line-2: #3A414A; --track: #555D68; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #1B3657;
     --ok: #4FD1A0; --ok-ink: #4FD1A0; --ok-tint: #123F31; --bad: #FF8A70; --bad-ink: #FF8A70; --bad-tint: #55211A; --code-bg: #313944;
     --violet: #ADA0E8; --violet-ink: #C2B8F0; --violet-tint: #2C2650; --amber: #E0AE60; --amber-ink: #EBC27F; --amber-tint: #46340F; --tk-num: #ADA0E8; --tk-string: #E0AE60;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #A9B0B8; --ink-3: #78808A;
-  --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #1B3657;
+  --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #B8BEC6; --ink-3: #949CA6;
+  --line: #2B3138; --line-2: #3A414A; --track: #555D68; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #1B3657;
   --ok: #4FD1A0; --ok-ink: #4FD1A0; --ok-tint: #123F31; --bad: #FF8A70; --bad-ink: #FF8A70; --bad-tint: #55211A; --code-bg: #313944;
     --violet: #ADA0E8; --violet-ink: #C2B8F0; --violet-tint: #2C2650; --amber: #E0AE60; --amber-ink: #EBC27F; --amber-tint: #46340F; --tk-num: #ADA0E8; --tk-string: #E0AE60;
   color-scheme: dark;
@@ -87,8 +90,6 @@ a { color: var(--accent-ink); }
 .brand-mark { width: 18px; height: 18px; display: grid; grid-template: 1fr 1fr / 1fr 1fr; gap: 2px; flex: none; }
 .brand-mark i { background: var(--ink); border-radius: 1px; }
 .brand-mark i:nth-child(4) { background: var(--accent); }
-.review-badge { font-size: var(--fs-xs); color: var(--accent-ink); background: var(--accent-tint); padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
-.brand-wrap { display: flex; align-items: center; gap: 12px; flex: none; }
 .nav { display: flex; gap: 4px; }
 .nav a { padding: 7px 12px; border-radius: 6px; color: var(--ink-2); font-size: var(--fs-sm); text-decoration: none; white-space: nowrap; }
 .nav a:hover { color: var(--ink); background: var(--well); }
@@ -125,15 +126,15 @@ kbd { font: var(--fs-2xs) var(--mono); color: var(--ink-3); border: 1px solid va
 
 /* Terms: primary form, other language in parentheses on first use per section. */
 dfn.term { font-style: normal; text-decoration: underline dotted var(--violet); text-underline-offset: 5px; text-decoration-thickness: 1px; }
-dfn .term-alt { color: var(--violet-ink); font-size: 0.86em; }
+/* The mapping is the same size as the text it maps: only colour sets it apart. */
+dfn .term-alt { color: var(--violet-ink); }
 dfn.term-repeat { text-decoration: none; }
 dfn.term-repeat .term-alt { display: none; }
 .annotate-all dfn.term-repeat .term-alt { display: inline; }
 
 /* Terms inside titles: the mapping shows, quieter, without the dotted rule. */
-.ttl dfn.term { text-decoration: none; white-space: nowrap; }
-.ttl .term-alt { font-size: 0.86em; }
-.display .term-alt { font-size: 0.5em; letter-spacing: 0; }
+.ttl dfn.term { text-decoration: none; }
+.display .term-alt { letter-spacing: 0; }
 
 /* SQL tokens, shared by static snippets and the editor. */
 .tk-keyword { color: var(--accent-ink); }
@@ -153,7 +154,7 @@ dfn.term-repeat .term-alt { display: none; }
 .next-bar .segs { flex: 1; width: auto; }
 .overall { display: flex; align-items: center; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); font-size: var(--fs-xs); color: var(--ink-2); }
 .overall .pct { min-width: 3ch; text-align: right; font-variant-numeric: tabular-nums; }
-.bar { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar { flex: 1; height: 4px; background: var(--track); border-radius: 2px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
 
 .modules { padding: 16px 0 96px; }
@@ -173,15 +174,14 @@ dfn.term-repeat .term-alt { display: none; }
 .st-done::after { content: ""; width: 7px; height: 4px; border: solid var(--sheet); border-width: 0 0 1.5px 1.5px; transform: translateY(-1px) rotate(-45deg); }
 .st-now { box-shadow: inset 0 0 0 1.5px var(--accent); }
 .st-now::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-.st-lock { box-shadow: inset 0 0 0 1px var(--line-2); }
+.st-lock { box-shadow: inset 0 0 0 1px var(--track); }
 .lessons .locked { color: var(--ink-3); }
 .lessons .tag { margin-left: auto; font-size: var(--fs-xs); color: var(--ink-3); white-space: nowrap; }
 .row-bar { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
 
 /* Exercise progress: one segment per exercise, a fixed overall width so rows line up. */
 .segs { display: flex; gap: 3px; width: 84px; }
-.segs i { flex: 1; height: 6px; border-radius: 2px; background: var(--line-2); opacity: 0.7; }
-.segs i.ok, .segs i.bad { opacity: 1; }
+.segs i { flex: 1; height: 6px; border-radius: 2px; background: var(--track); }
 .segs i.ok { background: var(--ok); }
 .segs i.bad { background: repeating-linear-gradient(-45deg, var(--bad) 0 2px, color-mix(in srgb, var(--bad) 30%, transparent) 2px 4px); }
 .segs-n { font-size: var(--fs-xs); color: var(--ink-3); min-width: 3.4em; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -204,7 +204,7 @@ dfn.term-repeat .term-alt { display: none; }
 .ex-list .pip { margin-left: auto; }
 .ex-list a:hover { color: var(--ink); }
 .ex-list a[aria-current="step"] { color: var(--ink); }
-.pip { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line-2); flex: none; }
+.pip { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--track); flex: none; }
 .pip.ok { background: var(--ok); box-shadow: none; }
 .pip.bad { box-shadow: inset 0 0 0 1.5px var(--bad); }
 
@@ -276,7 +276,7 @@ table.grid { width: 100%; border-collapse: collapse; font: var(--fs-xs)/1.45 var
 .ex-head { display: flex; align-items: flex-end; gap: 24px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
 .steps { display: flex; gap: 6px; margin-left: auto; }
 .steps { align-self: center; padding-top: 12px; }
-.steps a { width: 32px; height: 6px; border-radius: 2px; background: var(--line-2); }
+.steps a { width: 32px; height: 6px; border-radius: 2px; background: var(--track); }
 .steps a.ok { background: var(--ok); }
 /* Stripes, so a wrong exercise reads differently from a right one without colour. */
 .steps a.bad { background: repeating-linear-gradient(-45deg, var(--bad) 0 3px, color-mix(in srgb, var(--bad) 35%, transparent) 3px 6px); }
@@ -393,7 +393,7 @@ table.grid { width: 100%; border-collapse: collapse; font: var(--fs-xs)/1.45 var
 .bank-table .ex-l { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 4px; }
 .bank-table .actions { text-align: right; }
 .streak { display: inline-flex; gap: 4px; vertical-align: middle; }
-.streak i { width: 14px; height: 4px; border-radius: 2px; background: var(--line-2); }
+.streak i { width: 14px; height: 4px; border-radius: 2px; background: var(--track); }
 .streak i.on { background: var(--ok); }
 .note-btn { border: 0; background: none; padding: 0; text-align: left; cursor: pointer; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.7; max-width: 300px; }
 .note-btn.empty { color: var(--ink-3); }
@@ -407,7 +407,7 @@ table.grid { width: 100%; border-collapse: collapse; font: var(--fs-xs)/1.45 var
 .terms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); border-top: 1px solid var(--line); }
 .terms div { display: flex; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); margin-right: 32px; }
 .terms .p { font-size: var(--fs-md); white-space: nowrap; }
-.terms .o { font-size: var(--fs-sm); color: var(--ink-3); }
+.terms .o { font-size: var(--fs-md); color: var(--ink-2); }
 
 /* ---------- Narrow screens ---------- */
 @media (max-width: 900px) {

@@ -83,7 +83,7 @@ export function renderTop(ctx: Ctx, route: Route, onLang: (l: Lang) => void) {
   const top = $('#top')
   mount(top, html`
     <div class="top-in">
-      <div class="brand-wrap"><a class="brand" href="${href.map()}"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>SQL Lab</span></a>${REVIEW ? html`<span class="review-badge" title="${tText(lang, 'review.hint')}">${tText(lang, 'review.badge')}</span>` : ''}</div>
+      <a class="brand" href="${href.map()}"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>SQL Lab</span></a>
       <nav class="nav" aria-label="Main">
         ${item('map', href.map(), tText(lang, 'nav.map'))}
         ${item('lesson', learnHref, tText(lang, 'nav.learn'))}

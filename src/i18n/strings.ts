@@ -159,7 +159,6 @@ export const strings = {
     'glossary.en': 'English',
 
     'review.badge': '审阅模式',
-    'review.hint': '所有讲解都已解锁；这里的做题记录和正式学习完全分开。',
     'boot.loading': '正在加载…',
     'boot.failed': '启动失败：{message}',
   },
@@ -319,7 +318,6 @@ export const strings = {
     'glossary.en': 'English',
 
     'review.badge': 'Review mode',
-    'review.hint': 'Every lesson is unlocked, and progress here is kept apart from your real learning record.',
     'boot.loading': 'Loading…',
     'boot.failed': 'Could not start: {message}',
   },

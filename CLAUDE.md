@@ -254,7 +254,10 @@ tint, extra rows struck through in red.
 Two secondary hues add a little colour to content and never mean right or
 wrong: violet marks glossary terms (dotted rule, other-language form) and the
 "predict" exercise kind; amber marks emphasis (a thick underline stroke, since
-there is no bold) and the "debug" kind. Type sizes come only from the `--fs-*`
+there is no bold) and the "debug" kind. Every text colour, secondary and tertiary included, is at least 4.5:1
+against page, sheet and well in both themes; empty progress tracks use
+`--track` (≥ 2:1). A term's other-language form is the same size as the
+text around it and differs only in colour. Type sizes come only from the `--fs-*`
 scale in `app.css` (13 / 14 / 15 / 17 / 18 / 20 / 26 / 32 / 44 px); nothing
 below 13px except `kbd`. Exercise progress is always drawn the same way:
 one segment per exercise, solved green, attempted striped red (`.segs`,

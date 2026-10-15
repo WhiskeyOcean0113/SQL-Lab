@@ -63,7 +63,9 @@ function titleFor(ctx: Ctx, r: ReturnType<typeof parseRoute>): string {
   const l = ctx.lang
   const name = r.name === 'lesson' || r.name === 'practice' ? ctx.course.lessons[r.id]?.title[l] : undefined
   const page = name ?? tText(l, r.name === 'mistakes' ? 'nav.mistakes' : r.name === 'glossary' ? 'nav.glossary' : 'nav.map')
-  return `${page} · SQL Lab`
+  // Review mode is only marked in the tab title: it is a tool for checking
+  // content, and a badge in the page looked like a control.
+  return `${page} · SQL Lab${REVIEW ? ` (${tText(l, 'review.badge')})` : ''}`
 }
 
 mount(main, html`<div class="boot">${raw(t('zh', 'boot.loading'))}</div>`)

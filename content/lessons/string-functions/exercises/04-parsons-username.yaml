@@ -1,0 +1,17 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询：列出有邮箱的顾客的名字和邮箱用户名（`@` 前面的部分），第二列命名为 `username`。有一个片段是多余的。
+  en: Arrange the pieces into a query listing the name and email username (the part before `@`) of every customer who has an email, with the second column named `username`. One piece is not needed.
+hint:
+  zh: "`split_part` 的段号从 1 开始。"
+  en: "`split_part` numbers its pieces from 1."
+solution: |
+  SELECT name,
+  split_part(email, '@', 1) AS username
+  FROM customers
+  WHERE email IS NOT NULL;
+distractors:
+  - split_part(email, '@', 0) AS username
+check: { column_names: true }

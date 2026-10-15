@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 下面这条查询返回什么？（2024 年是闰年。）
+  en: What does this query return? (2024 is a leap year.)
+hint:
+  zh: 2 月没有 31 日。PostgreSQL 会怎样处理？
+  en: February has no 31st. What does PostgreSQL do about that?
+query: SELECT DATE '2024-01-31' + INTERVAL '1 month' AS next_month;
+choices:
+  - "2024-03-02 00:00:00"
+  - "2024-02-29 00:00:00"
+  - "2024-02-31"
+  - { zh: 查询会报错, en: The query fails }
+answer: 1
+explain:
+  zh: 2024-02-29 00:00:00。加一个月时，如果目标月份没有那一天，PostgreSQL 会调整到那个月的最后一天，而不是顺延到 3 月。结果带着 00:00:00，因为 `date + interval` 得到的是 `timestamp`。
+  en: 2024-02-29 00:00:00. When the target month has no such day, PostgreSQL clamps to that month's last day rather than spilling into March. The result has 00:00:00 because `date + interval` is a `timestamp`.

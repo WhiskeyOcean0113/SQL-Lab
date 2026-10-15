@@ -1,0 +1,27 @@
+kind: predict
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 三件商品的单价都在 100 美元以上。下面这条查询给它们的 `tier` 是什么？
+  en: The three products below all cost over 100 dollars. What `tier` does this query give them?
+hint:
+  zh: CASE 从上往下判断，第一个成立的分支就给出结果。
+  en: CASE tests from the top, and the first branch that holds supplies the result.
+query: |
+  SELECT name, price,
+         CASE
+           WHEN price >= 30 THEN 'standard'
+           WHEN price >= 100 THEN 'premium'
+           ELSE 'budget'
+         END AS tier
+  FROM products
+  WHERE price >= 100;
+choices:
+  - { zh: 三件都是 premium, en: All three are premium }
+  - { zh: 三件都是 standard, en: All three are standard }
+  - { zh: 有的是 premium，有的是 standard, en: "Some premium, some standard" }
+answer: 1
+verify: { rows: 3 }
+explain:
+  zh: 三件都是 standard。价格在 100 以上的商品也满足 `price >= 30`，而这个分支写在前面，于是 premium 的分支永远轮不到。要把更窄的条件 `price >= 100` 写在前面。
+  en: All three are standard. Anything over 100 also satisfies `price >= 30`, and that branch comes first, so the premium branch never gets a turn. Put the narrower `price >= 100` first.

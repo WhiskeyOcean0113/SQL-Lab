@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 下面这条查询返回多少？
+  en: What does this query return?
+hint:
+  zh: 括号里的除法是在什么类型下完成的？转换发生在除法之前还是之后？
+  en: In what type does the division inside the parentheses happen, and does the cast come before or after it?
+query: SELECT round((25 / 3)::numeric, 2) AS share;
+choices:
+  - '8.33'
+  - '8.00'
+  - { zh: 查询会报错, en: The query fails }
+answer: 1
+explain:
+  zh: 8.00。括号里的 `25 / 3` 先按整数除法算出 8，之后再转成 `numeric` 已经太晚了。写成 `25::numeric / 3` 才是 8.33。
+  en: 8.00. The `25 / 3` inside the parentheses is computed first as integer division, giving 8, and casting to `numeric` afterwards is too late. `25::numeric / 3` gives 8.33.

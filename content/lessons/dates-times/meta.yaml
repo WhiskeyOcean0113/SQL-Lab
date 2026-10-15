@@ -1,0 +1,6 @@
+title:   { zh: 日期与时间, en: Dates and times }
+summary:
+  zh: 计算时间差、加减日期、取出年月日，并避开月末和时区这类陷阱。
+  en: Measure time between events, add to dates, pull out years and months, and steer clear of month-end and time-zone traps.
+dataset: shop
+prereqs: [string-functions]

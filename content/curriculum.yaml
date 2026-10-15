@@ -28,13 +28,8 @@ modules:
     summary:
       zh: 在查询里计算新值：算术、字符串、日期时间、条件表达式和类型转换。
       en: Compute new values in a query with arithmetic, strings, dates, conditionals and casts.
-    lessons: []
-    planned:
-      - { zh: 算术与数值类型, en: Arithmetic and numeric types }
-      - { zh: 字符串函数, en: String functions }
-      - { zh: 日期与时间, en: Dates and times }
-      - { zh: CASE 表达式, en: CASE expressions }
-      - { zh: 类型转换 CAST, en: Type casts }
+    lessons: [arithmetic, string-functions, dates-times, case-expressions, type-casts]
+    planned: []
 
   - id: m3
     title: { zh: 聚合, en: Aggregation }

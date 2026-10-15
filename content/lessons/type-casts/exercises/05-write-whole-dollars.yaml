@@ -1,0 +1,11 @@
+kind: write
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 列出每件商品的名字和四舍五入到整数美元的价格，列依次为 `name` 和 `whole_dollars`。
+  en: List each product's name and its price rounded to whole dollars, as the columns `name` and `whole_dollars`.
+hint:
+  zh: 把 `price` 转成 `integer`。
+  en: Cast `price` to `integer`.
+solution: SELECT name, CAST(price AS integer) AS whole_dollars FROM products;
+check: { column_names: true }

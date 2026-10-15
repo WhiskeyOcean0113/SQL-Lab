@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 列出每笔订单的编号和阶段：状态为 `delivered` 或 `cancelled` 的是 `closed`，其他都是 `open`，列依次为 `id` 和 `phase`。
+  en: List each order's id and phase, `closed` when the status is `delivered` or `cancelled` and `open` otherwise, as the columns `id` and `phase`.
+hint:
+  zh: 可以用简单 CASE，也可以用 `WHEN status IN (...)`。
+  en: Either a simple CASE or `WHEN status IN (...)` works.
+solution: |
+  SELECT id,
+         CASE WHEN status IN ('delivered', 'cancelled') THEN 'closed' ELSE 'open' END AS phase
+  FROM orders;
+check: { column_names: true }

@@ -64,3 +64,16 @@ pagination:       { en: pagination, zh: 分页 }
 duplicate-row:    { en: duplicate row, zh: 重复行 }
 intermediate-table: { en: intermediate table, zh: 中间表 }
 select-list:      { en: select list, zh: 选择列表 }
+function:         { en: function, zh: 函数 }
+integer-division: { en: integer division, zh: 整数除法 }
+modulo:           { en: modulo, zh: 取余 }
+floating-point:   { en: floating-point number, zh: 浮点数 }
+exact-numeric:    { en: exact numeric type, zh: 精确数值类型 }
+string:           { en: string, zh: 字符串 }
+concatenation:    { en: concatenation, zh: 拼接 }
+timestamp:        { en: timestamp, zh: 时间戳 }
+interval:         { en: interval, zh: 时间间隔 }
+time-zone:        { en: time zone, zh: 时区 }
+case-expression:  { en: CASE expression, zh: CASE 表达式 }
+type-cast:        { en: type cast, zh: 类型转换 }
+implicit-cast:    { en: implicit cast, zh: 隐式转换 }

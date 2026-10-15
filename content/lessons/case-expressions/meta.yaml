@@ -1,0 +1,6 @@
+title:   { zh: CASE 表达式, en: CASE expressions }
+summary:
+  zh: 按条件给出不同的值：分档、贴标签、自定义排序，以及用 COALESCE 和 NULLIF 处理空值。
+  en: Produce different values under different conditions, for tiers, labels and custom sort orders, and handle NULLs with COALESCE and NULLIF.
+dataset: shop
+prereqs: [dates-times]

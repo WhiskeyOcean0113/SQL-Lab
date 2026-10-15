@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 每箱装 6 件。列出每件商品的名字、能装满的箱数和装箱后剩下的件数，列依次为 `name`、`full_boxes`、`leftover`。
+  en: A box holds 6 units. List each product's name, how many full boxes its stock fills, and how many units are left over, as the columns `name`, `full_boxes`, `leftover`.
+hint:
+  zh: 这里整数除法正好有用；余数用 `%`。
+  en: Integer division is exactly right here, and the remainder is `%`.
+solution: |
+  SELECT name, stock / 6 AS full_boxes, stock % 6 AS leftover
+  FROM products;
+check: { column_names: true }

@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出已发货订单的编号和发货用时（从下单到发货），列依次为 `id` 和 `shipping_time`。结果全是负数。修好它。
+  en: This query should list each shipped order's id and how long it took to ship (from ordering to shipping), as the columns `id` and `shipping_time`. Every value comes out negative. Fix it.
+hint:
+  zh: 时长是"结束减开始"。
+  en: A duration is end minus start.
+starter: |
+  SELECT id, ordered_at - shipped_at AS shipping_time
+  FROM orders
+  WHERE shipped_at IS NOT NULL;
+solution: |
+  SELECT id, shipped_at - ordered_at AS shipping_time
+  FROM orders
+  WHERE shipped_at IS NOT NULL;
+check: { column_names: true }

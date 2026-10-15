@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: |
+    下面这条查询想算出每件商品的库存平均分成 3 份后每份多少件，保留两位小数，列依次为 `name` 和 `per_share`。它已经用了 `::numeric`，结果却还是 8.00 这样的整数。修好它。
+  en: |
+    This query should show each product's stock split into 3 equal shares, rounded to two decimal places, as the columns `name` and `per_share`. It already uses `::numeric`, yet results still come out as whole numbers like 8.00. Fix it.
+hint:
+  zh: 转换要发生在除法之前，包在参与除法的数上。
+  en: The cast must happen before the division, on a number that takes part in it.
+starter: |
+  SELECT name, round((stock / 3)::numeric, 2) AS per_share
+  FROM products;
+solution: |
+  SELECT name, round(stock::numeric / 3, 2) AS per_share
+  FROM products;
+check: { column_names: true }

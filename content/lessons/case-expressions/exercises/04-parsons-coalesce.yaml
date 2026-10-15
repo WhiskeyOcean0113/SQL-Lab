@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：列出所有顾客的名字和城市，城市未知时显示 `unknown`，第二列命名为 `city`。有一个片段是多余的。
+  en: Arrange the pieces into a query listing every customer's name and city, showing `unknown` when the city is unknown, with the second column named `city`. One piece is not needed.
+hint:
+  zh: 简单 CASE 的 `WHEN NULL` 永远不会匹配。
+  en: A simple CASE's `WHEN NULL` never matches.
+solution: |
+  SELECT name,
+  COALESCE(city, 'unknown') AS city
+  FROM customers;
+distractors:
+  - CASE city WHEN NULL THEN 'unknown' ELSE city END AS city
+check: { column_names: true }

@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: The Pragmatic Programmer 的库存是 25 件。下面这条查询给它的 `note` 是什么？
+  en: The Pragmatic Programmer has 25 units in stock. What `note` does this query give it?
+hint:
+  zh: 所有条件都不成立，又没有 `ELSE`，会返回什么？
+  en: When no condition holds and there is no `ELSE`, what comes back?
+query: |
+  SELECT name,
+         CASE WHEN stock = 0 THEN 'sold out' END AS note
+  FROM products
+  WHERE id = 1;
+choices:
+  - "ok"
+  - { zh: 空字符串 '', en: "An empty string ''" }
+  - { zh: "NULL（空值）", en: NULL (no value) }
+  - { zh: 查询会报错, en: The query fails }
+answer: 2
+explain:
+  zh: NULL。没有任何分支成立、也没有 `ELSE` 时，CASE 返回 NULL。如果想要一个默认值，就写上 `ELSE 'ok'`。
+  en: NULL. When no branch holds and there is no `ELSE`, CASE returns NULL. For a default value, add `ELSE 'ok'`.

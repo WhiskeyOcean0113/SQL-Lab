@@ -1,0 +1,16 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: Designing Data Apps 的单价是 55.50。下面这条查询返回多少？
+  en: Designing Data Apps costs 55.50. What does this query return?
+hint:
+  zh: "`numeric` 的 `round` 在正好一半时怎样处理？"
+  en: How does `round` on `numeric` treat an exact half?
+query: SELECT round(price) AS rounded FROM products WHERE id = 2;
+choices: ['55', '56', '55.50']
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 56。`numeric` 的 `round` 在正好一半时远离零取整，所以 55.50 变成 56。浮点数的 `round` 会取最近的偶数，这也是金额不用浮点数的原因之一。
+  en: 56. `round` on `numeric` rounds an exact half away from zero, so 55.50 becomes 56. On floating-point values `round` goes to the nearest even number, one more reason money stays out of floating point.

@@ -1,0 +1,11 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: 列出每笔订单的编号和下单日期（只要日期，不要时刻），列依次为 `id` 和 `order_date`。
+  en: List each order's id and the date it was placed (the date only, without the time), as the columns `id` and `order_date`.
+hint:
+  zh: 把 `ordered_at` 转成 `date`。
+  en: Cast `ordered_at` to `date`.
+solution: SELECT id, ordered_at::date AS order_date FROM orders;
+check: { column_names: true }

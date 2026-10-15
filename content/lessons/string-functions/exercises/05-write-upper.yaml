@@ -1,0 +1,11 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 列出所有顾客的名字，全部转成大写字母，列名为 `name_upper`。
+  en: List every customer's name in capital letters, in a column called `name_upper`.
+hint:
+  zh: "`upper()`。"
+  en: "`upper()`."
+solution: SELECT upper(name) AS name_upper FROM customers;
+check: { column_names: true }

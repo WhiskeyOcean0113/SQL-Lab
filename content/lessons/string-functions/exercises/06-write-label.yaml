@@ -1,0 +1,13 @@
+kind: write
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: |
+    为每位顾客生成"名字, 城市"这样的标签（例如 `Lin Wei, Shanghai`），列名为 `label`。城市未知的顾客，标签里只写名字，不能是 NULL，也不能留下多余的逗号。
+  en: |
+    Build a "name, city" label for every customer (for example `Lin Wei, Shanghai`), in a column called `label`. For customers whose city is unknown, the label is just the name: not NULL, and no dangling comma.
+hint:
+  zh: 用 `||` 会让城市为 NULL 的标签整个变成 NULL；有一个函数会用分隔符连接并跳过 NULL。
+  en: With `||`, a NULL city turns the whole label NULL. One function joins with a separator and skips NULLs.
+solution: SELECT concat_ws(', ', name, city) AS label FROM customers;
+check: { column_names: true }

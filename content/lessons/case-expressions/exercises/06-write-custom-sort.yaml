@@ -1,0 +1,22 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: |
+    列出所有订单的编号和状态，按处理流程排序：`pending`、`paid`、`shipped`、`delivered`、`cancelled`；同一状态内按订单编号从小到大。
+  en: |
+    List every order's id and status, sorted by the order of the workflow, `pending`, `paid`, `shipped`, `delivered`, `cancelled`, and by order id within each status.
+hint:
+  zh: 在 `ORDER BY` 里用 CASE 把每个状态映射成一个数字，再加上 `id` 作第二个排序键。
+  en: In `ORDER BY`, map each status to a number with CASE, then add `id` as the second key.
+solution: |
+  SELECT id, status
+  FROM orders
+  ORDER BY CASE status
+             WHEN 'pending' THEN 1
+             WHEN 'paid' THEN 2
+             WHEN 'shipped' THEN 3
+             WHEN 'delivered' THEN 4
+             ELSE 5
+           END, id;
+check: { order_matters: true }

@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 所有商品打 85 折（价格乘以 0.85）。列出商品名和折后价，折后价四舍五入到两位小数，列依次为 `name` 和 `sale_price`。
+  en: Every product is 15% off (price times 0.85). List the product name and the sale price rounded to two decimal places, as the columns `name` and `sale_price`.
+hint:
+  zh: "`round(表达式, 2)`。"
+  en: "`round(expression, 2)`."
+solution: |
+  SELECT name, round(price * 0.85, 2) AS sale_price
+  FROM products;
+check: { column_names: true }

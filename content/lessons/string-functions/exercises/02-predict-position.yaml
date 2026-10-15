@@ -1,0 +1,15 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询返回多少？
+  en: What does this query return?
+hint:
+  zh: SQL 的字符串位置从几开始数？
+  en: Where do SQL string positions start counting?
+query: SELECT position('@' in 'ava.t@example.com') AS at;
+choices: ['5', '6', '7']
+answer: 1
+explain:
+  zh: 6。`a`、`v`、`a`、`.`、`t` 占了第 1 到第 5 个位置，`@` 是第 6 个。SQL 的字符串位置从 1 开始数，不是从 0。
+  en: 6. `a`, `v`, `a`, `.` and `t` take positions 1 to 5, so `@` is the 6th. SQL string positions start at 1, not 0.

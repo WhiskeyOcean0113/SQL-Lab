@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询返回的两个值分别是多少？
+  en: What two values does this query return?
+hint:
+  zh: 两边都是整数时，`/` 的结果是什么类型？
+  en: When both sides are integers, what type does `/` produce?
+query: SELECT 25 / 4 AS boxes, 25 % 4 AS leftover;
+choices:
+  - { zh: "boxes 是 6.25，leftover 是 0", en: "boxes is 6.25, leftover is 0" }
+  - { zh: "boxes 是 6，leftover 是 1", en: "boxes is 6, leftover is 1" }
+  - { zh: "boxes 是 7，leftover 是 1", en: "boxes is 7, leftover is 1" }
+answer: 1
+explain:
+  zh: 整数除以整数还是整数，25 / 4 截掉小数得到 6（不会四舍五入成 7）；25 % 4 是余数 1。想得到 6.25，要写成 25 / 4.0。
+  en: An integer divided by an integer is an integer, so 25 / 4 drops the fraction and gives 6 (it does not round up to 7), and 25 % 4 is the remainder, 1. To get 6.25, write 25 / 4.0.

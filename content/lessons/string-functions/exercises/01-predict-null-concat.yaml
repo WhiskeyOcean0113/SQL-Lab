@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询返回什么？
+  en: What does this query return?
+hint:
+  zh: 拼接的某一段是 NULL 时，整段结果会怎样？
+  en: What happens to the whole result when one piece of a concatenation is NULL?
+query: SELECT 'Lin Wei' || ' / ' || NULL AS label;
+choices:
+  - "Lin Wei / "
+  - "Lin Wei / NULL"
+  - { zh: "NULL（空值）", en: NULL (no value) }
+  - { zh: 查询会报错, en: The query fails }
+answer: 2
+explain:
+  zh: NULL。和算术一样，`||` 的任何一段是 NULL，整段结果就是 NULL。想跳过 NULL，用 `concat` 或 `concat_ws`。
+  en: NULL. Just like arithmetic, if any piece of `||` is NULL, the whole result is NULL. To skip NULLs, use `concat` or `concat_ws`.

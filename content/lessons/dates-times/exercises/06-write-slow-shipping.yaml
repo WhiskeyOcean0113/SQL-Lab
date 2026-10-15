@@ -1,0 +1,13 @@
+kind: write
+difficulty: 3
+lesson_ref: core
+prompt:
+  zh: 列出从下单到发货用了超过 2 天的订单，列依次为订单编号和发货用时（`shipping_time`）。
+  en: List the orders that took more than 2 days from ordering to shipping, as the columns order id and the time it took (`shipping_time`).
+hint:
+  zh: 两个时间戳相减得到 `interval`，可以直接和 `INTERVAL '2 days'` 比较。
+  en: Two timestamps subtract to an `interval`, which compares directly with `INTERVAL '2 days'`.
+solution: |
+  SELECT id, shipped_at - ordered_at AS shipping_time
+  FROM orders
+  WHERE shipped_at - ordered_at > INTERVAL '2 days';

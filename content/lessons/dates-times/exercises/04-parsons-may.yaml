@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 用下面的片段拼出一条查询：列出 2024 年 5 月下的所有订单的编号和下单时间。有一个片段是多余的。
+  en: Arrange the pieces into a query listing the id and order time of every order placed in May 2024. One piece is not needed.
+hint:
+  zh: 用左闭右开的范围：大于等于 5 月 1 日，小于 6 月 1 日。
+  en: "Use a half-open range: on or after 1 May, before 1 June."
+solution: |
+  SELECT id, ordered_at
+  FROM orders
+  WHERE ordered_at >= '2024-05-01'
+  AND ordered_at < '2024-06-01';
+distractors:
+  - AND ordered_at < '2024-06-30';

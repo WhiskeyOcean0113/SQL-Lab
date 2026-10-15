@@ -1,0 +1,28 @@
+kind: debug
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: |
+    下面这条查询想把所有商品分档：100 美元及以上是 `premium`，30 美元及以上是 `standard`，其余是 `budget`，列依次为 `name`、`price`、`tier`。结果里一个 premium 都没有。修好它。
+  en: |
+    This query should put every product in a tier, `premium` from 100 dollars up, `standard` from 30 up and `budget` otherwise, as the columns `name`, `price`, `tier`. The result has no premium products at all. Fix it.
+hint:
+  zh: 哪一个条件更窄？它应该写在前面。
+  en: Which condition is narrower? It belongs first.
+starter: |
+  SELECT name, price,
+         CASE
+           WHEN price >= 30 THEN 'standard'
+           WHEN price >= 100 THEN 'premium'
+           ELSE 'budget'
+         END AS tier
+  FROM products;
+solution: |
+  SELECT name, price,
+         CASE
+           WHEN price >= 100 THEN 'premium'
+           WHEN price >= 30 THEN 'standard'
+           ELSE 'budget'
+         END AS tier
+  FROM products;
+check: { column_names: true }

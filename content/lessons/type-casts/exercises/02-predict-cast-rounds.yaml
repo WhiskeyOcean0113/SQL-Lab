@@ -1,0 +1,15 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询返回多少？
+  en: What does this query return?
+hint:
+  zh: 小数转整数是截断还是四舍五入？
+  en: Does casting a decimal to an integer truncate or round?
+query: SELECT 19.99::integer AS whole;
+choices: ['19', '20', '19.99']
+answer: 1
+explain:
+  zh: 20。PostgreSQL 把小数转成整数时会四舍五入，不是直接截掉小数。需要截断时用 `trunc(19.99)`，得到 19。
+  en: 20. PostgreSQL rounds when casting a decimal to an integer; it does not just drop the fraction. To truncate, use `trunc(19.99)`, which gives 19.

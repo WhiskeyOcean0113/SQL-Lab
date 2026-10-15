@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 列出每位顾客到 2024 年 7 月 1 日为止注册了多少天，列依次为 `name` 和 `days_as_member`。
+  en: List how many days each customer had been a member as of 1 July 2024, as the columns `name` and `days_as_member`.
+hint:
+  zh: "`DATE '2024-07-01' - joined_on` 直接得到天数。"
+  en: "`DATE '2024-07-01' - joined_on` gives the number of days directly."
+solution: |
+  SELECT name, DATE '2024-07-01' - joined_on AS days_as_member
+  FROM customers;
+check: { column_names: true }

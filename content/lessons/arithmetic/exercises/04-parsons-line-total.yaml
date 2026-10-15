@@ -1,0 +1,17 @@
+kind: parsons
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 用下面的片段拼出一条查询：列出订单 10 每一行的商品编号和金额（数量乘以单价），金额列命名为 `line_total`。有一个片段是多余的。
+  en: Arrange the pieces into a query listing, for each line of order 10, the product id and the amount (quantity times unit price), with the amount named `line_total`. One piece is not needed.
+hint:
+  zh: 金额是乘法，不是加法。
+  en: The amount is a multiplication, not an addition.
+solution: |
+  SELECT product_id,
+  quantity * unit_price AS line_total
+  FROM order_items
+  WHERE order_id = 10;
+distractors:
+  - quantity + unit_price AS line_total
+check: { column_names: true }

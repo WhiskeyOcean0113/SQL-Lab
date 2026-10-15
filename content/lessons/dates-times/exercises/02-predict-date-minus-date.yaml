@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询返回什么？
+  en: What does this query return?
+hint:
+  zh: 两个 `date` 相减和两个 `timestamp` 相减，得到的类型不一样。
+  en: Subtracting two `date`s gives a different type from subtracting two `timestamp`s.
+query: SELECT DATE '2024-07-01' - DATE '2024-06-01' AS gap;
+choices:
+  - { zh: "30（一个整数）", en: "30 (an integer)" }
+  - { zh: "30 days（一个 interval）", en: "30 days (an interval)" }
+  - "1 mon"
+answer: 0
+explain:
+  zh: 30，一个整数，表示相差的天数。只有两个 `timestamp` 相减才得到 `interval`。所以拿它和 `INTERVAL '2 days'` 比较会报错，要和整数比较。
+  en: 30, an integer counting the days between. Only two `timestamp`s subtract to an `interval`, so comparing this result with `INTERVAL '2 days'` is an error; compare it with an integer.

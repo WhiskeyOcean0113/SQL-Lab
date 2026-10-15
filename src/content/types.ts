@@ -15,13 +15,21 @@ export interface Term {
   zh: string
 }
 
-export interface Module {
-  id: string
+/**
+ * A title may contain glossary terms. `title` is plain text in the primary
+ * language (document.title, breadcrumbs); `titleHtml` annotates the terms.
+ */
+export interface Titled {
   title: Bi
+  titleHtml: Bi
+}
+
+export interface Module extends Titled {
+  id: string
   summary: Bi
   lessons: string[]
   /** Lessons announced in the curriculum but not written yet. Shown, never unlockable. */
-  planned: Bi[]
+  planned: Titled[]
 }
 
 /** One `## Heading {#id}` block of a lesson, already rendered to HTML. */
@@ -70,10 +78,9 @@ export interface PredictExercise extends ExerciseBase {
 
 export type Exercise = QueryExercise | PredictExercise
 
-export interface Lesson {
+export interface Lesson extends Titled {
   id: string
   module: string
-  title: Bi
   summary: Bi
   dataset: string
   prereqs: string[]

@@ -12,7 +12,12 @@ describe('buildContent', () => {
   it('builds the fixture without problems', () => {
     expect(problems).toEqual([])
     expect(course.path).toEqual(['basics', 'filtering'])
-    expect(course.modules[0]!.planned).toEqual([{ zh: '以后再写', en: 'Coming later' }])
+    expect(course.modules[0]!.planned.map(p => p.title)).toEqual([{ zh: '以后再写', en: 'Coming later' }])
+  })
+
+  it('annotates terms in titles and keeps a plain-text form', () => {
+    expect(course.modules[0]!.title).toEqual({ zh: '基础表', en: 'Basic tables' })
+    expect(course.modules[0]!.titleHtml.zh).toBe('基础<dfn class="term" data-term="table" title="table">表<span class="term-alt" lang="en"> (table)</span></dfn>')
   })
 
   it('splits lessons into template sections with plain headings', () => {
@@ -22,14 +27,14 @@ describe('buildContent', () => {
 
   it('expands terms with the primary language first and annotates only the first use per section', () => {
     const why = lesson.body.zh[0]!.html
-    expect(why).toContain('<dfn class="term" data-term="table" title="table">表<span class="term-alt" lang="en">table</span></dfn>')
+    expect(why).toContain('<dfn class="term" data-term="table" title="table">表<span class="term-alt" lang="en"> (table)</span></dfn>')
     expect(why.match(/class="term term-repeat" data-term="row"/g)).toHaveLength(1)
     const core = lesson.body.zh[1]!.html
     expect(core).toContain('class="term" data-term="table"') // new section, annotated again
   })
 
   it('supports display overrides and capitalisation in English', () => {
-    expect(lesson.body.en[0]!.html).toContain('>rows<span class="term-alt" lang="zh-Hans">行</span>')
+    expect(lesson.body.en[0]!.html).toContain('>rows<span class="term-alt" lang="zh-Hans"> (行)</span>')
     expect(lesson.body.en[1]!.html).toContain('>Table<span')
   })
 

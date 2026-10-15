@@ -1,6 +1,6 @@
 ## 为什么需要它 {#why}
 
-"每笔订单从下单到发货用了多久？""哪些顾客注册已经超过一年？""3 月份有哪些订单？"这些问题都要拿日期和时间做计算。
+“每笔订单从下单到发货用了多久？”“哪些顾客注册已经超过一年？”“3 月份有哪些订单？”这些问题都要拿日期和时间做计算。
 
 时间数据看起来像文字，但它有自己的类型和运算规则。用对了很简洁，用错了会在月末、跨年、时区这些地方悄悄出错。
 
@@ -28,7 +28,7 @@ FROM orders
 WHERE shipped_at IS NOT NULL;
 ```
 
-shop 的数据停在 2024 年 6 月底。为了让结果固定不变，这门课把"今天"当作 `DATE '2024-07-01'`。真实查询里，`current_date` 是今天的日期，`now()` 是现在的{{term:timestamp}}。
+shop 的数据停在 2024 年 6 月底。为了让结果固定不变，这门课把“今天”当作 `DATE '2024-07-01'`。真实查询里，`current_date` 是今天的日期，`now()` 是现在的{{term:timestamp}}。
 
 ## 示例 {#example}
 
@@ -44,7 +44,7 @@ SELECT name, joined_on, DATE '2024-07-01' - joined_on AS days_as_member
 FROM customers;
 ```
 
-Lin Wei 是 534 天，最新注册的 Mei Tanaka 是 125 天。如果要以"年、月、日"表示，可以用 `age(DATE '2024-07-01', joined_on)`，它会返回 `1 year 5 mons 18 days` 这样的结果。
+Lin Wei 是 534 天，最新注册的 Mei Tanaka 是 125 天。如果要以“年、月、日”表示，可以用 `age(DATE '2024-07-01', joined_on)`，它会返回 `1 year 5 mons 18 days` 这样的结果。
 
 ## 变体 {#variants}
 
@@ -98,7 +98,7 @@ SELECT DATE '2024-01-31' + INTERVAL '1 month' AS jan31_plus_month,
 
 **不存在的日期会报错。** `'2024-02-30'::date` 会报 `date/time field value out of range`。日期一定要用 ISO 格式 `YYYY-MM-DD`，像 `03/05/2024` 这样的写法，不同地区会读成 3 月 5 日或 5 月 3 日。
 
-**时区。** `timestamp` 不带时区信息，shop 约定所有时间都是 UTC。`timestamptz`（timestamp with time zone）会记住一个确定的时刻，显示时再按会话的{{term:time-zone}}换算。`now()` 返回的就是 `timestamptz`。存放"真实发生的时刻"时，实际项目通常用 `timestamptz`。
+**时区。** `timestamp` 不带时区信息，shop 约定所有时间都是 UTC。`timestamptz`（timestamp with time zone）会记住一个确定的时刻，显示时再按会话的{{term:time-zone}}换算。`now()` 返回的就是 `timestamptz`。存放“真实发生的时刻”时，实际项目通常用 `timestamptz`。
 
 **用范围筛选，而不是 `extract`。** `WHERE extract(month from ordered_at) = 3` 能找到 3 月的订单，但它会把每一年的 3 月都算进来，而且数据库没法用索引加速（第 9 章）。更好的写法是第 1 章学过的左闭右开范围：`ordered_at >= '2024-03-01' AND ordered_at < '2024-04-01'`。
 
@@ -112,11 +112,11 @@ FROM orders
 WHERE id = 1;
 ```
 
-`-1 days -04:48:00`。时长是"结束减开始"。
+`-1 days -04:48:00`。时长是“结束减开始”。
 
 **2. 期待 `date - date` 得到 `interval`。** 两个日期相减得到的是整数天数；两个时间戳相减才得到 `interval`。拿整数去和 `INTERVAL '2 days'` 比较会报错。
 
-**3. 用 `extract(month …)` 却忽略了年份。** 数据跨年以后，"3 月"会混进好几年的订单。要的是某一年的某个月，就用日期范围。
+**3. 用 `extract(month …)` 却忽略了年份。** 数据跨年以后，“3 月”会混进好几年的订单。要的是某一年的某个月，就用日期范围。
 
 **4. 用非 ISO 格式写日期。** `'05/03/2024'` 含义不明确，`'2024-03-05'` 永远不会被误读。
 

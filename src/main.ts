@@ -1,6 +1,7 @@
 import course from 'virtual:content'
 import type { Lang } from './content/types.ts'
 import { Engine } from './engine/client.ts'
+import { spaceText } from './i18n/autospace.ts'
 import { setGlossary, t, tText } from './i18n/index.ts'
 import { Progress } from './state/progress.ts'
 import { REVIEW, createCtx, parseRoute, renderTop, type Ctx } from './ui/app.ts'
@@ -44,7 +45,7 @@ async function boot() {
   function route() {
     const r = parseRoute(location.hash)
     top()
-    document.title = titleFor(ctx, r)
+    document.title = spaceText(titleFor(ctx, r))
     switch (r.name) {
       case 'map': return renderMap(main, ctx)
       case 'lesson': return renderLesson(main, ctx, r.id, r.section)

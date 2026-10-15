@@ -2,8 +2,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import type { CheckSpec } from '../../src/engine/types.ts'
-import { LANGS, type Bi, type Course, type Exercise, type Lang, type Lesson, type Module, type Term } from '../../src/content/types.ts'
-import { renderInlineText, renderSections, renderSnippet, type RenderEnv } from './markdown.ts'
+import { LANGS, type Bi, type Course, type Exercise, type Lang, type Lesson, type Module, type Term, type Titled } from '../../src/content/types.ts'
+import { renderInlineText, renderSections, renderSnippet, toPlainText, type RenderEnv } from './markdown.ts'
 
 // Reads content/ and produces the Course the browser loads. Structural
 // problems are collected, not thrown, so validate can list all of them at once;
@@ -36,6 +36,20 @@ function bi(value: unknown, where: string, problems: string[]): Bi {
   return { zh: v.zh ?? '', en: v.en ?? '' }
 }
 
+/** A title with optional `{{term:…}}` markup: every term in it shows both languages. */
+function titled(value: unknown, where: string, glossary: Map<string, Term>, problems: string[]): Titled {
+  const src = bi(value, where, problems)
+  const title = {} as Bi
+  const titleHtml = {} as Bi
+  for (const lang of LANGS) {
+    const env: RenderEnv = { lang, glossary, problems: [] }
+    titleHtml[lang] = renderInlineText(src[lang], env)
+    title[lang] = toPlainText(renderInlineText(src[lang], { ...env, plain: true }))
+    problems.push(...env.problems.map(p => `${where}.${lang}: ${p}`))
+  }
+  return { title, titleHtml }
+}
+
 export function buildContent(root: string): BuildResult {
   const problems: string[] = []
 
@@ -54,10 +68,10 @@ export function buildContent(root: string): BuildResult {
   const curriculum = readYaml(join(root, 'curriculum.yaml')) as { modules?: Raw[] }
   const modules: Module[] = (curriculum.modules ?? []).map((m, i) => ({
     id: String(m.id ?? `module-${i}`),
-    title: bi(m.title, `curriculum ${m.id} title`, problems),
+    ...titled(m.title, `curriculum ${m.id} title`, glossaryMap, problems),
     summary: bi(m.summary, `curriculum ${m.id} summary`, problems),
     lessons: ((m.lessons as string[] | undefined) ?? []).map(String),
-    planned: ((m.planned as unknown[] | undefined) ?? []).map((p, j) => bi(p, `curriculum ${m.id} planned[${j}]`, problems)),
+    planned: ((m.planned as unknown[] | undefined) ?? []).map((p, j) => titled(p, `curriculum ${m.id} planned[${j}]`, glossaryMap, problems)),
   }))
   const path = modules.flatMap(m => m.lessons)
 
@@ -93,7 +107,7 @@ export function buildContent(root: string): BuildResult {
       lessons[id] = {
         id,
         module: mod.id,
-        title: bi(meta.title, where('meta.title'), problems),
+        ...titled(meta.title, where('meta.title'), glossaryMap, problems),
         summary: bi(meta.summary, where('meta.summary'), problems),
         dataset,
         prereqs: ((meta.prereqs as string[] | undefined) ?? []).map(String),

@@ -2,7 +2,7 @@ kind: parsons
 difficulty: 2
 lesson_ref: example
 prompt:
-  zh: 用下面的片段拼出一条查询：列出每笔订单的编号和参考号，参考号的格式是"顾客编号-订单编号"（例如 `1-4`），第二列命名为 `reference`。有一个片段是多余的。
+  zh: 用下面的片段拼出一条查询：列出每笔订单的编号和参考号，参考号的格式是“顾客编号-订单编号”（例如 `1-4`），第二列命名为 `reference`。有一个片段是多余的。
   en: Arrange the pieces into a query listing each order's id and a reference of the form "customer id-order id" (for example `1-4`), with the second column named `reference`. One piece is not needed.
 hint:
   zh: 拼接文字用 `||`，`+` 是加法。

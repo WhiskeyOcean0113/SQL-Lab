@@ -2,7 +2,7 @@ import type { Course, Lang, Lesson } from '../content/types.ts'
 import type { Engine } from '../engine/client.ts'
 import { t, tText } from '../i18n/index.ts'
 import { lessonStates, type LessonState, type Progress } from '../state/progress.ts'
-import { $, html, mount, raw } from './dom.ts'
+import { $, html, mount, raw, type Raw } from './dom.ts'
 
 // Shared state for every view, plus the hash router and the top bar.
 
@@ -83,7 +83,7 @@ export function renderTop(ctx: Ctx, route: Route, onLang: (l: Lang) => void) {
   const top = $('#top')
   mount(top, html`
     <div class="top-in">
-      <a class="brand" href="${href.map()}"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>SQL Lab</span></a>${REVIEW ? html`<span class="review-badge" title="${tText(lang, 'review.hint')}">${tText(lang, 'review.badge')}</span>` : ''}
+      <div class="brand-wrap"><a class="brand" href="${href.map()}"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>SQL Lab</span></a>${REVIEW ? html`<span class="review-badge" title="${tText(lang, 'review.hint')}">${tText(lang, 'review.badge')}</span>` : ''}</div>
       <nav class="nav" aria-label="Main">
         ${item('map', href.map(), tText(lang, 'nav.map'))}
         ${item('lesson', learnHref, tText(lang, 'nav.learn'))}
@@ -91,12 +91,27 @@ export function renderTop(ctx: Ctx, route: Route, onLang: (l: Lang) => void) {
         ${item('mistakes', href.mistakes(), tText(lang, 'nav.mistakes'))}
         ${item('glossary', href.glossary(), tText(lang, 'nav.glossary'))}
       </nav>
-      <div class="seg" role="group" aria-label="Language">
-        <button type="button" data-lang="zh" aria-pressed="${String(lang === 'zh')}" lang="zh-Hans">中</button>
-        <button type="button" data-lang="en" aria-pressed="${String(lang === 'en')}" lang="en">EN</button>
-      </div>
+      <label class="lang-pick"><span class="sr-only">Language / 语言</span><select data-lang>
+        <option value="zh" lang="zh-Hans"${lang === 'zh' ? raw(' selected') : ''}>中文</option>
+        <option value="en" lang="en"${lang === 'en' ? raw(' selected') : ''}>English</option>
+      </select></label>
     </div>`)
-  top.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach(b => b.addEventListener('click', () => onLang(b.dataset.lang as Lang)))
+  const pick = $<HTMLSelectElement>('[data-lang]', top)
+  pick.addEventListener('change', () => onLang(pick.value as Lang))
+}
+
+/**
+ * One segment per exercise: solved, attempted (striped, like the exercise
+ * page's steps) or untouched, followed by the count.
+ */
+export function exerciseBar(ctx: Ctx, lesson: Lesson): Raw {
+  const cells = lesson.exercises.map(e => {
+    const st = ctx.status.get(e.id)
+    return st?.solved ? 'ok' : st ? 'bad' : ''
+  })
+  const done = cells.filter(c => c === 'ok').length
+  const total = cells.length
+  return html`<span class="segs" role="img" aria-label="${tText(ctx.lang, 'map.solved', { done, total })}">${cells.map(c => html`<i class="${c}"></i>`)}</span><span class="segs-n">${done} / ${total}</span>`
 }
 
 /** Plain-text section heading, used in "Reread …" links. */

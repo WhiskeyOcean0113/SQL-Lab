@@ -1,6 +1,6 @@
 import { t } from '../../i18n/index.ts'
 import { href, notFound, type Ctx } from '../app.ts'
-import { $$, biTitle, html, mount, pad2, raw } from '../dom.ts'
+import { $$, html, mount, pad2, raw } from '../dom.ts'
 import { hydrateRunner } from '../runner.ts'
 import { chapterNo } from './map.ts'
 
@@ -21,16 +21,16 @@ export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: 
     <div class="wrap">
       <div class="lesson">
         <aside class="rail">
-          <p class="kicker">${raw(t(lang, 'map.chapter', { n: chapterNo(lesson.module) }))} · ${module?.title[lang] ?? ''}</p>
+          <p class="kicker">${raw(t(lang, 'map.chapter', { n: chapterNo(lesson.module) }))} ${module?.title[lang] ?? ''}</p>
           <ol class="toc" aria-label="${t(lang, 'lesson.contents')}">
-            ${sections.map(s => html`<li><a href="${href.lesson(id, s.id)}" data-sec="${s.id}">${raw(s.heading)}</a></li>`)}
+            ${sections.map((s, i) => html`<li><a href="${href.lesson(id, s.id)}" data-sec="${s.id}"><span class="no">${pad2(i + 1)}</span><span>${raw(s.heading)}</span></a></li>`)}
           </ol>
           <p class="kicker">${raw(t(lang, 'lesson.exercises'))}</p>
           <ul class="ex-list">
             ${lesson.exercises.map((e, i) => {
               const st = status.get(e.id)
               const pip = st?.solved ? 'ok' : st ? 'bad' : ''
-              return html`<li><a href="${href.practice(id, i + 1)}"><span class="pip ${pip}" aria-hidden="true"></span>${raw(t(lang, `kind.${e.kind}`))}</a></li>`
+              return html`<li><a href="${href.practice(id, i + 1)}"><span class="no">${pad2(i + 1)}</span><span>${raw(t(lang, `kind.${e.kind}`))}</span><span class="pip ${pip}" aria-hidden="true"></span></a></li>`
             })}
           </ul>
         </aside>
@@ -38,7 +38,7 @@ export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: 
         <article>
           <header class="lesson-head">
             <p class="kicker">${raw(t(lang, 'lesson.kicker', { n: index, total: course.path.length }))}</p>
-            <h1 class="display">${biTitle(lesson.title, lang)}</h1>
+            <h1 class="display ttl">${raw(lesson.titleHtml[lang])}</h1>
             <p class="lede">${lesson.summary[lang]}</p>
             <div class="facts">
               <span>${raw(t(lang, 'lesson.dataset'))} <b>${lesson.dataset}</b></span>
@@ -48,7 +48,7 @@ export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: 
           </header>
           ${sections.map((s, i) => html`
             <section class="section" id="sec-${s.id}">
-              <h2><small>${pad2(i + 1)}</small>${raw(s.heading)}</h2>
+              <h2><span class="no">${pad2(i + 1)}</span><span>${raw(s.heading)}</span></h2>
               <div class="prose">${raw(s.html)}</div>
             </section>`)}
           <div class="lesson-foot">

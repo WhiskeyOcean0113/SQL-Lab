@@ -77,3 +77,11 @@ time-zone:        { en: time zone, zh: 时区 }
 case-expression:  { en: CASE expression, zh: CASE 表达式 }
 type-cast:        { en: type cast, zh: 类型转换 }
 implicit-cast:    { en: implicit cast, zh: 隐式转换 }
+relational-model: { en: relational model, zh: 关系模型 }
+aggregation:      { en: aggregation, zh: 聚合 }
+set-operation:    { en: set operation, zh: 集合运算 }
+column-alias:     { en: column alias, zh: 列别名 }
+numeric-type:     { en: numeric type, zh: 数值类型 }
+string-function:  { en: string function, zh: 字符串函数 }
+scalar-subquery:  { en: scalar subquery, zh: 标量子查询 }
+recursive-cte:    { en: recursive CTE, zh: 递归 CTE }

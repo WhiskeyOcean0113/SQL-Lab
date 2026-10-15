@@ -39,14 +39,14 @@ export async function renderBank(root: HTMLElement, ctx: Ctx) {
             <h1 class="display">${raw(t(lang, 'bank.title'))}</h1>
           </div>
           <div class="bank-stats">
-            <div class="stat"><div class="v">${open.length}</div><div class="k">${raw(t(lang, 'bank.open'))}</div></div>
-            <div class="stat"><div class="v">${mastered.length}</div><div class="k">${raw(t(lang, 'bank.mastered'))}</div></div>
+            <div class="stat open"><div class="v">${open.length}</div><div class="k">${raw(t(lang, 'bank.open'))}</div></div>
+            <div class="stat mastered"><div class="v">${mastered.length}</div><div class="k">${raw(t(lang, 'bank.mastered'))}</div></div>
           </div>
         </div>
         <div class="bank-tools">
           ${(['open', 'mastered', 'all'] as const).map(f => html`<button type="button" class="chip" data-filter="${f}" aria-pressed="${String(filter === f)}">${raw(t(lang, `bank.${f}`))}</button>`)}
           <span class="rule">${raw(t(lang, 'bank.rule', { n: streak }))}</span>
-          <button type="button" class="btn ghost small" data-export>${raw(t(lang, 'bank.export'))}</button>
+          <button type="button" class="btn small" data-export>${raw(t(lang, 'bank.export'))}</button>
         </div>
         ${shown.length ? html`
         <div class="bank-table">

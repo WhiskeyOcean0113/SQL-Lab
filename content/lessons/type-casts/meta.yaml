@@ -1,4 +1,4 @@
-title:   { zh: 类型转换 CAST, en: Type casts }
+title:   { zh: "{{term:type-cast}}", en: "{{Term:type-cast|Type casts}}" }
 summary:
   zh: 在文字、数字和日期之间转换，知道什么时候数据库替你转换、什么时候必须自己写。
   en: Convert between text, numbers and dates, and know when the database converts for you and when you must say so.

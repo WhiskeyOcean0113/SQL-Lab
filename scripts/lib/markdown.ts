@@ -63,7 +63,7 @@ export function createMarkdown() {
     const first = !env.seen?.has(id)
     env.seen?.add(id)
     const cls = first ? 'term' : 'term term-repeat'
-    return `<dfn class="${cls}" data-term="${id}" title="${escapeHtml(term[other])}">${escapeHtml(primary)}<span class="term-alt" lang="${other === 'zh' ? 'zh-Hans' : 'en'}">${escapeHtml(term[other])}</span></dfn>`
+    return `<dfn class="${cls}" data-term="${id}" title="${escapeHtml(term[other])}">${escapeHtml(primary)}<span class="term-alt" lang="${other === 'zh' ? 'zh-Hans' : 'en'}"> (${escapeHtml(term[other])})</span></dfn>`
   }
 
   md.renderer.rules.fence = (tokens, idx) => {
@@ -146,6 +146,11 @@ export function runnableBlocks(src: string): RunnableBlock[] {
   return md.parse(src, {})
     .filter(t => t.type === 'fence' && /^sql\s+run\b/.test(t.info.trim()))
     .map(t => ({ sql: t.content.trim(), expectError: /\berror\b/.test(t.info) }))
+}
+
+/** Rendered inline HTML → plain text, e.g. a title for document.title or a breadcrumb. */
+export function toPlainText(html: string): string {
+  return html.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
 }
 
 /** One line of inline Markdown, e.g. a multiple-choice option. */

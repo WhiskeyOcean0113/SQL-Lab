@@ -5,7 +5,7 @@ prompt:
   zh: 订单 3 里买了三种不同的商品。下面这条查询会返回几行？
   en: Order 3 contains three different products. How many rows does this query return?
 hint:
-  zh: "`order_items` 的一行是\"某笔订单里的一种商品\"。"
+  zh: "`order_items` 的一行是“某笔订单里的一种商品”。"
   en: A row of `order_items` is one product within one order.
 query: SELECT * FROM order_items WHERE order_id = 3;
 choices: ['1', '3', '42']

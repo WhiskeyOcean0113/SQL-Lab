@@ -1,6 +1,6 @@
-title:   { zh: DISTINCT, en: DISTINCT }
+title: { zh: DISTINCT, en: DISTINCT }
 summary:
-  zh: 去掉结果里的重复行，并弄清楚"重复"指的是整行，而不是某一列。
+  zh: 去掉结果里的重复行，并弄清楚“重复”指的是整行，而不是某一列。
   en: Remove duplicate rows from a result, and see that "duplicate" means the whole row, not one column.
 dataset: shop
-prereqs: [order-limit]
+prereqs: [ order-limit ]

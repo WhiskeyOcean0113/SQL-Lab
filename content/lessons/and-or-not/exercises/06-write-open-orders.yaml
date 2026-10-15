@@ -7,7 +7,7 @@ prompt:
   en: |
     List the orders placed by customer 2 or customer 6 whose status is `paid` or `pending`, as the columns order id, customer id and status.
 hint:
-  zh: 这里有两组"二选一"，每组都要用括号包起来，再用 `AND` 连接。
+  zh: 这里有两组“二选一”，每组都要用括号包起来，再用 `AND` 连接。
   en: There are two either/or groups. Wrap each in parentheses and join them with `AND`.
 solution: |
   SELECT id, customer_id, status

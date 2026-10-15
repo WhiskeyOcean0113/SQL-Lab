@@ -36,7 +36,7 @@ export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n:
         </div>
         <div class="split">
           <div class="task">
-            <span class="type">${raw(t(lang, `kind.${ex.kind}`))}</span>
+            <span class="type kind-${ex.kind}">${raw(t(lang, `kind.${ex.kind}`))}</span>
             <div class="prompt">${raw(ex.prompt[lang])}</div>
             <ul class="req"></ul>
             <div class="hint">
@@ -58,7 +58,7 @@ export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n:
     const body = $('.hint-body', root)
     body.hidden = !body.hidden
     hintBtn.setAttribute('aria-expanded', String(!body.hidden))
-    hintBtn.innerHTML = t(lang, body.hidden ? 'ex.hint' : 'ex.hideHint')
+    mount(hintBtn, raw(t(lang, body.hidden ? 'ex.hint' : 'ex.hideHint')))
   })
 
   const env: Env = { root, ctx, lesson, ex, n, onProgress }
@@ -88,8 +88,8 @@ function renderPager(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
   const nextId = ctx.course.path[ctx.course.path.indexOf(lesson.id) + 1]
   const next = nextId ? ctx.course.lessons[nextId] : undefined
   const left = n > 1
-    ? html`<a class="btn ghost" href="${href.practice(lesson.id, n - 1)}">← ${raw(t(lang, 'ex.prev'))}</a>`
-    : html`<a class="btn ghost" href="${href.lesson(lesson.id)}">← ${raw(t(lang, 'ex.backToLesson'))}</a>`
+    ? html`<a class="btn" href="${href.practice(lesson.id, n - 1)}">← ${raw(t(lang, 'ex.prev'))}</a>`
+    : html`<a class="btn" href="${href.lesson(lesson.id)}">← ${raw(t(lang, 'ex.backToLesson'))}</a>`
   let right: Raw
   if (n < total) {
     right = html`<a class="btn" href="${href.practice(lesson.id, n + 1)}">${raw(t(lang, 'ex.next'))} →</a>`
@@ -236,7 +236,7 @@ async function renderQuery(env: Env, ex: QueryExercise) {
       editor?.markError(g.error?.position)
       mount(out, html``)
       const { lessonCompleted, attempts: count } = await record(env, sql, g)
-      $('[data-attempts]', work).innerHTML = t(lang, 'ex.submitted', { n: count })
+      mount($('[data-attempts]', work), raw(t(lang, 'ex.submitted', { n: count })))
       if (g.correct) {
         mount(verdictEl, html`<div class="verdict">
           <div class="verdict-top"><span class="badge ok">${raw(t(lang, 'verdict.correct'))}</span><span class="sum">${raw(t(lang, 'ex.attempt', { n: count }))}</span></div>

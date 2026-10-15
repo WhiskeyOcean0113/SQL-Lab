@@ -19,7 +19,7 @@ export function termHtml(id: string, lang: Lang): string {
   const term = glossary.get(id)
   if (!term) return esc(id.replace(/-/g, ' '))
   const other: Lang = lang === 'zh' ? 'en' : 'zh'
-  return `<dfn class="term" data-term="${id}" title="${esc(term[other])}">${esc(term[lang])}<span class="term-alt" lang="${other === 'zh' ? 'zh-Hans' : 'en'}">${esc(term[other])}</span></dfn>`
+  return `<dfn class="term" data-term="${id}" title="${esc(term[other])}">${esc(term[lang])}<span class="term-alt" lang="${other === 'zh' ? 'zh-Hans' : 'en'}"> (${esc(term[other])})</span></dfn>`
 }
 
 /** A UI string as HTML. Variables are escaped; terms are expanded. */

@@ -1,6 +1,6 @@
 ## 为什么需要它 {#why}
 
-"shop 的顾客来自哪些国家？"直接查 `country` 会得到 12 行，China 出现三次，Canada 和 Japan 各出现两次：
+“shop 的顾客来自哪些国家？”直接查 `country` 会得到 12 行，China 出现三次，Canada 和 Japan 各出现两次：
 
 ```sql run
 SELECT country
@@ -26,7 +26,7 @@ FROM customers;
 
 ## 示例 {#example}
 
-问题：顾客分布在哪些"国家 + 城市"的组合里？
+问题：顾客分布在哪些“国家 + 城市”的组合里？
 
 1. **确定要比较的是哪几列。** 国家和城市，两列一起。
 2. **把这两列都写进选择列表。** `DISTINCT` 会对两列的组合去重。
@@ -58,7 +58,7 @@ FROM orders
 ORDER BY status;
 ```
 
-**找出"出现过"的值。** 哪些顾客下过订单？`orders` 里每笔订单都有 `customer_id`，去重之后就是下过单的顾客：
+**找出“出现过”的值。** 哪些顾客下过订单？`orders` 里每笔订单都有 `customer_id`，去重之后就是下过单的顾客：
 
 ```sql run
 SELECT DISTINCT customer_id
@@ -72,7 +72,7 @@ ORDER BY customer_id;
 
 ## 深入 {#deeper}
 
-**`DISTINCT` 把 NULL 当作相同的值。** 讲 NULL 的那一篇说过，`NULL = NULL` 的结果是 unknown。但去重时，SQL 规定所有 NULL 算作同一个值，所以 `SELECT DISTINCT city` 只有一行 NULL。规则看起来不一致，但它很实用：你通常希望"未知"在名单里只出现一次。
+**`DISTINCT` 把 NULL 当作相同的值。** 讲 NULL 的那一篇说过，`NULL = NULL` 的结果是 unknown。但去重时，SQL 规定所有 NULL 算作同一个值，所以 `SELECT DISTINCT city` 只有一行 NULL。规则看起来不一致，但它很实用：你通常希望“未知”在名单里只出现一次。
 
 **排序列必须出现在选择列表里。** 下面这条查询会报错：
 
@@ -92,7 +92,7 @@ FROM customers
 ORDER BY country, joined_on;
 ```
 
-`DISTINCT ON` 的列必须和 `ORDER BY` 最左边的列一致，而"第一行"由后面的排序键决定。它不是标准 SQL；第 6 章的窗口函数能用标准的方式做到同样的事。
+`DISTINCT ON` 的列必须和 `ORDER BY` 最左边的列一致，而“第一行”由后面的排序键决定。它不是标准 SQL；第 6 章的窗口函数能用标准的方式做到同样的事。
 
 **`DISTINCT` 不是万能的修补。** 第 4 章学 join 时会看到，连接方式不对会让行重复。用 `DISTINCT` 把重复的行藏起来，往往掩盖了真正的错误。看到意料之外的重复，先找出它从哪里来。
 
@@ -109,14 +109,14 @@ FROM customers;
 
 **2. 想去重却多选了一列。** 只想要国家名单，却顺手选了 `name`：`SELECT DISTINCT country, name` 会返回 12 行，因为每位顾客的名字都不同，没有任何两行完全相同。选择列表里只放用来去重的列。
 
-**3. `ORDER BY` 用了不在选择列表里的列。** 见上面的"深入"：`SELECT DISTINCT` 时，排序只能用选出来的列。
+**3. `ORDER BY` 用了不在选择列表里的列。** 见上面的“深入”：`SELECT DISTINCT` 时，排序只能用选出来的列。
 
-**4. 用 `DISTINCT` 掩盖重复。** 当结果出现了不该有的重复，`DISTINCT` 能让它"看起来对"，但重复背后的原因还在。先弄清楚为什么重复。
+**4. 用 `DISTINCT` 掩盖重复。** 当结果出现了不该有的重复，`DISTINCT` 能让它“看起来对”，但重复背后的原因还在。先弄清楚为什么重复。
 
 ## 小结 {#summary}
 
 - `SELECT DISTINCT` 去掉重复的行，每种行只保留一次。
-- "重复"指选择列表里所有列都相同，`DISTINCT` 永远作用于整行。
+- “重复”指选择列表里所有列都相同，`DISTINCT` 永远作用于整行。
 - 去重时所有 NULL 被看作同一个值。
 - `SELECT DISTINCT` 的 `ORDER BY` 只能使用选择列表里的表达式。
 - PostgreSQL 的 `DISTINCT ON (列)` 对指定列去重，并保留排序后的第一行。

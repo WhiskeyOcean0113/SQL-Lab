@@ -2,7 +2,7 @@ kind: debug
 difficulty: 1
 lesson_ref: mistakes
 prompt:
-  zh: 下面这条查询想为每位顾客生成"名字 (国家)"这样的标签，列名为 `label`。它报错了。修好它。
+  zh: 下面这条查询想为每位顾客生成“名字 (国家)”这样的标签，列名为 `label`。它报错了。修好它。
   en: This query should build a "name (country)" label for every customer, in a column called `label`. It fails. Fix it.
 hint:
   zh: PostgreSQL 用什么运算符拼接文字？

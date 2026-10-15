@@ -2,7 +2,7 @@ kind: predict
 difficulty: 1
 lesson_ref: mistakes
 prompt:
-  zh: 有人把"列出来自 China 和 Japan 的顾客"写成了下面这条查询（shop 有 3 位 China 顾客、2 位 Japan 顾客）。它会返回几行？
+  zh: 有人把“列出来自 China 和 Japan 的顾客”写成了下面这条查询（shop 有 3 位 China 顾客、2 位 Japan 顾客）。它会返回几行？
   en: Someone wrote "list the customers from China and Japan" as the query below (shop has 3 customers from China and 2 from Japan). How many rows does it return?
 hint:
   zh: 同一行的 `country` 能同时等于两个不同的值吗？
@@ -15,5 +15,5 @@ choices: ['5', '3', '2', '0']
 answer: 3
 verify: { rows: 0 }
 explain:
-  zh: 0 行。`AND` 要求同一行同时满足两个条件，而一位顾客的国家不可能既是 China 又是 Japan。日常说的"China 和 Japan 的顾客"是两组顾客合在一起，在 SQL 里要用 `OR`，结果是 5 行。
+  zh: 0 行。`AND` 要求同一行同时满足两个条件，而一位顾客的国家不可能既是 China 又是 Japan。日常说的“China 和 Japan 的顾客”是两组顾客合在一起，在 SQL 里要用 `OR`，结果是 5 行。
   en: 0 rows. `AND` needs one row to meet both conditions, and no customer's country is both China and Japan. "Customers from China and Japan" in everyday speech means the two groups together, which in SQL is `OR`, giving 5 rows.

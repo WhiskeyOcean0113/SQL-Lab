@@ -1,6 +1,6 @@
 modules:
   - id: m1
-    title: { zh: 基础, en: Basics }
+    title: { zh: "基础{{term:table}}", en: "Basic {{term:table|tables}}" }
     summary: { zh: 第一步。, en: First steps. }
     lessons: [basics, filtering]
     planned:

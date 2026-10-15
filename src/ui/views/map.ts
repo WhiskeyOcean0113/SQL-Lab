@@ -1,6 +1,6 @@
 import { t, tText } from '../../i18n/index.ts'
-import { href, type Ctx } from '../app.ts'
-import { biTitle, html, mount, raw } from '../dom.ts'
+import { exerciseBar, href, type Ctx } from '../app.ts'
+import { html, mount, pad2, raw } from '../dom.ts'
 
 export function renderMap(root: HTMLElement, ctx: Ctx) {
   const { course, lang, states, status } = ctx
@@ -16,13 +16,16 @@ export function renderMap(root: HTMLElement, ctx: Ctx) {
   const next = current
     ? html`
       <div class="next">
-        <div class="label">${raw(t(lang, allDone ? 'map.allDone' : 'map.continue'))}</div>
-        <div class="title">${biTitle(current.title, lang)}</div>
-        <div class="meta">${raw(t(lang, 'map.chapter', { n: chapterNo(current.module) }))} · ${course.modules.find(m => m.id === current.module)?.title[lang] ?? ''} · ${raw(t(lang, 'map.exerciseProgress', { done: solvedIn(current.id), total: current.exercises.length }))}</div>
+        <div class="next-top">
+          <span class="label">${raw(t(lang, allDone ? 'map.allDone' : 'map.continue'))}</span>
+          <span class="label">${raw(t(lang, 'map.chapter', { n: chapterNo(current.module) }))} ${course.modules.find(m => m.id === current.module)?.title[lang] ?? ''}</span>
+        </div>
+        <div class="title ttl">${raw(current.titleHtml[lang])}</div>
+        <div class="next-bar">${exerciseBar(ctx, current)}</div>
         <a class="btn primary" href="${href.lesson(current.id)}">${raw(t(lang, allDone ? 'map.review' : doneCount || solvedIn(current.id) ? 'map.continue' : 'map.start'))}</a>
-        <div class="overall"><span>${raw(t(lang, 'map.doneCount', { n: doneCount }))}</span><div class="bar"><i style="width: ${pct}%"></i></div><span>${pct}%</span></div>
+        <div class="overall"><span>${raw(t(lang, 'map.doneCount', { n: doneCount, total: lessonCount }))}</span><div class="bar"><i style="width: ${pct}%"></i></div><span class="pct">${pct}%</span></div>
       </div>`
-    : html`<div class="next"><div class="meta">${raw(t(lang, 'map.noLessons'))}</div></div>`
+    : html`<div class="next"><div class="label">${raw(t(lang, 'map.noLessons'))}</div></div>`
 
   mount(root, html`
     <section class="wrap">
@@ -39,21 +42,17 @@ export function renderMap(root: HTMLElement, ctx: Ctx) {
           const isCurrent = current?.module === m.id && !allDone
           return html`
           <div class="module${isCurrent ? ' current' : ''}">
-            <div class="no" aria-hidden="true">${String(chapterNo(m.id)).padStart(2, '0')}</div>
-            <div><h3>${biTitle(m.title, lang)}</h3><p class="sum">${m.summary[lang]}</p></div>
+            <div class="no" aria-hidden="true">${pad2(chapterNo(m.id))}</div>
+            <div><h3 class="ttl">${raw(m.titleHtml[lang])}</h3><p class="sum">${m.summary[lang]}</p></div>
             <ul class="lessons">
               ${m.lessons.map(id => {
                 const l = course.lessons[id]
                 if (!l) return ''
                 const s = states[id]
-                const solved = solvedIn(id)
-                if (s === 'locked') return html`<li><span class="row locked"><span class="state st-lock" aria-hidden="true"></span><span class="name">${biTitle(l.title, lang)}</span></span></li>`
-                const tag = s === 'done'
-                  ? html`<span class="tag">${solved} / ${l.exercises.length}</span>`
-                  : html`<span class="now-tag">${raw(t(lang, 'map.learning', { done: solved, total: l.exercises.length }))}</span>`
-                return html`<li><a class="row" href="${href.lesson(id)}"><span class="state ${s === 'done' ? 'st-done' : 'st-now'}" aria-hidden="true"></span><span class="name">${biTitle(l.title, lang)}</span>${tag}</a></li>`
+                if (s === 'locked') return html`<li><span class="row locked"><span class="state st-lock" aria-hidden="true"></span><span class="name ttl">${raw(l.titleHtml[lang])}</span></span></li>`
+                return html`<li><a class="row" href="${href.lesson(id)}"><span class="state ${s === 'done' ? 'st-done' : 'st-now'}" aria-hidden="true"></span><span class="name ttl">${raw(l.titleHtml[lang])}</span><span class="row-bar">${exerciseBar(ctx, l)}</span></a></li>`
               })}
-              ${m.planned.map(p => html`<li><span class="row locked"><span class="state st-lock" aria-hidden="true"></span><span class="name">${biTitle(p, lang)}</span><span class="tag">${tText(lang, 'map.planned')}</span></span></li>`)}
+              ${m.planned.map(p => html`<li><span class="row locked"><span class="state st-lock" aria-hidden="true"></span><span class="name ttl">${raw(p.titleHtml[lang])}</span><span class="tag">${tText(lang, 'map.planned')}</span></span></li>`)}
             </ul>
           </div>`
         })}

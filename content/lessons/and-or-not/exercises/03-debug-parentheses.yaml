@@ -7,7 +7,7 @@ prompt:
   en: |
     This query should list customer 1's orders that are shipped or delivered, as the columns order id, customer id and status. It returns many orders that belong to other customers. Fix it.
 hint:
-  zh: "`AND` 先算。现在这条查询实际的意思是\"顾客 1 的已发货订单，或者任何人的已送达订单\"。"
+  zh: "`AND` 先算。现在这条查询实际的意思是“顾客 1 的已发货订单，或者任何人的已送达订单”。"
   en: '`AND` comes first. As written, it means "customer 1''s shipped orders, or anyone''s delivered orders".'
 starter: |
   SELECT id, customer_id, status

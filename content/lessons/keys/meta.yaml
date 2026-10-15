@@ -1,4 +1,4 @@
-title:   { zh: 主键与外键, en: Primary and foreign keys }
+title:   { zh: "{{term:primary-key}}与{{term:foreign-key}}", en: "{{Term:primary-key|Primary keys}} and {{term:foreign-key|foreign keys}}" }
 summary:
   zh: 理解数据库怎样唯一地认出每一行，以及表与表之间怎样互相引用。
   en: Understand how a database identifies each row exactly, and how tables refer to one another.

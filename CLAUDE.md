@@ -83,7 +83,7 @@ validate passes.
 ### meta.yaml
 
 ```yaml
-title:   { zh: 内连接, en: INNER JOIN }
+title:   { zh: "{{term:primary-key}}与{{term:foreign-key}}", en: "{{Term:primary-key|Primary keys}} and {{term:foreign-key|foreign keys}}" }
 summary: { zh: 一句话说明学完能做什么。, en: One sentence on what you can do afterwards. }
 dataset: shop
 prereqs: [select-basics, where-filter]    # must come earlier in curriculum
@@ -162,6 +162,13 @@ Quote values YAML would otherwise convert: `"NULL"`, `"null"`, `"yes"`,
   show only the primary form, with the other on hover.
 - Never type a translation inline; add the term to `glossary.yaml` and use
   `{{term:id}}`. If a term appears in the curriculum, it belongs in the glossary.
+- Titles (lesson, module, planned) never carry a full translation. Mark only
+  the words a reader could misread with `{{term:…}}` (表, 行, 列, 别名, …);
+  every term in a title shows its other-language form. Quote such YAML values.
+- Spacing between Chinese and Latin text, digits and brackets is added at
+  render time (`src/i18n/autospace.ts`, applied in `mount()`); do not hand-type
+  it, and do not remove it where it is already typed. Chinese prose uses
+  Chinese quotation marks “…”, never straight quotes.
 - SQL code, keywords (`SELECT`, `JOIN`), table and column names are code. They
   are the same in both languages and are never translated.
 - The two versions are equivalent, not literal translations. Each should read
@@ -243,3 +250,12 @@ where Chinese can appear; build hierarchy from size, colour and space. Colours
 are CSS variables with a dark-mode set; never hard-code a colour in a view.
 The verdict's diff table is the signature element: missing rows in the accent
 tint, extra rows struck through in red.
+
+Two secondary hues add a little colour to content and never mean right or
+wrong: violet marks glossary terms (dotted rule, other-language form) and the
+"predict" exercise kind; amber marks emphasis (a thick underline stroke, since
+there is no bold) and the "debug" kind. Type sizes come only from the `--fs-*`
+scale in `app.css` (13 / 14 / 15 / 17 / 18 / 20 / 26 / 32 / 44 px); nothing
+below 13px except `kbd`. Exercise progress is always drawn the same way:
+one segment per exercise, solved green, attempted striped red (`.segs`,
+`.steps`). Where the mockup and `app.css` differ, `app.css` is current.

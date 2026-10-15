@@ -1,4 +1,4 @@
-title:   { zh: 算术与数值类型, en: Arithmetic and numeric types }
+title:   { zh: "算术与{{term:numeric-type}}", en: "Arithmetic and {{term:numeric-type|numeric types}}" }
 summary:
   zh: 在查询里做加减乘除和取整，并知道整数、精确小数和浮点数各会给你什么结果。
   en: Add, subtract, multiply, divide and round in a query, and know what integers, exact decimals and floating-point numbers each give you.

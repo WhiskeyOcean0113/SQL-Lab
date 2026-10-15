@@ -3,7 +3,7 @@ difficulty: 3
 lesson_ref: deeper
 prompt:
   zh: |
-    为每位顾客生成"名字, 城市"这样的标签（例如 `Lin Wei, Shanghai`），列名为 `label`。城市未知的顾客，标签里只写名字，不能是 NULL，也不能留下多余的逗号。
+    为每位顾客生成“名字, 城市”这样的标签（例如 `Lin Wei, Shanghai`），列名为 `label`。城市未知的顾客，标签里只写名字，不能是 NULL，也不能留下多余的逗号。
   en: |
     Build a "name, city" label for every customer (for example `Lin Wei, Shanghai`), in a column called `label`. For customers whose city is unknown, the label is just the name: not NULL, and no dangling comma.
 hint:

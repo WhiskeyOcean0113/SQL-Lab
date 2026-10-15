@@ -1,4 +1,4 @@
-title:   { zh: 字符串函数, en: String functions }
+title:   { zh: "{{term:string-function}}", en: "{{Term:string-function|String functions}}" }
 summary:
   zh: 拼接、截取、查找和改写文字，并处理大小写和 NULL。
   en: Join, cut, search and rewrite text, and handle case and NULL along the way.

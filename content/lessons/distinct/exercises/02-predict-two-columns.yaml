@@ -14,5 +14,5 @@ choices: ['8', '9', '12']
 answer: 1
 verify: { rows: 9 }
 explain:
-  zh: 9 行。`DISTINCT` 永远作用于整个选择列表，`(country)` 只是给一列加了括号。所以它对"国家 + 城市"的组合去重：China 有 Shanghai 和 Beijing 两个组合，因此比国家数多一行。
+  zh: 9 行。`DISTINCT` 永远作用于整个选择列表，`(country)` 只是给一列加了括号。所以它对“国家 + 城市”的组合去重：China 有 Shanghai 和 Beijing 两个组合，因此比国家数多一行。
   en: 9 rows. `DISTINCT` always applies to the whole select list; `(country)` is just one column in parentheses. So it deduplicates country + city combinations, and China has two of them, Shanghai and Beijing, one more than the number of countries.

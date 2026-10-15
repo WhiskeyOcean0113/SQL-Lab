@@ -5,7 +5,7 @@ prompt:
   zh: 用下面的片段拼出一条查询：列出还没发货、也没有被取消的订单，列依次为订单编号和状态。有一个片段是多余的。
   en: Arrange the pieces into a query listing the orders that have not shipped and are not cancelled, as the columns order id and status. One piece is not needed.
 hint:
-  zh: "\"还没发货\"就是 `shipped_at` 没有值。"
+  zh: "“还没发货”就是 `shipped_at` 没有值。"
   en: '"Not shipped" means `shipped_at` has no value.'
 solution: |
   SELECT id, status

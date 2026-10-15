@@ -19,7 +19,7 @@ function head(rs: ResultSet, lead = false): Raw {
 
 export function resultTable(rs: ResultSet): Raw {
   const numeric = rs.columns.map(c => NUMERIC.has(c.type))
-  return html`<table class="grid">${head(rs)}<tbody>${rs.rows.map(r => html`<tr>${r.map((v, i) => cell(v, numeric[i]!))}</tr>`)}</tbody></table>`
+  return html`<table class="grid" translate="no">${head(rs)}<tbody>${rs.rows.map(r => html`<tr>${r.map((v, i) => cell(v, numeric[i]!))}</tr>`)}</tbody></table>`
 }
 
 export function errorBlock(err: SqlError, sql: string, lang: Lang): Raw {
@@ -94,7 +94,7 @@ function diffTable(g: Grade, lang: Lang): Raw {
   return html`
     <div class="legend"><span><i class="lg-missing"></i>${raw(t(lang, 'verdict.legend.missing'))}</span><span><i class="lg-extra"></i>${raw(t(lang, 'verdict.legend.extra'))}</span></div>
     <div class="diff">
-      <table class="grid">${head(rs, true)}<tbody>${shown.map(d => html`<tr class="${d.kind}"><td class="mark">${raw(mark(d.kind))}</td>${d.row.map((v, i) => cell(v, numeric[i] ?? false))}</tr>`)}</tbody></table>
+      <table class="grid" translate="no">${head(rs, true)}<tbody>${shown.map(d => html`<tr class="${d.kind}"><td class="mark">${raw(mark(d.kind))}</td>${d.row.map((v, i) => cell(v, numeric[i] ?? false))}</tr>`)}</tbody></table>
       ${rows.length > DIFF_LIMIT ? html`<div class="more">${raw(t(lang, 'verdict.more', { n: rows.length - DIFF_LIMIT }))}</div>` : ''}
     </div>`
 }

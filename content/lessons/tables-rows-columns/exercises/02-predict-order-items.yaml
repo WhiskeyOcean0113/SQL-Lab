@@ -15,5 +15,5 @@ choices:
   - { zh: 一位顾客的购物车, en: A customer's shopping cart }
 answer: 1
 explain:
-  zh: 每一行是"某笔订单里的某种商品"。同一个 `order_id` 可以出现好几次，因为一笔订单可以包含多种商品；同一个 `product_id` 也可以出现好几次，因为同一件商品可以被不同的订单买走。
+  zh: 每一行是“某笔订单里的某种商品”。同一个 `order_id` 可以出现好几次，因为一笔订单可以包含多种商品；同一个 `product_id` 也可以出现好几次，因为同一件商品可以被不同的订单买走。
   en: Each row is "this product in that order". The same `order_id` can appear several times because an order can contain several products, and the same `product_id` can appear several times because many orders can buy the same product.

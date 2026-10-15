@@ -1,4 +1,4 @@
-title:   { zh: WHERE 与比较运算, en: WHERE and comparisons }
+title:   { zh: "WHERE 与{{term:comparison-operator|比较运算}}", en: "WHERE and {{term:comparison-operator|comparisons}}" }
 summary:
   zh: 只留下满足条件的行：比较数字、文字和日期，并分清单引号和双引号。
   en: Keep only the rows that meet a condition, comparing numbers, text and dates, and know single quotes from double quotes.

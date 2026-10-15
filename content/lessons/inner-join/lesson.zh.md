@@ -16,7 +16,7 @@ FROM customers
 WHERE id <= 5;
 ```
 
-把两次的结果摆在一起，你能用眼睛对出来：订单 1 和订单 4 都是 Lin Wei 下的。这一篇要学的，就是让数据库替你完成这项"对号"的工作，并且一次处理全部订单。
+把两次的结果摆在一起，你能用眼睛对出来：订单 1 和订单 4 都是 Lin Wei 下的。这一篇要学的，就是让数据库替你完成这项“对号”的工作，并且一次处理全部订单。
 
 > 为什么不把顾客名字直接存进 `orders`？因为同一位顾客会下很多笔订单。名字只存一份，改名时只需要改一处，也不会出现同一个人在不同订单里拼法不一样的情况。代价是查询时要把表重新拼起来，这正是 join 的用处。
 
@@ -34,13 +34,13 @@ JOIN customers ON customers.id = orders.customer_id
 几个要点：
 
 - 连接条件写在 `ON` 后面，和 `WHERE` 里的条件是同一种判断。只有判断结果为 true 的配对会留下。
-- `orders.customer_id` 是一个{{term:foreign-key}}：它的值指向 `customers` 的{{term:primary-key}} `id`。绝大多数 join 都沿着"外键 = 主键"这条线连接。
+- `orders.customer_id` 是一个{{term:foreign-key}}：它的值指向 `customers` 的{{term:primary-key}} `id`。绝大多数 join 都沿着“外键 = 主键”这条线连接。
 - 任何一边找不到配对的行，都不会出现在结果里。shop 有两位顾客从没下过单，所以连接 `orders` 和 `customers` 得到的 24 行里，找不到 Lucas Silva 和 Mei Tanaka。
 - `JOIN` 和 `INNER JOIN` 完全相同，`INNER` 可以省略。
 
 在{{term:logical-order}}里，`FROM` 和 `JOIN` 最先执行：数据库先得到一张拼好的宽表，`WHERE` 再去筛选它，最后由 `SELECT` 从中挑出列。所以 `WHERE` 和 `SELECT` 都能同时使用两张表的列。
 
-从定义上说，内连接等于先求两张表的{{term:cartesian-product}}，也就是所有可能的配对（24 笔订单 × 12 位顾客 = 288 对），再用 `ON` 的条件筛掉不成立的配对。数据库实际执行时不会真的生成 288 行，但结果一定和这个定义一致。后面遇到行数"变多"或"变少"的问题，都可以回到这个定义来想。
+从定义上说，内连接等于先求两张表的{{term:cartesian-product}}，也就是所有可能的配对（24 笔订单 × 12 位顾客 = 288 对），再用 `ON` 的条件筛掉不成立的配对。数据库实际执行时不会真的生成 288 行，但结果一定和这个定义一致。后面遇到行数“变多”或“变少”的问题，都可以回到这个定义来想。
 
 ## 示例 {#example}
 
@@ -51,7 +51,7 @@ JOIN customers ON customers.id = orders.customer_id
 1. **找出需要的列分别在哪张表。** 订单编号和状态在 `orders`，名字在 `customers`。
 2. **找出连接两张表的列。** `orders.customer_id` 指向 `customers.id`。
 3. **写出 `FROM` 和 `JOIN`。** 给两张表起短的{{term:alias|表别名}} `o` 和 `c`，连接条件是 `c.id = o.customer_id`。
-4. **用"别名.列名"写 `SELECT`。** 两张表都有 `id` 列，必须写明要的是 `o.id`。
+4. **用“别名.列名”写 `SELECT`。** 两张表都有 `id` 列，必须写明要的是 `o.id`。
 5. **最后加上筛选。** `WHERE o.id <= 5`。
 
 ```sql run
@@ -71,13 +71,13 @@ WHERE o.id <= 5;
 | 4 | 1 | `id = 1` | Lin Wei |
 | 5 | 4 | `id = 4` | Sofia Rossi |
 
-Lin Wei 出现了两次，因为 Lin Wei 下了两笔订单，`customers` 里的同一行被配对了两次。这是{{term:one-to-many}}的正常结果：内连接不会去重，"一"这一边的行会随着"多"那一边重复出现。
+Lin Wei 出现了两次，因为 Lin Wei 下了两笔订单，`customers` 里的同一行被配对了两次。这是{{term:one-to-many}}的正常结果：内连接不会去重，“一”这一边的行会随着“多”那一边重复出现。
 
 ## 变体 {#variants}
 
 **表的先后可以交换。** 写成 `FROM customers AS c JOIN orders AS o ON ...`，得到的行完全相同，只是 `SELECT *` 时列的先后不同。对内连接来说，哪张表写在前面不影响结果。
 
-**连接条件写在 `ON`，筛选条件写在 `WHERE`。** 对内连接，把 `c.country = 'Canada'` 放进 `ON` 还是 `WHERE`，结果都一样。但请养成习惯：`ON` 只写"两张表怎么对上"，`WHERE` 写"要哪些行"。下一篇的外连接里，这两个位置的效果会不同。
+**连接条件写在 `ON`，筛选条件写在 `WHERE`。** 对内连接，把 `c.country = 'Canada'` 放进 `ON` 还是 `WHERE`，结果都一样。但请养成习惯：`ON` 只写“两张表怎么对上”，`WHERE` 写“要哪些行”。下一篇的外连接里，这两个位置的效果会不同。
 
 ```sql run
 SELECT o.id, c.name, o.status
@@ -121,7 +121,7 @@ FROM orders AS o
 NATURAL JOIN customers AS c;
 ```
 
-两张表唯一同名的列是 `id`，于是"订单 5"被配给了"顾客 5"。没有报错，返回 12 行看起来很正常的数据，但大部分都是错的。PostgreSQL 文档也提醒：表结构一变，NATURAL JOIN 的含义就会跟着变。请始终显式地写 `ON`。
+两张表唯一同名的列是 `id`，于是“订单 5”被配给了“顾客 5”。没有报错，返回 12 行看起来很正常的数据，但大部分都是错的。PostgreSQL 文档也提醒：表结构一变，NATURAL JOIN 的含义就会跟着变。请始终显式地写 `ON`。
 
 **旧式写法：用逗号连接。** 你会在别处见到 `FROM orders, customers WHERE customers.id = orders.customer_id`。它和内连接的结果相同，但连接条件混在 `WHERE` 里，一旦漏写，得到的就是 288 行的笛卡尔积。也不要把逗号和 `JOIN` 混在一起用：`JOIN` 比逗号结合得更紧，容易得到意料之外的错误。
 
@@ -129,7 +129,7 @@ NATURAL JOIN customers AS c;
 
 ## 常见错误 {#mistakes}
 
-**1. 漏写连接条件。** 有人以为数据库会"自动按编号对上"。它不会。用逗号列出两张表却没写条件，每笔订单都会和每位顾客配对：
+**1. 漏写连接条件。** 有人以为数据库会“自动按编号对上”。它不会。用逗号列出两张表却没写条件，每笔订单都会和每位顾客配对：
 
 ```sql
 SELECT o.id, c.name
@@ -156,12 +156,12 @@ JOIN order_items AS i ON i.product_id = p.id
 WHERE c.name = 'Outdoor';
 ```
 
-每件商品按它被买过的次数重复出现，从没卖出过的 Folding Chair 则消失了。多连一张表不是"多带一些信息"，它会改变结果有哪些行。只连回答问题必需的表。
+每件商品按它被买过的次数重复出现，从没卖出过的 Folding Chair 则消失了。多连一张表不是“多带一些信息”，它会改变结果有哪些行。只连回答问题必需的表。
 
 ## 小结 {#summary}
 
 - `JOIN ... ON` 把两张表的行配对，只保留 `ON` 条件为 true 的配对；`INNER` 可以省略。
-- 连接条件通常是"外键 = 主键"，例如 `c.id = o.customer_id`。
+- 连接条件通常是“外键 = 主键”，例如 `c.id = o.customer_id`。
 - 找不到配对的行会被丢掉，连接列为 NULL 的行也是如此。
-- 一对多关系中，"一"这边的行会重复出现；行数异常时，先检查连接条件和多连的表。
+- 一对多关系中，“一”这边的行会重复出现；行数异常时，先检查连接条件和多连的表。
 - 用表别名限定每一列，并且始终显式地写 `ON`。

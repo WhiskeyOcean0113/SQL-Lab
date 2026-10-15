@@ -1,4 +1,4 @@
-title:   { zh: 一条查询的逻辑执行顺序, en: How a query is evaluated }
+title:   { zh: "一条查询的{{term:logical-order}}", en: How a query is evaluated }
 summary:
   zh: 写 SQL 的顺序和数据库理解它的顺序并不一样；记住后者，很多报错就不再神秘。
   en: SQL is written in one order and evaluated in another. Learn the second, and many errors stop being mysterious.

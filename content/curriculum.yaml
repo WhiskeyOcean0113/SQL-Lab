@@ -8,7 +8,7 @@
 
 modules:
   - id: m0
-    title: { zh: 关系模型, en: The relational model }
+    title: { zh: "{{term:relational-model}}", en: "The {{term:relational-model}}" }
     summary:
       zh: 在写第一条 query 之前，先弄清楚数据长什么样，以及数据库是按什么顺序理解一条 query 的。
       en: Before the first query, learn what the data looks like and the order in which the database reads a query.
@@ -24,7 +24,7 @@ modules:
     planned: []
 
   - id: m2
-    title: { zh: 表达式与函数, en: Expressions and functions }
+    title: { zh: "{{term:expression}}与{{term:function}}", en: "{{Term:expression|Expressions}} and {{term:function|functions}}" }
     summary:
       zh: 在查询里计算新值：算术、字符串、日期时间、条件表达式和类型转换。
       en: Compute new values in a query with arithmetic, strings, dates, conditionals and casts.
@@ -32,39 +32,39 @@ modules:
     planned: []
 
   - id: m3
-    title: { zh: 聚合, en: Aggregation }
+    title: { zh: "{{term:aggregation}}", en: "{{Term:aggregation}}" }
     summary:
       zh: 把很多行汇总成一行，再按组汇总，并筛选汇总后的结果。
       en: Collapse many rows into one, then one per group, and filter the groups.
     lessons: []
     planned:
-      - { zh: 聚合函数, en: Aggregate functions }
+      - { zh: "{{term:aggregate-function}}", en: "{{Term:aggregate-function|Aggregate functions}}" }
       - { zh: GROUP BY, en: GROUP BY }
       - { zh: HAVING 与 WHERE 的区别, en: HAVING versus WHERE }
       - { zh: 聚合与 NULL, en: Aggregates and NULL }
 
   - id: m4
-    title: { zh: 多表连接, en: Joining tables }
+    title: { zh: "多表{{term:join}}", en: "{{Term:join|Joining}} tables" }
     summary:
       zh: 用共同的列把多张表拼起来，并理解每种 join 会保留哪些行。
       en: Combine tables through shared columns, and know which rows each kind of join keeps.
     lessons: [inner-join]
     planned:
       - { zh: LEFT、RIGHT 与 FULL JOIN, en: "LEFT, RIGHT and FULL JOIN" }
-      - { zh: 自连接, en: Self joins }
-      - { zh: CROSS JOIN 与行数暴增, en: CROSS JOIN and row explosion }
+      - { zh: "{{term:self-join}}", en: "{{Term:self-join|Self joins}}" }
+      - { zh: "CROSS JOIN 与{{term:cartesian-product}}", en: "CROSS JOIN and the {{term:cartesian-product}}" }
       - { zh: 多表 join 与聚合, en: Joining several tables and aggregating }
 
   - id: m5
-    title: { zh: 子查询与集合运算, en: Subqueries and set operations }
+    title: { zh: "{{term:subquery}}与{{term:set-operation}}", en: "{{Term:subquery|Subqueries}} and {{term:set-operation|set operations}}" }
     summary:
       zh: 把一条 query 的结果当作另一条 query 的输入，以及合并、相交、相减结果集。
       en: Use one query's result inside another, and union, intersect or subtract result sets.
     lessons: []
     planned:
-      - { zh: 标量子查询与表子查询, en: Scalar and table subqueries }
+      - { zh: "{{term:scalar-subquery}}与表子查询", en: "{{Term:scalar-subquery|Scalar}} and table subqueries" }
       - { zh: IN 与 EXISTS, en: IN and EXISTS }
-      - { zh: 关联子查询, en: Correlated subqueries }
+      - { zh: "{{term:correlated-subquery}}", en: "{{Term:correlated-subquery|Correlated subqueries}}" }
       - { zh: UNION、INTERSECT 与 EXCEPT, en: "UNION, INTERSECT and EXCEPT" }
 
   - id: m6
@@ -74,10 +74,10 @@ modules:
       en: Break complex queries apart with CTEs, and rank or accumulate without collapsing rows using window functions.
     lessons: []
     planned:
-      - { zh: CTE（WITH 子句）, en: CTEs (the WITH clause) }
-      - { zh: 递归 CTE, en: Recursive CTEs }
-      - { zh: 窗口函数：排名, en: "Window functions: ranking" }
-      - { zh: 窗口函数：偏移与累计, en: "Window functions: offsets and running totals" }
+      - { zh: CTE 与 WITH 子句, en: CTEs and the WITH clause }
+      - { zh: "{{term:recursive-cte}}", en: "{{Term:recursive-cte|Recursive CTEs}}" }
+      - { zh: "{{term:window-function}}：排名", en: "{{Term:window-function|Window functions}}: ranking" }
+      - { zh: "{{term:window-function}}：偏移与累计", en: "{{Term:window-function|Window functions}}: offsets and running totals" }
 
   - id: m7
     title: { zh: 修改数据, en: Changing data }
@@ -89,7 +89,7 @@ modules:
       - { zh: INSERT, en: INSERT }
       - { zh: UPDATE 与 DELETE, en: UPDATE and DELETE }
       - { zh: UPSERT（ON CONFLICT）, en: UPSERT (ON CONFLICT) }
-      - { zh: 事务与 ACID, en: Transactions and ACID }
+      - { zh: "{{term:transaction}}与 ACID", en: "{{Term:transaction|Transactions}} and ACID" }
 
   - id: m8
     title: { zh: 数据库设计, en: Database design }
@@ -98,10 +98,10 @@ modules:
       en: Design tables by choosing types, adding constraints, normalizing, and wrapping queries in views.
     lessons: []
     planned:
-      - { zh: 数据类型, en: Data types }
-      - { zh: 约束, en: Constraints }
-      - { zh: 范式（到 3NF）, en: Normalization (up to 3NF) }
-      - { zh: 视图, en: Views }
+      - { zh: "{{term:data-type}}", en: "{{Term:data-type|Data types}}" }
+      - { zh: "{{term:constraint}}", en: "{{Term:constraint|Constraints}}" }
+      - { zh: "{{term:normalization}}（到 3NF）", en: "{{Term:normalization}} (up to 3NF)" }
+      - { zh: "{{term:view}}", en: "{{Term:view|Views}}" }
 
   - id: m9
     title: { zh: 性能入门, en: Performance basics }
@@ -110,5 +110,5 @@ modules:
       en: Understand why indexes are fast, and how to read a query plan.
     lessons: []
     planned:
-      - { zh: 索引, en: Indexes }
-      - { zh: 用 EXPLAIN 读执行计划, en: Reading plans with EXPLAIN }
+      - { zh: "{{term:index}}", en: "{{Term:index|Indexes}}" }
+      - { zh: "用 EXPLAIN 读{{term:query-plan}}", en: "Reading {{term:query-plan|query plans}} with EXPLAIN" }

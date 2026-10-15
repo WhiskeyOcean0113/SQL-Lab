@@ -229,7 +229,10 @@ SQL worker and the hash router (`src/ui/app.ts`); each page is one module in
 
 The approved direction is `design/mockup.html`; `src/styles/app.css` is its
 implementation. Simple and modern: cool neutral greys, one muted steel-blue
-accent, green for correct, a soft red for errors. Latin text in Arial, Chinese
+accent, green for correct, red for wrong. Correct and wrong must stay easy to
+tell apart: they differ in hue and lightness, their tints are ΔE ≈ 22 apart,
+and wrong states also carry a non-colour cue (strikethrough, stripes, a hollow
+ring). Text on a tint uses the matching `--ok-ink` / `--bad-ink`. Latin text in Arial, Chinese
 in SimSun (fallbacks: Songti SC, STSong). SimSun has no bold, so never use bold
 where Chinese can appear; build hierarchy from size, colour and space. Colours
 are CSS variables with a dark-mode set; never hard-code a colour in a view.

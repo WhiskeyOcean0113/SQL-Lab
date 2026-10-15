@@ -1,0 +1,21 @@
+kind: predict
+difficulty: 1
+lesson_ref: example
+prompt:
+  zh: shop 里有两位顾客住在日本：Kenji Sato 和 Mei Tanaka。下面这条查询会返回几行？
+  en: Two shop customers live in Japan, Kenji Sato and Mei Tanaka. How many rows does this query return?
+hint:
+  zh: 每一行结果都是"一位顾客 + 一笔订单"的配对。分别想想这两位顾客各有几笔订单。
+  en: Each result row is one customer paired with one order. Think about how many orders each of the two has.
+query: |
+  SELECT c.name, o.id
+  FROM customers AS c
+  JOIN orders AS o ON o.customer_id = c.id
+  WHERE c.country = 'Japan';
+choices: ['2', '3', '4', '0']
+answer: 1
+explain:
+  zh: |
+    3 行，全部是 Kenji Sato：Kenji Sato 有 3 笔订单（3、12、24），每一笔都和 Kenji Sato 配对一次。Mei Tanaka 从没下过单，找不到配对，所以一行都没有。顾客的人数并不决定结果的行数，配对的数量才决定。
+  en: |
+    3 rows, all for Kenji Sato, who has three orders (3, 12 and 24), each paired once. Mei Tanaka has never ordered, finds no partner and contributes no rows. The number of customers does not decide the row count; the number of matching pairs does.

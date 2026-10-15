@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 列出所有来自 Canada 的顾客下的订单，列依次为订单编号、顾客名字、订单状态。不要求排序。
+  en: List every order placed by a customer from Canada, with the columns order id, customer name and order status, in that order. Any row order is fine.
+hint:
+  zh: 先用 `JOIN ... ON` 把订单和顾客对上，再用 `WHERE` 筛选 `country`。
+  en: Match orders to customers with `JOIN ... ON` first, then filter on `country` in `WHERE`.
+solution: |
+  SELECT o.id, c.name, o.status
+  FROM orders AS o
+  JOIN customers AS c ON c.id = o.customer_id
+  WHERE c.country = 'Canada';

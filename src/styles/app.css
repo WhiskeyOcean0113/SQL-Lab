@@ -14,11 +14,16 @@
   --line-2: #CDD2D9;
   --accent: #3A6788;
   --accent-ink: #2C5370;
-  --accent-tint: #E9EFF5;
-  --ok: #3B7656;
-  --ok-tint: #E7F1EB;
-  --bad: #B4483E;
-  --bad-tint: #F7E9E7;
+  --accent-tint: #D9E7F6;
+  /* Correct and wrong differ in hue and lightness, and their tints are far
+     apart (ΔE ≈ 22), so they stay distinct for red-green colour blindness too.
+     *-ink is for text placed on the matching tint. */
+  --ok: #126B4E;
+  --ok-ink: #0E6447;
+  --ok-tint: #D4EEE1;
+  --bad: #CF3F2E;
+  --bad-ink: #A62A1D;
+  --bad-tint: #FCDAD4;
   --tk-num: #9A6A2F;
   --font: Arial, "Helvetica Neue", SimSun, "宋体", "Songti SC", STSong, serif;
   --mono: Menlo, "SF Mono", Consolas, SimSun, monospace;
@@ -29,15 +34,15 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #A9B0B8; --ink-3: #78808A;
-    --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #223040;
-    --ok: #7DBA97; --ok-tint: #1F3128; --bad: #E08A80; --bad-tint: #3A2422; --tk-num: #D9A86A;
+    --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #1B3657;
+    --ok: #4FD1A0; --ok-ink: #4FD1A0; --ok-tint: #123F31; --bad: #FF8A70; --bad-ink: #FF8A70; --bad-tint: #55211A; --tk-num: #D9A86A;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --page: #15181C; --sheet: #1B1F24; --well: #22272D; --ink: #E6E8EB; --ink-2: #A9B0B8; --ink-3: #78808A;
-  --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #223040;
-  --ok: #7DBA97; --ok-tint: #1F3128; --bad: #E08A80; --bad-tint: #3A2422; --tk-num: #D9A86A;
+  --line: #2B3138; --line-2: #3A414A; --accent: #86AED0; --accent-ink: #A9C6DF; --accent-tint: #1B3657;
+  --ok: #4FD1A0; --ok-ink: #4FD1A0; --ok-tint: #123F31; --bad: #FF8A70; --bad-ink: #FF8A70; --bad-tint: #55211A; --tk-num: #D9A86A;
   color-scheme: dark;
 }
 
@@ -169,7 +174,8 @@ dfn.term-repeat .term-alt { display: none; }
 .prose li::marker { color: var(--ink-3); }
 .prose blockquote { margin: 24px 0; padding: 16px 20px; border-radius: 10px; background: var(--well); font-size: 15px; line-height: 1.85; }
 .prose blockquote p:last-child { margin: 0; }
-.prose strong { font-weight: 400; color: var(--ink); background: linear-gradient(transparent 62%, var(--accent-tint) 62%); }
+/* SimSun has no bold, so emphasis is colour, not weight. */
+.prose strong { font-weight: 400; color: var(--accent-ink); }
 .prose pre.sql-static { margin: 20px 0; padding: 16px 20px; background: var(--well); border-radius: 10px; font: 13.5px/1.75 var(--mono); overflow-x: auto; }
 .prose pre.sql-static code { background: none; padding: 0; font: inherit; }
 .prose .table-scroll { overflow-x: auto; margin: 20px 0; }
@@ -198,7 +204,7 @@ table.grid { width: 100%; border-collapse: collapse; font: 13px/1.45 var(--mono)
 .grid .null { color: var(--ink-3); font-style: italic; }
 
 .sql-err { margin: 12px 0 4px; padding: 12px 14px; border-radius: var(--radius); background: var(--bad-tint); color: var(--ink); font-size: 14px; line-height: 1.7; }
-.sql-err .friendly { color: var(--bad); }
+.sql-err .friendly { color: var(--bad-ink); }
 .sql-err .raw { font: 12.5px/1.6 var(--mono); color: var(--ink-2); margin-top: 4px; word-break: break-word; }
 
 /* ---------- CodeMirror ---------- */
@@ -223,8 +229,12 @@ table.grid { width: 100%; border-collapse: collapse; font: 13px/1.45 var(--mono)
 .steps { display: flex; gap: 6px; margin-left: auto; }
 .steps a { width: 28px; height: 4px; border-radius: 2px; background: var(--line-2); }
 .steps a.ok { background: var(--ok); }
-.steps a.bad { background: var(--bad); }
-.steps a[aria-current="step"] { background: var(--accent); }
+/* Stripes, so a wrong exercise reads differently from a right one without colour. */
+.steps a.bad { background: repeating-linear-gradient(-45deg, var(--bad) 0 3px, color-mix(in srgb, var(--bad) 35%, transparent) 3px 6px); }
+/* The current exercise keeps its right/wrong colour and gains an underline. */
+.steps a { position: relative; }
+.steps a[aria-current="step"]:not(.ok):not(.bad) { background: var(--accent); }
+.steps a[aria-current="step"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 2px; border-radius: 1px; background: var(--ink); }
 .split { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 40px; padding-top: 32px; align-items: start; }
 .task .type { display: inline-block; font-size: 12.5px; color: var(--accent-ink); background: var(--accent-tint); padding: 2px 10px; border-radius: 10px; margin-bottom: 14px; }
 .task .prompt { font-size: 16.5px; line-height: 1.95; }
@@ -262,6 +272,7 @@ table.grid { width: 100%; border-collapse: collapse; font: 13px/1.45 var(--mono)
 
 /* Predict */
 .predict-query { margin: 0; padding: 18px 20px; background: var(--well); font: 13.5px/1.75 var(--mono); overflow-x: auto; }
+.predict-query code, .answer .code code { background: none; padding: 0; font: inherit; border-radius: 0; }
 .choices { display: grid; gap: 8px; padding: 16px; }
 .choice { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; font-size: 15px; background: var(--sheet); }
 .choice:hover { border-color: var(--line-2); }
@@ -289,11 +300,11 @@ table.grid { width: 100%; border-collapse: collapse; font: 13px/1.45 var(--mono)
 .diff .grid th { background: var(--sheet); }
 .diff td.mark { width: 56px; font: 12px var(--font); padding-left: 10px; }
 .diff tr.extra td { background: var(--bad-tint); }
-.diff tr.extra td:not(.mark) { color: var(--bad); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 60%, transparent); }
-.diff tr.extra td.mark { color: var(--bad); }
+.diff tr.extra td:not(.mark) { color: var(--bad-ink); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad-ink) 70%, transparent); }
+.diff tr.extra td.mark { color: var(--bad-ink); box-shadow: inset 3px 0 0 var(--bad); }
 .diff tr.missing td { background: var(--accent-tint); }
 .diff tr.missing td:not(.mark) { color: var(--accent-ink); }
-.diff tr.missing td.mark { color: var(--accent-ink); }
+.diff tr.missing td.mark { color: var(--accent-ink); box-shadow: inset 3px 0 0 var(--accent); }
 .diff .more { font-size: 12.5px; color: var(--ink-3); padding: 8px 0 0; }
 .side-by-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 8px 20px 16px; }
 .side-by-side h4 { font-size: 12.5px; font-weight: 400; color: var(--ink-3); margin: 8px 0 4px; }

@@ -38,3 +38,5 @@ normalization:    { en: normalization, zh: 范式化 }
 index:            { en: index, zh: 索引 }
 view:             { en: view, zh: 视图 }
 query-plan:       { en: query plan, zh: 执行计划 }
+natural-join:     { en: natural join, zh: 自然连接 }
+one-to-many:      { en: one-to-many relationship, zh: 一对多关系 }

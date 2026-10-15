@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 有两位顾客来自 Canada，`orders` 一共有 24 行。下面这条查询漏写了连接条件，它会返回几行？
+  en: Two customers are from Canada, and `orders` has 24 rows. This query forgot its join condition. How many rows does it return?
+hint:
+  zh: 回到定义：没有连接条件时，每一笔订单会和哪些顾客配对？`WHERE` 又留下了其中哪些？
+  en: Go back to the definition. With no join condition, which customers does each order pair with, and which of those pairs does `WHERE` keep?
+query: |
+  SELECT o.id
+  FROM orders AS o, customers AS c
+  WHERE c.country = 'Canada';
+choices: ['5', '2', '24', '48']
+answer: 3
+explain:
+  zh: |
+    48 行。没有连接条件，24 笔订单和 12 位顾客组成 288 个配对，`WHERE` 只留下顾客来自 Canada 的配对：每笔订单配两位加拿大顾客，24 × 2 = 48。每个订单编号都出现两次，而且大部分订单根本不是这两位顾客下的。正确的结果是 5 行。
+  en: |
+    48 rows. Without a join condition, 24 orders and 12 customers make 288 pairs, and `WHERE` keeps the pairs whose customer is from Canada: every order with each of the two Canadian customers, 24 × 2 = 48. Every order id appears twice, and most of those orders were not placed by either customer. The correct answer has 5 rows.

@@ -1,0 +1,18 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: |
+    列出 Kenji Sato 的每一笔订单里买了哪些商品：每件商品一行，列依次为订单编号和商品名。不要求排序。
+  en: |
+    List what Kenji Sato bought in each order: one row per product, with the columns order id and product name, in that order. Any row order is fine.
+hint:
+  zh: 要从顾客走到商品，中间需要经过 `orders` 和 `order_items`。一共四张表、三个 `JOIN`，每个 `ON` 都沿着一个外键。
+  en: Getting from a customer to products goes through `orders` and `order_items`. That is four tables and three joins, each `ON` following one foreign key.
+solution: |
+  SELECT o.id, p.name
+  FROM customers AS c
+  JOIN orders AS o ON o.customer_id = c.id
+  JOIN order_items AS i ON i.order_id = o.id
+  JOIN products AS p ON p.id = i.product_id
+  WHERE c.name = 'Kenji Sato';

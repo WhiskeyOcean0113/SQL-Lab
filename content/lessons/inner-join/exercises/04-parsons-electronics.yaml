@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询，列出 Electronics 分类下的所有商品：商品名和分类名两列。有两个片段是多余的。
+  en: Arrange the pieces into a query that lists every product in the Electronics category, with two columns, the product name and the category name. Two of the pieces are not needed.
+hint:
+  zh: 连接条件要沿着外键 `products.category_id`；筛选的是分类的名字，不是商品的名字。
+  en: The join follows the foreign key `products.category_id`, and the filter is on the category's name, not the product's.
+solution: |
+  SELECT p.name, c.name
+  FROM products AS p
+  JOIN categories AS c
+  ON c.id = p.category_id
+  WHERE c.name = 'Electronics';
+distractors:
+  - ON c.id = p.id
+  - WHERE p.name = 'Electronics';

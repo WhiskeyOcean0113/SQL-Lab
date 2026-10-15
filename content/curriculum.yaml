@@ -63,9 +63,8 @@ modules:
     summary:
       zh: 用共同的列把多张表拼起来，并理解每种 join 会保留哪些行。
       en: Combine tables through shared columns, and know which rows each kind of join keeps.
-    lessons: []
+    lessons: [inner-join]
     planned:
-      - { zh: INNER JOIN, en: INNER JOIN }
       - { zh: LEFT、RIGHT 与 FULL JOIN, en: LEFT, RIGHT and FULL JOIN }
       - { zh: 自连接, en: Self joins }
       - { zh: CROSS JOIN 与行数暴增, en: CROSS JOIN and row explosion }

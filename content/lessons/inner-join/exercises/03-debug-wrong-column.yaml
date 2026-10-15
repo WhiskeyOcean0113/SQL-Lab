@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: |
+    下面这条查询想列出每一笔订单的编号、下单顾客的名字和订单状态，列依次为 `id`、`name`、`status`。它能运行，但结果不对。找出问题并修好它。
+  en: |
+    This query should list every order with its id, the name of the customer who placed it, and its status, as the columns `id`, `name`, `status`. It runs, but the result is wrong. Find the problem and fix it.
+hint:
+  zh: 看 `ON` 两边比较的是什么。`orders` 里哪一列记录了下单的顾客？
+  en: Look at what the two sides of `ON` compare. Which column of `orders` records the customer?
+starter: |
+  SELECT o.id, c.name, o.status
+  FROM orders AS o
+  JOIN customers AS c ON c.id = o.id;
+solution: |
+  SELECT o.id, c.name, o.status
+  FROM orders AS o
+  JOIN customers AS c ON c.id = o.customer_id;

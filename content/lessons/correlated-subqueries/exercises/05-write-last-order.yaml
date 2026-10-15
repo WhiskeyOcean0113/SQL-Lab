@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 列出每一位顾客的名字和最近一次下单的时间，列名依次为 `name` 和 `last_order`。没下过单的顾客也要列出，`last_order` 显示为 NULL。
+  en: List every customer's name with the time of their most recent order, in columns called `name` and `last_order`. Customers who have never ordered must appear too, with a NULL `last_order`.
+hint:
+  zh: 在 `SELECT` 里写一个关联子查询：`max(ordered_at)`，条件是订单的 `customer_id` 等于外层顾客的 `id`。
+  en: Write a correlated subquery in `SELECT`, `max(ordered_at)` where the order's `customer_id` equals the outer customer's `id`.
+solution: |
+  SELECT c.name,
+         (SELECT max(o.ordered_at) FROM orders AS o WHERE o.customer_id = c.id) AS last_order
+  FROM customers AS c;
+check: { column_names: true }

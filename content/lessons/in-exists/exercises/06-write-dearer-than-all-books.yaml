@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 列出比 Books 分类（`category_id` 为 1）里每一本书都贵的商品，列依次为 `name` 和 `price`。
+  en: List the products dearer than every book in the Books category (`category_id` 1), with the columns `name` and `price`.
+hint:
+  zh: "`> ALL (子查询)` 要求比子查询返回的每个值都大。"
+  en: "`> ALL (subquery)` requires being greater than every value the subquery returns."
+solution: |
+  SELECT name, price
+  FROM products
+  WHERE price > ALL (SELECT price FROM products WHERE category_id = 1);
+check: { column_names: true }

@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 1 月有 3 位顾客下过单（顾客 1、2、3），6 月有 7 位顾客下过单，其中也包括顾客 1、2、3。下面这条查询会返回几行？
+  en: Three customers ordered in January (customers 1, 2 and 3), and 7 ordered in June, including customers 1, 2 and 3. How many rows does this query return?
+hint:
+  zh: "`UNION` 会把两边都有的顾客合并成一行。"
+  en: "`UNION` merges customers who appear on both sides into one row."
+query: |
+  SELECT customer_id FROM orders WHERE ordered_at < '2024-02-01'
+  UNION
+  SELECT customer_id FROM orders WHERE ordered_at >= '2024-06-01';
+choices: ['3', '7', '10']
+answer: 1
+verify: { rows: 7 }
+explain:
+  zh: 7 行。6 月的 7 位顾客已经包括了 1 月的 3 位，`UNION` 去掉重复后就是这 7 位。换成 `UNION ALL` 会是 10 行。
+  en: Seven rows. June's 7 customers already include January's 3, and `UNION` removes the repeats, leaving those 7. `UNION ALL` would give 10.

@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: Books 分类有 3 本书，价格是 19.99、42.00 和 55.50，平均 39.16。下面这条查询的结果里，Books 分类的商品有几件？
+  en: The Books category has 3 books priced 19.99, 42.00 and 55.50, averaging 39.16. How many Books products appear in this query's result?
+hint:
+  zh: 每件书都和 Books 自己的平均价比较。
+  en: Each book is compared with the average of Books itself.
+query: |
+  SELECT p.name, p.price
+  FROM products AS p
+  WHERE p.price > (
+    SELECT avg(p2.price)
+    FROM products AS p2
+    WHERE p2.category_id = p.category_id
+  );
+choices: ['0', '1', '2', '3']
+answer: 2
+explain:
+  zh: 2 件：42.00 和 55.50 高于 Books 的平均价 39.16，19.99 不高于。每件商品都和自己所在分类的平均价比较，而不是和全部商品的平均价比较。
+  en: Two, 42.00 and 55.50, which are above the Books average of 39.16; 19.99 is not. Each product is compared with its own category's average, not with the average of all products.

@@ -1,0 +1,6 @@
+title:   { zh: "{{term:scalar-subquery}}与{{term:derived-table}}", en: "{{Term:scalar-subquery|Scalar subqueries}} and {{term:derived-table|derived tables}}" }
+summary:
+  zh: 把一条查询的结果当作一个值或一张表，放进另一条查询里使用。
+  en: Use one query's result as a single value or as a table inside another query.
+dataset: shop
+prereqs: [joins-aggregation]

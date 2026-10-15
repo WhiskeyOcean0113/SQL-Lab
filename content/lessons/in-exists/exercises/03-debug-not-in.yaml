@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: 下面这条查询想列出从没推荐过别人的顾客名字，却一行都没有返回。修好它。
+  en: This query should list the names of the customers who have never referred anyone, but it returns no rows. Fix it.
+hint:
+  zh: "`referred_by` 里有 NULL。可以改用 `NOT EXISTS`，也可以在子查询里排除 NULL。"
+  en: "`referred_by` contains NULLs. Use `NOT EXISTS`, or exclude the NULLs inside the subquery."
+starter: |
+  SELECT name
+  FROM customers
+  WHERE id NOT IN (SELECT referred_by FROM customers);
+solution: |
+  SELECT name
+  FROM customers AS c
+  WHERE NOT EXISTS (
+    SELECT 1 FROM customers AS x WHERE x.referred_by = c.id
+  );

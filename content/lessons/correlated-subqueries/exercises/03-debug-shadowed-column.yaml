@@ -1,0 +1,21 @@
+kind: debug
+difficulty: 3
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出比**自己所在分类**平均价贵的商品，列依次为商品名和价格，却只返回了 3 行，和全体平均的结果一样。修好它。
+  en: This query should list the products dearer than the average of **their own category**, with the name and the price as the columns, but it returns only 3 rows, the same as comparing with the overall average. Fix it.
+hint:
+  zh: 子查询里的两个 `category_id` 都指向子查询自己的表。给内层表起一个别名，再写清楚和外层的哪一列比较。
+  en: Both `category_id`s inside the subquery refer to the subquery's own table. Give the inner table an alias and spell out which outer column it is compared with.
+starter: |
+  SELECT p.name, p.price
+  FROM products AS p
+  WHERE p.price > (
+    SELECT avg(price) FROM products WHERE category_id = category_id
+  );
+solution: |
+  SELECT p.name, p.price
+  FROM products AS p
+  WHERE p.price > (
+    SELECT avg(p2.price) FROM products AS p2 WHERE p2.category_id = p.category_id
+  );

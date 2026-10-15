@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: shop 里没有编号为 999 的商品。下面这条查询会返回什么？
+  en: shop has no product with id 999. What does this query return?
+hint:
+  zh: 子查询一行都没找到时，标量子查询的值是什么？拿它和价格比较会得到什么？
+  en: When the subquery finds nothing, what is the scalar subquery's value? What does comparing a price with it give?
+query: |
+  SELECT name
+  FROM products
+  WHERE price > (SELECT price FROM products WHERE id = 999);
+choices:
+  - { zh: 所有 16 件商品, en: All 16 products }
+  - { zh: 0 行，没有报错, en: "No rows, and no error" }
+  - { zh: 报错, en: An error }
+answer: 1
+verify: { rows: 0 }
+explain:
+  zh: 0 行，也不报错。子查询没有返回任何行，标量子查询的值就是 NULL；`price > NULL` 是 unknown，`WHERE` 不保留任何一行。
+  en: No rows, and no error. The subquery returns nothing, so the scalar subquery is NULL; `price > NULL` is unknown, and `WHERE` keeps no rows.

@@ -1,0 +1,18 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 列出买过 Ceramic Mug（商品 8）的顾客名字，每位顾客只出现一次。
+  en: List the names of the customers who have bought a Ceramic Mug (product 8), each customer once.
+hint:
+  zh: 先写一个子查询，找出买过商品 8 的订单属于哪些顾客，再用 `IN`。
+  en: First write a subquery finding the customers whose orders include product 8, then use `IN`.
+solution: |
+  SELECT name
+  FROM customers
+  WHERE id IN (
+    SELECT o.customer_id
+    FROM orders AS o
+    JOIN order_items AS i ON i.order_id = o.id
+    WHERE i.product_id = 8
+  );

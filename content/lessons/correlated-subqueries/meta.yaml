@@ -1,0 +1,6 @@
+title:   { zh: "{{term:correlated-subquery}}", en: "{{Term:correlated-subquery|Correlated subqueries}}" }
+summary:
+  zh: 让子查询引用外层的当前行，回答“比同类平均贵”“每位顾客最近一笔订单”这类按行比较的问题。
+  en: Let a subquery refer to the outer query's current row, to answer per-row questions such as "dearer than its category's average" or "each customer's latest order".
+dataset: shop
+prereqs: [in-exists]

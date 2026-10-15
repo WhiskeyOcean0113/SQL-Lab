@@ -1,0 +1,16 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：4 月之前下过单、但 6 月没有再下单的顾客编号。有两个片段是多余的。
+  en: Arrange the pieces into a query finding the ids of customers who ordered before April but did not order in June. Two pieces are not needed.
+hint:
+  zh: “在 A 中但不在 B 中”是 `EXCEPT`，方向不能反。
+  en: '"In A but not in B" is `EXCEPT`, and the direction matters.'
+solution: |
+  SELECT customer_id FROM orders WHERE ordered_at < '2024-04-01'
+  EXCEPT
+  SELECT customer_id FROM orders WHERE ordered_at >= '2024-06-01';
+distractors:
+  - INTERSECT
+  - UNION

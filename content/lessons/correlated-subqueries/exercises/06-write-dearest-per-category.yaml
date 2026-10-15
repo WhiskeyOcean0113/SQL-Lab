@@ -1,0 +1,16 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+prompt:
+  zh: 列出每个分类里最贵的商品，列依次为 `category_id`、`name` 和 `price`。没有分类的商品不算。
+  en: List the most expensive product in each category, with the columns `category_id`, `name` and `price`. Products without a category do not count.
+hint:
+  zh: 和“每位顾客最近的订单”一样：外层每件商品，比较它的价格是否等于同类商品的最高价。
+  en: Like "each customer's latest order"; for each outer product, test whether its price equals the highest price in its category.
+solution: |
+  SELECT p.category_id, p.name, p.price
+  FROM products AS p
+  WHERE p.price = (
+    SELECT max(p2.price) FROM products AS p2 WHERE p2.category_id = p.category_id
+  );
+check: { column_names: true }

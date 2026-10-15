@@ -1,0 +1,6 @@
+title:   { zh: IN 与 EXISTS, en: IN and EXISTS }
+summary:
+  zh: 用 IN 和 EXISTS 判断“在不在另一张表里”，并避开 NOT IN 遇到 NULL 时一行都不返回的陷阱。
+  en: Test whether rows appear in another table with IN and EXISTS, and avoid the NOT IN trap that returns nothing once a NULL is involved.
+dataset: shop
+prereqs: [subqueries]

@@ -52,12 +52,8 @@ modules:
     summary:
       zh: 把一条 query 的结果当作另一条 query 的输入，以及合并、相交、相减结果集。
       en: Use one query's result inside another, and union, intersect or subtract result sets.
-    lessons: []
-    planned:
-      - { zh: "{{term:scalar-subquery}}与表子查询", en: "{{Term:scalar-subquery|Scalar}} and table subqueries" }
-      - { zh: IN 与 EXISTS, en: IN and EXISTS }
-      - { zh: "{{term:correlated-subquery}}", en: "{{Term:correlated-subquery|Correlated subqueries}}" }
-      - { zh: UNION、INTERSECT 与 EXCEPT, en: "UNION, INTERSECT and EXCEPT" }
+    lessons: [subqueries, in-exists, correlated-subqueries, set-operations]
+    planned: []
 
   - id: m6
     title: { zh: 进阶查询, en: Advanced queries }

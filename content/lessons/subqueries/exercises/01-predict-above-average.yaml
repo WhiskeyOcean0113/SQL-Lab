@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 16 件商品的平均价是 78.84 美元，高于这个价格的只有 4K Monitor（399）、Noise-Cancelling Headphones（249）和 Mechanical Keyboard（129）。下面这条查询会返回几行？
+  en: The 16 products average 78.84 dollars, and only 4K Monitor (399), Noise-Cancelling Headphones (249) and Mechanical Keyboard (129) cost more. How many rows does this query return?
+hint:
+  zh: 子查询先算出一个值，外层再拿每件商品和这个值比较。
+  en: The subquery computes one value first; the outer query then compares every product with it.
+query: |
+  SELECT name, price
+  FROM products
+  WHERE price > (SELECT avg(price) FROM products);
+choices: ['1', '3', '16']
+answer: 1
+verify: { rows: 3 }
+explain:
+  zh: 3 行。子查询只返回一个值，平均价 78.84；外层查询就相当于 `WHERE price > 78.84`。
+  en: Three rows. The subquery returns a single value, the average 78.84, so the outer query amounts to `WHERE price > 78.84`.

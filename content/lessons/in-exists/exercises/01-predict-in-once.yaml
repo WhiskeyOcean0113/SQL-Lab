@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 有 11 笔已送达的订单，来自 10 位不同的顾客（Lin Wei 有两笔）。下面这条查询会返回几行？
+  en: There are 11 delivered orders, from 10 different customers (Lin Wei has two). How many rows does this query return?
+hint:
+  zh: "`IN` 关心的是“在不在”，还是“出现几次”？"
+  en: Does `IN` care whether a value is present, or how many times?
+query: |
+  SELECT name
+  FROM customers
+  WHERE id IN (SELECT customer_id FROM orders WHERE status = 'delivered');
+choices: ['10', '11', '12']
+answer: 0
+verify: { rows: 10 }
+explain:
+  zh: 10 行。外层每位顾客只判断一次“在不在名单里”，Lin Wei 的编号在名单里出现两次也只算一次。用连接写会得到 11 行。
+  en: Ten rows. Each outer customer is tested once against the list, so Lin Wei's id appearing twice still counts once. A join would give 11 rows.

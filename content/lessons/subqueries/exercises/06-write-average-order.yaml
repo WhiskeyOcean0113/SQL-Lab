@@ -1,0 +1,21 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+prompt:
+  zh: |
+    已送达（`delivered`）的订单平均每笔多少钱？先算出每笔已送达订单的总额，再求平均，四舍五入到两位小数，列名为 `avg_delivered`。
+  en: |
+    What is the average value of a delivered (`delivered`) order? Compute each delivered order's total, then average them, rounded to two decimal places, in a column called `avg_delivered`.
+hint:
+  zh: 内层查询要连接 `orders` 和 `order_items`，用 `WHERE` 留下已送达的订单，再按订单分组求和；外层对这些总额求平均。
+  en: The inner query joins `orders` and `order_items`, keeps delivered orders with `WHERE`, and sums per order; the outer query averages those totals.
+solution: |
+  SELECT round(avg(t.total), 2) AS avg_delivered
+  FROM (
+    SELECT o.id, sum(i.quantity * i.unit_price) AS total
+    FROM orders AS o
+    JOIN order_items AS i ON i.order_id = o.id
+    WHERE o.status = 'delivered'
+    GROUP BY o.id
+  ) AS t;
+check: { column_names: true }

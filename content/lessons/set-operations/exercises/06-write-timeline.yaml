@@ -1,0 +1,21 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+prompt:
+  zh: |
+    列出 Ava Thompson（顾客 2）每笔订单的下单和发货事件，列名依次为 `order_id`、`event`（值为 `ordered` 或 `shipped`）和 `at`（事件时间），按时间从早到晚排列。还没发货的订单只有下单事件。
+  en: |
+    List the placed and shipped events of each of Ava Thompson's (customer 2) orders, with the columns `order_id`, `event` (either `ordered` or `shipped`) and `at` (the event time), from earliest to latest. Orders not yet shipped have only a placed event.
+hint:
+  zh: 两条查询各产生一种事件，列对齐后用 `UNION ALL` 接起来，最后 `ORDER BY at`。
+  en: Each query produces one kind of event; line the columns up, stack them with `UNION ALL`, and finish with `ORDER BY at`.
+solution: |
+  SELECT id AS order_id, 'ordered' AS event, ordered_at AS at
+  FROM orders
+  WHERE customer_id = 2
+  UNION ALL
+  SELECT id, 'shipped', shipped_at
+  FROM orders
+  WHERE customer_id = 2 AND shipped_at IS NOT NULL
+  ORDER BY at;
+check: { order_matters: true, column_names: true }

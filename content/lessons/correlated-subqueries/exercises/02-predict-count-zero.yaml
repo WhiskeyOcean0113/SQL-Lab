@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: Mei Tanaka 从没下过订单。下面这条查询里，Mei Tanaka 那一行的 `orders` 是多少？
+  en: Mei Tanaka has never placed an order. In this query, what is `orders` on Mei Tanaka's row?
+hint:
+  zh: 子查询为 Mei Tanaka 数到了几行？`count` 在没有行时返回什么？
+  en: How many rows does the subquery count for Mei Tanaka? What does `count` return when there are none?
+query: |
+  SELECT c.name,
+         (SELECT count(*) FROM orders AS o WHERE o.customer_id = c.id) AS orders
+  FROM customers AS c;
+choices: ['0', '1', 'NULL']
+answer: 0
+explain:
+  zh: 0。子查询为 Mei Tanaka 一行都没找到，`count(*)` 对空集合返回 0。如果把 `count(*)` 换成 `sum`，得到的会是 NULL。
+  en: Zero. The subquery finds no rows for Mei Tanaka, and `count(*)` over nothing is 0. Swap `count(*)` for `sum` and the result would be NULL.

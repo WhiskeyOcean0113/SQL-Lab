@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想把加拿大顾客的名字和 Stationery 分类（`category_id` 为 4）的商品名合成一份名单，只有一列名字。它报错了。修好它。
+  en: This query should combine the names of Canadian customers and of Stationery products (`category_id` 4) into one list with a single name column. It fails. Fix it.
+hint:
+  zh: 两边选出的列数必须相同。题目只要一列。
+  en: Both sides must select the same number of columns, and the task wants one.
+starter: |
+  SELECT id, name FROM customers WHERE country = 'Canada'
+  UNION
+  SELECT name FROM products WHERE category_id = 4;
+solution: |
+  SELECT name FROM customers WHERE country = 'Canada'
+  UNION
+  SELECT name FROM products WHERE category_id = 4;

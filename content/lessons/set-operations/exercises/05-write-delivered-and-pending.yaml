@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用 `INTERSECT` 找出既有已送达（`delivered`）订单、又有待处理（`pending`）订单的顾客编号，列名为 `customer_id`。
+  en: Use `INTERSECT` to find the ids of the customers who have both a delivered (`delivered`) and a pending (`pending`) order, in a column called `customer_id`.
+hint:
+  zh: 两条查询各选出一种状态的 `customer_id`，再取交集。
+  en: Each query selects the `customer_id`s for one status; then intersect them.
+solution: |
+  SELECT customer_id FROM orders WHERE status = 'delivered'
+  INTERSECT
+  SELECT customer_id FROM orders WHERE status = 'pending';
+check: { column_names: true }

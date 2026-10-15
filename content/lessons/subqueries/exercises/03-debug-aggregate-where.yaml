@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询想列出比平均库存多的商品，列依次为商品名和库存。它报错了。修好它。
+  en: This query should list the products with more stock than the average, with the name and the stock as the columns. It fails. Fix it.
+hint:
+  zh: 聚合函数不能直接写进 `WHERE`，但可以放进一个子查询里。
+  en: An aggregate cannot go straight into `WHERE`, but it can go inside a subquery.
+starter: |
+  SELECT name, stock
+  FROM products
+  WHERE stock > avg(stock);
+solution: |
+  SELECT name, stock
+  FROM products
+  WHERE stock > (SELECT avg(stock) FROM products);

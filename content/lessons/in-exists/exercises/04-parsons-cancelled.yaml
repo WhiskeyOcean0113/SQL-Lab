@@ -1,0 +1,19 @@
+kind: parsons
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: 用下面的片段拼出一条查询：列出有过已取消订单的顾客名字，每位一次。有两个片段是多余的。
+  en: Arrange the pieces into a query listing the names of the customers who have had a cancelled order, each once. Two pieces are not needed.
+hint:
+  zh: "`EXISTS` 的子查询必须和外层的顾客关联起来。"
+  en: The `EXISTS` subquery must be linked to the outer customer.
+solution: |
+  SELECT c.name
+  FROM customers AS c
+  WHERE EXISTS (
+    SELECT 1 FROM orders AS o
+    WHERE o.customer_id = c.id AND o.status = 'cancelled'
+  );
+distractors:
+  - WHERE o.status = 'cancelled'
+  - JOIN orders AS o ON o.customer_id = c.id

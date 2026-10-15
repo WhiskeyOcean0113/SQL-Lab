@@ -15,18 +15,26 @@ export function esc(s: string): string {
 }
 
 /** Same markup the build-time renderer produces, so lesson CSS applies to UI text too. */
-export function termHtml(id: string, lang: Lang): string {
+export function termHtml(id: string, lang: Lang, display?: string): string {
   const term = glossary.get(id)
-  if (!term) return esc(id.replace(/-/g, ' '))
+  if (!term) return esc(display ?? id.replace(/-/g, ' '))
   const other: Lang = lang === 'zh' ? 'en' : 'zh'
-  return `<dfn class="term" data-term="${id}" title="${esc(term[other])}">${esc(term[lang])}<span class="term-alt" lang="${other === 'zh' ? 'zh-Hans' : 'en'}"> (${esc(term[other])})</span></dfn>`
+  return `<dfn class="term" data-term="${id}" title="${esc(term[other])}">${esc(display ?? term[lang])}<span class="term-alt" lang="${other === 'zh' ? 'zh-Hans' : 'en'}"> (${esc(term[other])})</span></dfn>`
+}
+
+/** Same markup as lessons: {{term:id}}, {{Term:id}} (capitalised), {{term:id|display text}}. */
+const TERM = /\{\{([Tt]erm):([a-z0-9-]+)(?:\|([^}]+))?\}\}/g
+
+function primary(id: string, lang: Lang, kind: string, display?: string): string {
+  const text = display ?? glossary.get(id)?.[lang] ?? id
+  return kind === 'Term' ? text.charAt(0).toUpperCase() + text.slice(1) : text
 }
 
 /** A UI string as HTML. Variables are escaped; terms are expanded. */
 export function t(lang: Lang, key: StringKey, vars: Record<string, string | number> = {}): string {
   const template: string = strings[lang][key] ?? key
   return template
-    .replace(/\{\{term:([a-z0-9-]+)\}\}/g, (_, id: string) => termHtml(id, lang))
+    .replace(TERM, (_, kind: string, id: string, display?: string) => termHtml(id, lang, primary(id, lang, kind, display)))
     .replace(/\{(\w+)\}/g, (m, name: string) => (name in vars ? esc(String(vars[name])) : m))
 }
 
@@ -35,7 +43,7 @@ export function tText(lang: Lang, key: StringKey, vars: Record<string, string | 
   const template: string = strings[lang][key] ?? key
   return template
     .replace(/<br>/g, ' ')
-    .replace(/\{\{term:([a-z0-9-]+)\}\}/g, (_, id: string) => glossary.get(id)?.[lang] ?? id)
+    .replace(TERM, (_, kind: string, id: string, display?: string) => primary(id, lang, kind, display))
     .replace(/\{(\w+)\}/g, (m, name: string) => (name in vars ? String(vars[name]) : m))
 }
 

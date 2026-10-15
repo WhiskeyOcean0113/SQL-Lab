@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 列出价格高于 Electronics 分类（`category_id` 为 2）平均价的所有商品，列依次为 `name` 和 `price`。
+  en: List every product priced above the average price of the Electronics category (`category_id` 2), with the columns `name` and `price`.
+hint:
+  zh: "`category_id = 2` 是用来算平均价的，所以它属于子查询，而不是外层查询。"
+  en: "`category_id = 2` is for computing the average, so it belongs in the subquery, not in the outer query."
+solution: |
+  SELECT name, price
+  FROM products
+  WHERE price > (SELECT avg(price) FROM products WHERE category_id = 2);
+check: { column_names: true }

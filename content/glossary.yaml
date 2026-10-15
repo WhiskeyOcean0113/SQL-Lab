@@ -94,3 +94,9 @@ preserved-table:  { en: preserved table, zh: 保留表 }
 set-returning-function: { en: set-returning function, zh: 集合返回函数 }
 row-explosion:    { en: row explosion, zh: 行数暴增 }
 fan-trap:         { en: fan trap, zh: 扇形陷阱 }
+derived-table:    { en: derived table, zh: 派生表 }
+outer-query:      { en: outer query, zh: 外层查询 }
+semi-join:        { en: semi-join, zh: 半连接 }
+set-union:        { en: union, zh: 并集 }
+set-intersection: { en: intersection, zh: 交集 }
+set-difference:   { en: difference, zh: 差集 }

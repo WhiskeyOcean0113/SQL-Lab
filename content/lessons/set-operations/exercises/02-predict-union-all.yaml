@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 和上一题一样：1 月 3 位顾客，6 月 7 位顾客，其中 3 位两个月都下过单。这次用的是 `UNION ALL`，会返回几行？
+  en: As in the previous exercise, 3 customers in January and 7 in June, 3 of whom ordered in both months. This time with `UNION ALL`, how many rows come back?
+hint:
+  zh: "`UNION ALL` 会去重吗？"
+  en: Does `UNION ALL` remove duplicates?
+query: |
+  SELECT customer_id FROM orders WHERE ordered_at < '2024-02-01'
+  UNION ALL
+  SELECT customer_id FROM orders WHERE ordered_at >= '2024-06-01';
+choices: ['7', '10', '21']
+answer: 1
+verify: { rows: 10 }
+explain:
+  zh: 10 行，3 + 7。`UNION ALL` 只是把两份结果接在一起，不去重，所以顾客 1、2、3 各出现两次。
+  en: Ten rows, 3 + 7. `UNION ALL` just stacks the two results without removing duplicates, so customers 1, 2 and 3 each appear twice.

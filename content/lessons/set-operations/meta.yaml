@@ -1,0 +1,6 @@
+title:   { zh: "{{term:set-operation}}：UNION、INTERSECT 与 EXCEPT", en: "{{Term:set-operation|Set operations}}: UNION, INTERSECT and EXCEPT" }
+summary:
+  zh: 把两条查询的结果上下合并、取共同部分或相减，并知道它们怎样处理重复和 NULL。
+  en: Stack, intersect or subtract the results of two queries, and know how they treat duplicates and NULL.
+dataset: shop
+prereqs: [correlated-subqueries]

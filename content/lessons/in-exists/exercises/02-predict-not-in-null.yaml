@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: 有 7 位顾客从没推荐过任何人。`referred_by` 列有 4 个 NULL。下面这条查询会返回几行？
+  en: Seven customers have never referred anyone. The `referred_by` column contains 4 NULLs. How many rows does this query return?
+hint:
+  zh: "`x NOT IN (…, NULL)` 展开后是 `x <> … AND x <> NULL`。`x <> NULL` 的结果是什么？"
+  en: "`x NOT IN (…, NULL)` expands to `x <> … AND x <> NULL`. What is `x <> NULL`?"
+query: |
+  SELECT name
+  FROM customers
+  WHERE id NOT IN (SELECT referred_by FROM customers);
+choices: ['0', '5', '7', '12']
+answer: 0
+verify: { rows: 0 }
+explain:
+  zh: 0 行。子查询的结果里有 NULL，`id <> NULL` 永远是 unknown，所以整个 `NOT IN` 不可能为 true。改用 `NOT EXISTS`，或在子查询里加 `WHERE referred_by IS NOT NULL`，才会得到 7 行。
+  en: Zero rows. The subquery's result contains NULL, `id <> NULL` is always unknown, so the whole `NOT IN` can never be true. `NOT EXISTS`, or `WHERE referred_by IS NOT NULL` inside the subquery, gives the 7 rows.

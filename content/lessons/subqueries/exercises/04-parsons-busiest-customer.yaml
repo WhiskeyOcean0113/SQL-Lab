@@ -1,0 +1,20 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询：下单最多的顾客下了几笔订单？先在派生表里数出每位顾客的订单数，再取最大值，列名为 `most`。有两个片段是多余的。
+  en: Arrange the pieces into a query answering how many orders the busiest customer placed. Count each customer's orders in a derived table, then take the maximum, in a column called `most`. Two pieces are not needed.
+hint:
+  zh: 聚合不能嵌套，所以 `max(count(*))` 不行。内层数，外层取最大。
+  en: Aggregates cannot nest, so `max(count(*))` fails. Count in the inner query, take the maximum in the outer one.
+solution: |
+  SELECT max(t.n) AS most
+  FROM (
+    SELECT customer_id, count(*) AS n
+    FROM orders
+    GROUP BY customer_id
+  ) AS t;
+distractors:
+  - SELECT max(count(*)) AS most
+  - GROUP BY t.n
+check: { column_names: true }

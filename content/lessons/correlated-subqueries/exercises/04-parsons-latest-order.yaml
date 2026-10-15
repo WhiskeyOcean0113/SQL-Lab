@@ -1,0 +1,20 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询：列出每位顾客最近的那一笔订单，列依次为 `customer_id` 和 `id`。有两个片段是多余的。
+  en: Arrange the pieces into a query listing each customer's most recent order, with the columns `customer_id` and `id`. Two pieces are not needed.
+hint:
+  zh: 子查询里要用另一个别名 `o2`，并且和外层的 `o.customer_id` 关联。
+  en: The subquery needs another alias, `o2`, linked to the outer `o.customer_id`.
+solution: |
+  SELECT o.customer_id, o.id
+  FROM orders AS o
+  WHERE o.ordered_at = (
+    SELECT max(o2.ordered_at) FROM orders AS o2
+    WHERE o2.customer_id = o.customer_id
+  );
+distractors:
+  - WHERE o2.customer_id = o2.customer_id
+  - GROUP BY o.customer_id
+check: { column_names: true }

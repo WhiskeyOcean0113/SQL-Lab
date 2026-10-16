@@ -1,0 +1,14 @@
+kind: write
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 列出金额至少 100 美元的订单明细行，一行的金额是数量乘以单价。列名依次为 `order_id`、`product_id` 和 `line_total`。
+  en: List the order lines worth at least 100 dollars, where a line is worth its quantity times its unit price. Use the columns `order_id`, `product_id` and `line_total`.
+hint:
+  zh: 在 `expression 运算符 expression` 这个形状里，左边可以是一个计算式。别名在 `WHERE` 里还不存在，所以在那里把计算式写出来。
+  en: In the shape `expression operator expression`, the left side can be a calculation. The alias does not exist yet in `WHERE`, so write the calculation out there.
+solution: |
+  SELECT order_id, product_id, quantity * unit_price AS line_total
+  FROM order_items
+  WHERE quantity * unit_price >= 100;
+check: { column_names: true }

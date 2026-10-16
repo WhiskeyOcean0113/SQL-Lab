@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出城市未知的顾客的名字，但它一行都没返回。修好它。
+  en: This query should list the names of the customers whose city is unknown, but it returns no rows. Fix it.
+hint:
+  zh: "`'NULL'` 带了引号，就是一段文字。"
+  en: "With quotes, `'NULL'` is a piece of text."
+starter: |
+  SELECT name
+  FROM customers
+  WHERE city = 'NULL';
+solution: |
+  SELECT name
+  FROM customers
+  WHERE city IS NULL;

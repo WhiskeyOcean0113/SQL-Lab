@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 下面这条查询想列出每件商品的名字、库存价值（价格乘以库存）和库存价值的一半，列名依次为 `name`、`stock_value` 和 `half_value`。它报错了。修好它，保留这三个列名。
+  en: This query should list each product's name, its stock value (price times stock) and half of that value, as the columns `name`, `stock_value` and `half_value`. It fails. Fix it, keeping the three column names.
+hint:
+  zh: 同一个 select 列表里的各项是同时算出来的，算 `half_value` 时还没有 `stock_value` 这个名字。把表达式再写一遍。
+  en: The items of one select list are computed at the same moment, so the name `stock_value` does not exist yet while `half_value` is computed. Write the expression out again.
+starter: |
+  SELECT name,
+         price * stock AS stock_value,
+         stock_value / 2 AS half_value
+  FROM products;
+solution: |
+  SELECT name,
+         price * stock AS stock_value,
+         price * stock / 2 AS half_value
+  FROM products;
+check: { column_names: true }

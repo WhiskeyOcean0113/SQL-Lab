@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: shop 里每位顾客的名字都以大写字母开头。下面这条查询会返回几行？
+  en: Every customer's name in shop starts with a capital letter. How many rows does this query return?
+hint:
+  zh: 本课程的数据库用 C 排序规则比较文本：大写字母和小写字母，谁排在前面？
+  en: "This course's database compares text with the C collation: which come first, capitals or lower-case letters?"
+query: |
+  SELECT name
+  FROM customers
+  WHERE name > 'a';
+choices: ['0', '6', '12']
+answer: 0
+verify: { rows: 0 }
+explain:
+  zh: 0 行。C 排序规则按字符编码比较，所有大写字母都排在所有小写字母前面，所以连 `'Zhang Min'` 都“小于” `'a'`。比较文本之前，先确认两边的大小写一致。
+  en: 0 rows. The C collation compares character codes, and every capital comes before every lower-case letter, so even `'Zhang Min'` is "less than" `'a'`. Before comparing text, make sure both sides use the same case.

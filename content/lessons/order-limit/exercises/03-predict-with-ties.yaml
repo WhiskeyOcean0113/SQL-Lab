@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 按国家排序后，顾客的开头是这样的：Brazil（1 位）、Canada（2 位）、China（3 位）、France（1 位）……下面这条查询会返回几行？
+  en: "Sorted by country, the customers begin like this: Brazil (1 customer), Canada (2), China (3), France (1)… How many rows does this query return?"
+hint:
+  zh: 第 4 行是谁？`WITH TIES` 还会把哪些行一起带上？
+  en: Who is in row 4? Which other rows does `WITH TIES` bring along?
+query: |
+  SELECT name, country
+  FROM customers
+  ORDER BY country
+  FETCH FIRST 4 ROWS WITH TIES;
+choices: ['4', '5', '6']
+answer: 2
+verify: { rows: 6 }
+explain:
+  zh: 6 行。前 4 行是 1 位巴西顾客、2 位加拿大顾客和 1 位中国顾客。`WITH TIES` 会把和第 4 行排序键相同的行都带上，也就是另外 2 位中国顾客。换成 `LIMIT 4` 只会有 4 行，而且留下哪一位中国顾客是不确定的。
+  en: 6 rows. The first 4 rows are the Brazilian customer, the 2 Canadians and one Chinese customer. `WITH TIES` also brings every row whose sort key ties with row 4, which means the other 2 Chinese customers. `LIMIT 4` would give 4 rows, and which Chinese customer stayed would be arbitrary.

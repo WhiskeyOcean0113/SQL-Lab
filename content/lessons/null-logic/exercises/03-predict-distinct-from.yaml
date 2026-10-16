@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 12 位顾客里有 2 位住在 Toronto，另有 2 位的城市是 NULL。下面这条查询会返回几行？
+  en: Of the 12 customers, 2 live in Toronto and 2 have a NULL city. How many rows does this query return?
+hint:
+  zh: 看语法表的最后一列：`IS DISTINCT FROM` 的结果会是“未知”吗？
+  en: "Check the last column of the syntax table: can `IS DISTINCT FROM` ever be unknown?"
+query: |
+  SELECT name, city
+  FROM customers
+  WHERE city IS DISTINCT FROM 'Toronto';
+choices: ['8', '10', '12']
+answer: 1
+verify: { rows: 10 }
+explain:
+  zh: 10 行。`IS DISTINCT FROM` 把 NULL 和一个值的比较算作“不同”，结果只有真或假，从来不是未知。所以城市为 NULL 的两位顾客也留了下来，只有住在 Toronto 的 2 位被去掉。换成 `city <> 'Toronto'`，这两位会因为条件是未知而被丢掉，只剩 8 行。
+  en: 10 rows. `IS DISTINCT FROM` counts NULL against a value as different, and its result is only ever true or false, never unknown. So the two customers with a NULL city stay, and only the 2 in Toronto go. With `city <> 'Toronto'` those two would be dropped, because the condition is unknown for them, leaving 8 rows.

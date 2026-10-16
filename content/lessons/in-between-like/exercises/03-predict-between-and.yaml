@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 价格在 22 到 42 美元之间的商品有 5 件：Trail Water Bottle（库存 45）、Fountain Pen（30）、USB-C Hub（60）、Camping Lantern（18）和 The Pragmatic Programmer（25）。下面这条查询会返回几行？
+  en: "Five products cost from 22 to 42 dollars: Trail Water Bottle (45 in stock), Fountain Pen (30), USB-C Hub (60), Camping Lantern (18) and The Pragmatic Programmer (25). How many rows does this query return?"
+hint:
+  zh: 第一个 `AND` 属于 `BETWEEN low AND high` 这个形状，第二个才是逻辑上的 `AND`。
+  en: The first `AND` belongs to the shape `BETWEEN low AND high`; only the second is the logical `AND`.
+query: |
+  SELECT name, price, stock
+  FROM products
+  WHERE price BETWEEN 22 AND 42 AND stock > 20;
+choices:
+  - '4'
+  - '5'
+  - { zh: "报错：一个条件里不能有两个 `AND`", en: "An error: a condition cannot hold two `AND`s" }
+answer: 0
+verify: { rows: 4 }
+explain:
+  zh: 4 行。数据库把 `BETWEEN 22 AND 42` 当作一个完整的条件，再用第二个 `AND` 接上 `stock > 20`。5 件商品里只有 Camping Lantern 的库存不超过 20，被去掉了。
+  en: 4 rows. The database reads `BETWEEN 22 AND 42` as one complete condition, and the second `AND` joins it to `stock > 20`. Of the five products, only Camping Lantern has 20 or fewer in stock, so it is dropped.

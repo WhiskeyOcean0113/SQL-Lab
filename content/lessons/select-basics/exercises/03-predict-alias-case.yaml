@@ -1,0 +1,17 @@
+kind: predict
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询用 `AS StockValue` 给计算列起了名字。结果里这一列叫什么？
+  en: This query names its computed column with `AS StockValue`. What is that column called in the result?
+hint:
+  zh: 语法表里说，`output_name` 和其他名字遵守同一套规则。不加引号的名字会怎样？
+  en: The syntax table says `output_name` follows the same rules as any other name. What happens to a name without quotes?
+query: |
+  SELECT name, price * stock AS StockValue
+  FROM products;
+choices: ['StockValue', 'stockvalue', 'STOCKVALUE', '?column?']
+answer: 1
+explain:
+  zh: "`stockvalue`。`output_name` 是一个名字，不加引号就会被转成小写。想保留大写，要写 `AS \"StockValue\"`；更省事的做法是一开始就用小写加下划线：`stock_value`。"
+  en: "`stockvalue`. `output_name` is a name, and an unquoted name is lower-cased. To keep the capitals, write `AS \"StockValue\"`; the easier route is lower case with underscores from the start: `stock_value`."

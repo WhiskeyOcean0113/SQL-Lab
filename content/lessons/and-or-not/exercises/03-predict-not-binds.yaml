@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 3
+lesson_ref: syntax
+prompt:
+  zh: 有 4 件商品库存超过 50：USB-C Hub、Ceramic Mug、Dot Grid Notebook 和 Gift Card，价格都不超过 100 美元。对照语法一节里的形状拆开这个条件，下面这条查询会返回几行？
+  en: "Four products have more than 50 in stock: USB-C Hub, Ceramic Mug, Dot Grid Notebook and Gift Card, all priced 100 dollars or less. Take the condition apart against the shapes in Syntax. How many rows does this query return?"
+hint:
+  zh: "`NOT` 最先算。最外层的形状是 `condition AND condition`，还是 `NOT condition`？"
+  en: "`NOT` is evaluated first. Is the outermost shape `condition AND condition`, or `NOT condition`?"
+query: |
+  SELECT name, price, stock
+  FROM products
+  WHERE NOT price > 100 AND stock > 50;
+choices: ['4', '12', '16']
+answer: 0
+verify: { rows: 4 }
+explain:
+  zh: 4 行。`NOT` 比 `AND` 先算，所以最外层是 `condition AND condition`，左边的 `condition` 是 `NOT price > 100`。条件的意思是“价格不超过 100，并且库存超过 50”，正好是那 4 件。如果读成 `NOT (price > 100 AND stock > 50)`，没有任何商品同时满足括号里的两条，16 件就会全部留下。
+  en: 4 rows. `NOT` binds before `AND`, so the outermost shape is `condition AND condition`, and its left `condition` is `NOT price > 100`. So the condition means "costs 100 or less, and more than 50 in stock", which fits exactly those four. Read as `NOT (price > 100 AND stock > 50)`, it would keep all 16, since no product meets both conditions inside the parentheses.

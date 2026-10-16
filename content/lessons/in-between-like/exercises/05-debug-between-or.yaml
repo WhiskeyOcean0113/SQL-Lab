@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出价格在 20 到 30 美元之间（含两端）的商品，列依次为名字和价格。它报错了。修好它。
+  en: This query should list the products priced from 20 to 30 dollars inclusive, with the columns name and price. It fails. Fix it.
+hint:
+  zh: "`BETWEEN` 的形状是固定的：`BETWEEN low AND high`。"
+  en: "The shape of `BETWEEN` is fixed: `BETWEEN low AND high`."
+starter: |
+  SELECT name, price
+  FROM products
+  WHERE price BETWEEN 20 OR 30;
+solution: |
+  SELECT name, price
+  FROM products
+  WHERE price BETWEEN 20 AND 30;

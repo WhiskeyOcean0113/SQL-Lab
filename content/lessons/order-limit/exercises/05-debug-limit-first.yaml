@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出库存最多的 3 件商品，列依次为名字和库存，库存多的在前。它报错了。修好它。
+  en: This query should list the 3 products with the most stock, with the columns name and stock, most first. It fails. Fix it.
+hint:
+  zh: 按语法里的顺序从上往下写：`ORDER BY` 在 `LIMIT` 之前。
+  en: "Write the clauses top to bottom in the order of the syntax: `ORDER BY` comes before `LIMIT`."
+starter: |
+  SELECT name, stock
+  FROM products
+  LIMIT 3
+  ORDER BY stock DESC;
+solution: |
+  SELECT name, stock
+  FROM products
+  ORDER BY stock DESC
+  LIMIT 3;
+check: { order_matters: true }

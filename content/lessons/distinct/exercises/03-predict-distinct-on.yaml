@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 12 位顾客来自 8 个国家，其中中国 3 位，加拿大和日本各 2 位。下面这条查询会返回几行？
+  en: The 12 customers come from 8 countries; 3 are from China, and Canada and Japan have 2 each. How many rows does this query return?
+hint:
+  zh: "`DISTINCT ON (country)` 只看括号里的列去重，不看整行。"
+  en: "`DISTINCT ON (country)` deduplicates on the column in parentheses only, not on the whole row."
+query: |
+  SELECT DISTINCT ON (country) country, name
+  FROM customers
+  ORDER BY country, joined_on;
+choices: ['8', '10', '12']
+answer: 0
+verify: { rows: 8 }
+explain:
+  zh: 8 行，每个国家一行。`DISTINCT ON (country)` 只按 `country` 去重，所以 `name` 不同也不影响；每个国家保留的是排序后的第一行，也就是最早加入的那位顾客。普通的 `DISTINCT` 按整行去重，这里会得到 12 行。
+  en: 8 rows, one per country. `DISTINCT ON (country)` deduplicates on `country` alone, so different names make no difference; each country keeps its first row after sorting, which is the customer who joined earliest. A plain `DISTINCT` deduplicates whole rows and would give 12 here.

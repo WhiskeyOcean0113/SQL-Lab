@@ -1,0 +1,15 @@
+kind: debug
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出 `orders` 里每一种“顾客 + 状态”的组合，每种组合一次，列依次为顾客 id 和状态。它报错了。修好它。
+  en: This query should list each different combination of customer and status in `orders`, each combination once, with the columns customer id and status. It fails. Fix it.
+hint:
+  zh: 在语法里，`DISTINCT` 只能紧跟在 `SELECT` 后面，作用于整个 select 列表。
+  en: In the syntax, `DISTINCT` can only come straight after `SELECT`, and it applies to the whole select list.
+starter: |
+  SELECT customer_id, DISTINCT status
+  FROM orders;
+solution: |
+  SELECT DISTINCT customer_id, status
+  FROM orders;

@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出来自中国或日本的顾客，列依次为名字和国家。它报错了。修好它。
+  en: This query should list the customers from China or Japan, with the columns name and country. It fails. Fix it.
+hint:
+  zh: SQL 里的“或”拼作 `OR`。`||` 在 PostgreSQL 里是拼接字符串用的。
+  en: SQL spells "or" as `OR`. In PostgreSQL, `||` joins strings together.
+starter: |
+  SELECT name, country
+  FROM customers
+  WHERE country = 'China' || country = 'Japan';
+solution: |
+  SELECT name, country
+  FROM customers
+  WHERE country = 'China' OR country = 'Japan';

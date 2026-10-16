@@ -28,7 +28,7 @@ export interface Module extends Titled {
   id: string
   summary: Bi
   lessons: string[]
-  /** Lessons announced in the curriculum but not written yet. Shown, never unlockable. */
+  /** Lessons announced in the curriculum but not written yet. Shown, but cannot be opened. */
   planned: Titled[]
 }
 

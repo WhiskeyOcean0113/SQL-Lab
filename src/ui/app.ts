@@ -7,7 +7,7 @@ import { currentTheme, setTheme } from './theme.ts'
 
 // Shared state for every view, plus the hash router and the top bar.
 
-/** `npm run review`: every lesson unlocked, progress kept in a separate database. */
+/** `npm run review`: progress kept in a separate database, for checking content. */
 export const REVIEW = import.meta.env.VITE_SQL_LAB_REVIEW === '1'
 
 export interface Ctx {
@@ -57,12 +57,11 @@ export async function createCtx(course: Course, engine: Engine, progress: Progre
     async refresh() {
       const done = await progress.doneLessons()
       ctx.states = lessonStates(course.path, done)
-      // Review mode opens every lesson so content can be checked out of order.
-      if (REVIEW) for (const id of course.path) if (ctx.states[id] === 'locked') ctx.states[id] = 'available'
       ctx.status = await progress.exerciseStatus()
     },
+    /** The suggested next lesson: the first unfinished one on the path. */
     currentLesson() {
-      const id = course.path.find(id => ctx.states[id] === 'available') ?? course.path.at(-1)
+      const id = course.path.find(id => ctx.states[id] !== 'done') ?? course.path.at(-1)
       return id ? course.lessons[id] : undefined
     },
     nextExercise(lesson) {
@@ -145,6 +144,6 @@ export function sectionHeading(lesson: Lesson, sectionId: string, lang: Lang): s
   return s ? s.heading.replace(/<[^>]+>/g, '') : sectionId
 }
 
-export function notFound(root: HTMLElement, ctx: Ctx, key: 'lesson.notFound' | 'lesson.locked' | 'ex.locked') {
+export function notFound(root: HTMLElement, ctx: Ctx, key: 'lesson.notFound') {
   mount(root, html`<div class="empty">${raw(t(ctx.lang, key))}<p><a class="btn" href="${href.map()}">${raw(t(ctx.lang, 'ex.backToMap'))}</a></p></div>`)
 }

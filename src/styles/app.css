@@ -185,7 +185,7 @@ dfn.term-repeat .term-alt { display: none; }
 .st-done::after { content: ""; width: 7px; height: 4px; border: solid var(--sheet); border-width: 0 0 1.5px 1.5px; transform: translateY(-1px) rotate(-45deg); }
 .st-now { box-shadow: inset 0 0 0 1.5px var(--accent); }
 .st-now::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-.st-lock { box-shadow: inset 0 0 0 1px var(--track); }
+.st-open, .st-lock { box-shadow: inset 0 0 0 1px var(--track); }
 .lessons .locked { color: var(--ink-3); }
 .lessons .tag { margin-left: auto; font-size: var(--fs-xs); color: var(--ink-3); white-space: nowrap; }
 .row-bar { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
@@ -390,7 +390,6 @@ table.grid { width: 100%; border-collapse: collapse; font: var(--fs-xs)/1.45 var
 /* Exercise pager: always offers the way on. */
 .ex-pager { display: flex; align-items: center; gap: 12px; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--line); }
 .ex-pager .sp { flex: 1; }
-.pager-note { font-size: var(--fs-sm); color: var(--ink-3); text-align: right; max-width: 460px; }
 
 /* ---------- Mistake bank ---------- */
 .bank { padding: 56px 0 96px; }

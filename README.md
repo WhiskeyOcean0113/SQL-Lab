@@ -6,7 +6,7 @@ A bilingual SQL course that runs entirely in the browser. Each lesson explains o
 
 ## What it does
 
-- **One path, in order.** Lessons unlock one at a time. A lesson is finished when every one of its exercises has been answered correctly.
+- **One suggested path, nothing locked.** The lessons follow a recommended order and the map points to your next one, but you can open any lesson at any time. A lesson is finished when every one of its exercises has been answered correctly.
 - **Lesson first, then practice.** Every lesson follows the same template: why you need it, the core idea, a worked example, variations, going deeper, common mistakes, and a summary.
 - **Runnable examples.** Every SQL block in a lesson can be edited and run against the practice database. Examples that are meant to fail show the real PostgreSQL error.
 - **Four kinds of exercise**, from easy to hard: predict the output, find the bug, arrange the pieces, and write the query.
@@ -50,7 +50,7 @@ Then open http://localhost:5173. Your progress is stored in your browser's Index
 | Command | What it does |
 |---|---|
 | `npm run dev` | Development server on port 5173, reloading when content changes |
-| `npm run review` | Port 5177 with every lesson unlocked and a separate progress database, for checking content |
+| `npm run review` | Port 5177 with a separate progress database, for checking content |
 | `npm run dev:fixture` | The same interface against a tiny two-lesson test course |
 | `npm test` | Tests for the SQL engine, grader, content pipeline and progress store |
 | `npm run validate` | Checks every content rule: both languages match, every example runs, every reference answer and answer key agrees with the data |

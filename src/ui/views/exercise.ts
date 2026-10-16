@@ -16,10 +16,9 @@ const readDraft = (id: string) => { try { return localStorage.getItem(draftKey(i
 const writeDraft = (id: string, text: string) => { try { localStorage.setItem(draftKey(id), text) } catch { /* private mode */ } }
 
 export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n: number, onProgress: () => void) {
-  const { course, lang, states } = ctx
+  const { course, lang } = ctx
   const lesson = course.lessons[lessonId]
   if (!lesson) return notFound(root, ctx, 'lesson.notFound')
-  if (states[lessonId] === 'locked') return notFound(root, ctx, 'ex.locked')
   const ex = lesson.exercises[n - 1]
   if (!ex) return notFound(root, ctx, 'lesson.notFound')
   void ctx.progress.startLesson(lessonId)
@@ -80,7 +79,7 @@ function renderSteps(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
 
 /**
  * Always-visible way on: previous / next exercise, and on the last exercise the
- * next lesson, open once every exercise here is right (or in review mode).
+ * next lesson.
  */
 function renderPager(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
   const lang = ctx.lang
@@ -95,11 +94,8 @@ function renderPager(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
     right = html`<a class="btn" href="${href.practice(lesson.id, n + 1)}">${raw(t(lang, 'ex.next'))} →</a>`
   } else if (!next) {
     right = html`<a class="btn" href="${href.map()}">${raw(t(lang, 'ex.backToMap'))}</a>`
-  } else if (ctx.states[next.id] !== 'locked') {
-    right = html`<a class="btn primary" href="${href.lesson(next.id)}">${raw(t(lang, 'ex.nextLessonNamed', { title: next.title[lang] }))} →</a>`
   } else {
-    const remaining = lesson.exercises.filter(e => !ctx.status.get(e.id)?.solved).length
-    right = html`<span class="pager-note">${raw(t(lang, 'ex.nextLocked', { n: remaining, title: next.title[lang] }))}</span>`
+    right = html`<a class="btn primary" href="${href.lesson(next.id)}">${raw(t(lang, 'ex.nextLessonNamed', { title: next.title[lang] }))} →</a>`
   }
   mount($('.ex-pager', root), html`${left}<span class="sp"></span>${right}`)
 }

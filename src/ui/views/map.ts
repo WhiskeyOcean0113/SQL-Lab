@@ -48,9 +48,9 @@ export function renderMap(root: HTMLElement, ctx: Ctx) {
               ${m.lessons.map(id => {
                 const l = course.lessons[id]
                 if (!l) return ''
-                const s = states[id]
-                if (s === 'locked') return html`<li><span class="row locked"><span class="state st-lock" aria-hidden="true"></span><span class="name ttl">${raw(l.titleHtml[lang])}</span></span></li>`
-                return html`<li><a class="row" href="${href.lesson(id)}"><span class="state ${s === 'done' ? 'st-done' : 'st-now'}" aria-hidden="true"></span><span class="name ttl">${raw(l.titleHtml[lang])}</span><span class="row-bar">${exerciseBar(ctx, l)}</span></a></li>`
+                // Done, the suggested next lesson, or simply not started: all of them open.
+                const mark = states[id] === 'done' ? 'st-done' : id === current?.id ? 'st-now' : 'st-open'
+                return html`<li><a class="row" href="${href.lesson(id)}"><span class="state ${mark}" aria-hidden="true"></span><span class="name ttl">${raw(l.titleHtml[lang])}</span><span class="row-bar">${exerciseBar(ctx, l)}</span></a></li>`
               })}
               ${m.planned.map(p => html`<li><span class="row locked"><span class="state st-lock" aria-hidden="true"></span><span class="name ttl">${raw(p.titleHtml[lang])}</span><span class="tag">${tText(lang, 'map.planned')}</span></span></li>`)}
             </ul>

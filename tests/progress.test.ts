@@ -14,12 +14,9 @@ beforeAll(async () => { p = await Progress.open() }, 30_000)
 afterAll(async () => { await p.close() })
 
 describe('lessonStates', () => {
-  it('opens exactly one unfinished lesson and locks the rest', () => {
-    expect(lessonStates(['a', 'b', 'c'], new Set())).toEqual({ a: 'available', b: 'locked', c: 'locked' })
-    expect(lessonStates(['a', 'b', 'c'], new Set(['a']))).toEqual({ a: 'done', b: 'available', c: 'locked' })
-  })
-  it('does not let a later "done" skip an unfinished lesson', () => {
-    expect(lessonStates(['a', 'b', 'c'], new Set(['a', 'c']))).toEqual({ a: 'done', b: 'available', c: 'locked' })
+  it('opens every lesson, finished or not', () => {
+    expect(lessonStates(['a', 'b', 'c'], new Set())).toEqual({ a: 'available', b: 'available', c: 'available' })
+    expect(lessonStates(['a', 'b', 'c'], new Set(['a', 'c']))).toEqual({ a: 'done', b: 'available', c: 'done' })
   })
 })
 

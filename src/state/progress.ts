@@ -24,21 +24,14 @@ export interface MistakeRow {
   note: string | null
 }
 
-export type LessonState = 'done' | 'available' | 'locked'
+export type LessonState = 'done' | 'available'
 
 /**
- * Strict linear unlocking: every finished lesson stays open, and exactly one
- * more, the first unfinished lesson on the path. Nothing can be skipped.
+ * Every lesson is open at any time; the path order is a recommendation, not a
+ * gate. A lesson is done once every one of its exercises has been solved.
  */
 export function lessonStates(path: string[], done: Set<string>): Record<string, LessonState> {
-  const out: Record<string, LessonState> = {}
-  let frontierFound = false
-  for (const id of path) {
-    if (done.has(id) && !frontierFound) out[id] = 'done'
-    else if (!frontierFound) { out[id] = 'available'; frontierFound = true }
-    else out[id] = 'locked'
-  }
-  return out
+  return Object.fromEntries(path.map(id => [id, done.has(id) ? 'done' : 'available']))
 }
 
 export class Progress {

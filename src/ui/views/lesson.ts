@@ -5,10 +5,9 @@ import { hydrateRunner } from '../runner.ts'
 import { chapterNo } from './map.ts'
 
 export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: string) {
-  const { course, lang, states, status } = ctx
+  const { course, lang, status } = ctx
   const lesson = course.lessons[id]
   if (!lesson) return notFound(root, ctx, 'lesson.notFound')
-  if (states[id] === 'locked') return notFound(root, ctx, 'lesson.locked')
   void ctx.progress.startLesson(id)
 
   const module = course.modules.find(m => m.id === lesson.module)

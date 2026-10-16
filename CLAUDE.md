@@ -13,7 +13,7 @@ and content written in different sessions consistent.
 ```bash
 npm run dev        # site at http://localhost:5173, reloads on content/ changes
 npm run dev:fixture  # same UI against tests/fixtures/content (a tiny two-lesson course)
-npm run review     # port 5177: every lesson unlocked, separate progress database, for checking content
+npm run review     # port 5177: separate progress database, for checking content
 npm test           # engine, grader, content pipeline, progress store
 npm run validate   # every content rule below; --verbose lists warnings
 npm run typecheck
@@ -25,8 +25,10 @@ typecheck, validate and tests. Never commit with failures and never bypass it.
 
 ## Principles
 
-1. **Strict linear path.** One order, defined only in `content/curriculum.yaml`.
-   A lesson unlocks when the previous one is done. No skipping, no "test out".
+1. **One recommended path, nothing locked.** One order, defined only in
+   `content/curriculum.yaml`. Every lesson and exercise is open at any time; the
+   map suggests the first unfinished lesson. Lessons still build on the ones
+   before them, so write each as if the learner followed the path.
 2. **Lesson first, then exercises.** A lesson is done when every one of its
    exercises has been answered correctly at least once.
 3. **Content and state are separate.** Content is files in git, written at
@@ -57,7 +59,7 @@ scripts/
 src/
   engine/                  PGlite practice DB, SQL scanner, grader (DOM-free)
   content/                 Course types, SQL highlighter
-  state/                   progress schema and store, unlock rules
+  state/                   progress schema and store, lesson states
   i18n/                    UI strings per language
   ui/                      views
 tests/                     vitest; fixtures/content is a tiny valid course
@@ -254,7 +256,7 @@ SQL worker and the hash router (`src/ui/app.ts`); each page is one module in
 `src/ui/views/` that renders into `#main`.
 
 - Routes: `#/` map, `#/lesson/<id>[/<section>]`, `#/practice/<id>/<n>`,
-  `#/mistakes`, `#/glossary`. Locked lessons and their exercises refuse to open.
+  `#/mistakes`, `#/glossary`. Every lesson and exercise route opens directly.
 - Templating: `html\`…\`` from `src/ui/dom.ts` escapes every value; only
   build-time lesson HTML and `t()` output go through `raw()`.
 - Every visible string comes from `src/i18n/strings.ts` through `t()`, which

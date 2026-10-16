@@ -1,0 +1,21 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 列出 2024 年 6 月 1 日到 6 月 7 日的每一天，以及当天下单的订单数，没有订单的日子显示 0。列名依次为 `day`（`date` 类型）和 `orders`，按日期排列。
+  en: List every day from 1 June to 7 June 2024 with the number of orders placed that day, showing 0 on days without orders. Use the columns `day` (of type `date`) and `orders`, sorted by date.
+hint:
+  zh: 用递归 CTE 从 `DATE '2024-06-01'` 开始每轮加 1 天，生成 7 天；再用 `LEFT JOIN` 接上订单，条件是 `ordered_at::date` 等于这一天，最后数 `o.id`。
+  en: Use a recursive CTE that starts at `DATE '2024-06-01'` and adds a day each round, giving 7 days; `LEFT JOIN` the orders on `ordered_at::date` equal to the day, then count `o.id`.
+solution: |
+  WITH RECURSIVE days AS (
+    SELECT DATE '2024-06-01' AS day
+    UNION ALL
+    SELECT day + 1 FROM days WHERE day < DATE '2024-06-07'
+  )
+  SELECT d.day, count(o.id) AS orders
+  FROM days AS d
+  LEFT JOIN orders AS o ON o.ordered_at::date = d.day
+  GROUP BY d.day
+  ORDER BY d.day;
+check: { order_matters: true, column_names: true }

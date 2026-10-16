@@ -1,0 +1,21 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 运行下面的查询。订单 1 是最早的一笔订单，它那一行的 `prev_order` 是什么？
+  en: Run the query below. Order 1 is the earliest order. What is `prev_order` on its row?
+hint:
+  zh: 最早的一笔前面还有行吗？
+  en: Is there any row before the earliest one?
+query: |
+  SELECT id, ordered_at,
+         lag(id) OVER (ORDER BY ordered_at) AS prev_order
+  FROM orders
+  ORDER BY ordered_at
+  LIMIT 3;
+choices: ['NULL', '0', '1', '2']
+answer: 0
+verify: { rows: 3 }
+explain:
+  zh: NULL。按下单时间排序后，订单 1 是第一行，前面没有行，`lag` 就返回 NULL。想要别的值，写成 `lag(id, 1, 0)`，没有上一行时返回 0。
+  en: NULL. Ordered by time, order 1 is the first row and has nothing before it, so `lag` returns NULL. For another value, write `lag(id, 1, 0)`, which returns 0 when there is no previous row.

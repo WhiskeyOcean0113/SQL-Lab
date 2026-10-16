@@ -1,0 +1,17 @@
+kind: parsons
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 用下面的片段拼出一条查询：顾客 3 的每笔订单，列名依次为 `id`、`ordered_at` 和 `prev`（ta 上一笔订单的下单时间）。有两个片段是多余的。
+  en: Arrange the pieces into a query listing each of customer 3's orders, in the columns `id`, `ordered_at` and `prev` (the time that customer placed the previous order). Two pieces are not needed.
+hint:
+  zh: 上一行用 `lag`；`WHERE` 里不能写窗口函数。
+  en: The previous row is `lag`; a window function cannot go in `WHERE`.
+solution: |
+  SELECT id, ordered_at,
+  lag(ordered_at) OVER (ORDER BY ordered_at) AS prev
+  FROM orders
+  WHERE customer_id = 3;
+distractors:
+  - lead(ordered_at) OVER (ORDER BY ordered_at) AS prev
+  - WHERE lag(ordered_at) OVER (ORDER BY ordered_at) IS NOT NULL;

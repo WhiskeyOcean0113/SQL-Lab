@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出 Home 分类（`category_id` 为 3）的每件商品，并在旁边写上这个分类里最便宜的商品名，列名依次为 `name`、`price` 和 `cheapest`。它没有报错，`cheapest` 却总是商品自己。修好它。
+  en: This query should list each Home product (`category_id` 3) with the name of the category's cheapest product beside it, in the columns `name`, `price` and `cheapest`. It runs without error, but `cheapest` is always the product itself. Fix it.
+hint:
+  zh: 默认的帧在当前行就结束了。把帧延伸到分区末尾，或者改用 `first_value` 并按价格升序。
+  en: The default frame ends at the current row. Extend it to the end of the partition, or switch to `first_value` with prices ascending.
+starter: |
+  SELECT name, price,
+         last_value(name) OVER (ORDER BY price DESC) AS cheapest
+  FROM products
+  WHERE category_id = 3;
+solution: |
+  SELECT name, price,
+         first_value(name) OVER (ORDER BY price) AS cheapest
+  FROM products
+  WHERE category_id = 3;
+check: { column_names: true }

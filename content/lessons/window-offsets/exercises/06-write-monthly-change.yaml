@@ -1,0 +1,19 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 按月统计下单的订单数（所有状态都算），并算出和上个月相比的变化。列名依次为 `month`（每月第一天，`date` 类型）、`orders` 和 `change`（本月减上个月，第一个月为 NULL），按月份排列。
+  en: Count the orders placed each month (all statuses) and the change from the previous month. Use the columns `month` (the first day of the month, of type `date`), `orders` and `change` (this month minus last month, NULL for the first month), sorted by month.
+hint:
+  zh: 先在 CTE 里按 `date_trunc('month', ordered_at)::date` 分组计数，再用 `orders - lag(orders) OVER (ORDER BY month)`。
+  en: Group and count by `date_trunc('month', ordered_at)::date` in a CTE, then use `orders - lag(orders) OVER (ORDER BY month)`.
+solution: |
+  WITH monthly AS (
+    SELECT date_trunc('month', ordered_at)::date AS month, count(*) AS orders
+    FROM orders
+    GROUP BY 1
+  )
+  SELECT month, orders, orders - lag(orders) OVER (ORDER BY month) AS change
+  FROM monthly
+  ORDER BY month;
+check: { order_matters: true, column_names: true }

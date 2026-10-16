@@ -1,0 +1,20 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 每笔订单的金额是它所有明细的 `quantity * unit_price` 之和。找出金额高于所有订单平均金额的订单，列名依次为 `order_id` 和 `total`，按金额从高到低排列。只算有明细的订单，取消的订单也算。
+  en: An order's total is the sum of `quantity * unit_price` over its items. Find the orders whose total is above the average order total, with the columns `order_id` and `total`, highest total first. Count only orders that have items, cancelled ones included.
+hint:
+  zh: 用一个 CTE 算出每笔订单的金额；主查询从它里面筛选，平均值也从它求。
+  en: Compute each order's total in a CTE; the main query filters it and also takes the average from it.
+solution: |
+  WITH order_totals AS (
+    SELECT order_id, sum(quantity * unit_price) AS total
+    FROM order_items
+    GROUP BY order_id
+  )
+  SELECT order_id, total
+  FROM order_totals
+  WHERE total > (SELECT avg(total) FROM order_totals)
+  ORDER BY total DESC;
+check: { order_matters: true, column_names: true }

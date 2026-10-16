@@ -1,0 +1,17 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 真正的 `orders` 表有 24 行。下面这条查询返回的数字是多少？
+  en: The real `orders` table has 24 rows. What number does this query return?
+hint:
+  zh: 当 CTE 和一张表同名时，`FROM orders` 读的是哪一个？
+  en: When a CTE has the same name as a table, which one does `FROM orders` read?
+query: |
+  WITH orders AS (SELECT 1 AS id)
+  SELECT count(*) FROM orders;
+choices: ['1', '24', '25']
+answer: 0
+explain:
+  zh: 1。在这条语句里，`orders` 指的是 CTE，它只有一行，真正的表被盖住了。数据库不会报错，所以给 CTE 起名时要避开已有的表名。
+  en: "1. Within this statement, `orders` means the CTE, which has a single row; the real table is hidden. The database raises no error, which is why a CTE should not share a name with an existing table."

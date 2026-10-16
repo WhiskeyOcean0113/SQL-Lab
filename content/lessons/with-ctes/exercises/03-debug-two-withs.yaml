@@ -1,0 +1,30 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想数出金额在 150 美元及以上的订单有几笔，结果只有一列 `big_orders`。它报错了。修好它。
+  en: This query should count the orders worth 150 dollars or more, returning a single column `big_orders`. It fails. Fix it.
+hint:
+  zh: 一条语句里 `WITH` 只写一次，第二个 CTE 用逗号接在后面。
+  en: A statement has one `WITH`; the second CTE follows after a comma.
+starter: |
+  WITH order_totals AS (
+    SELECT order_id, sum(quantity * unit_price) AS total
+    FROM order_items
+    GROUP BY order_id
+  ),
+  WITH big_orders AS (
+    SELECT order_id FROM order_totals WHERE total >= 150
+  )
+  SELECT count(*) AS big_orders FROM big_orders;
+solution: |
+  WITH order_totals AS (
+    SELECT order_id, sum(quantity * unit_price) AS total
+    FROM order_items
+    GROUP BY order_id
+  ),
+  big_orders AS (
+    SELECT order_id FROM order_totals WHERE total >= 150
+  )
+  SELECT count(*) AS big_orders FROM big_orders;
+check: { column_names: true }

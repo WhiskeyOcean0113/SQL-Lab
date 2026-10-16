@@ -1,0 +1,21 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: China 有 3 位顾客，Canada 和 Japan 各有 2 位，其余 5 个国家各有 1 位。下面这条查询里，Brazil 的 `r` 是多少？
+  en: China has 3 customers, Canada and Japan have 2 each, and the other 5 countries have 1 each. In this query, what is Brazil's `r`?
+hint:
+  zh: "`rank()` 遇到并列后会跳过被占掉的名次。"
+  en: After a tie, `rank()` skips the ranks the tied rows used up.
+query: |
+  SELECT country, count(*) AS customers,
+         rank() OVER (ORDER BY count(*) DESC) AS r
+  FROM customers
+  GROUP BY country
+  ORDER BY r, country;
+choices: ['2', '3', '4', '8']
+answer: 2
+verify: { rows: 8 }
+explain:
+  zh: 4。China 第 1，Canada 和 Japan 并列第 2，占掉了第 2 和第 3 两个名次，所以只有 1 位顾客的五个国家并列第 4。换成 `dense_rank()` 就是 3。
+  en: 4. China is first, and Canada and Japan tie for second, using up ranks 2 and 3, so the five one-customer countries tie for fourth. With `dense_rank()` it would be 3.

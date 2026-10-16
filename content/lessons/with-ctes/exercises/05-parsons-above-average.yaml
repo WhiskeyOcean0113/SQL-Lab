@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询：下单次数多于平均水平的顾客，列出 `customer_id` 和下单次数 `n`。平均水平只算下过单的顾客。有两个片段是多余的。
+  en: Arrange the pieces into a query listing the customers who placed more orders than average, with `customer_id` and their order count `n`. The average covers only customers who ordered. Two pieces are not needed.
+hint:
+  zh: 先用 CTE 算出每位顾客的下单次数，平均值再对这个 CTE 求一次。聚合函数不能直接写在 `WHERE` 里。
+  en: Count each customer's orders in a CTE, then average over that CTE. An aggregate cannot go directly in `WHERE`.
+solution: |
+  WITH order_counts AS (
+  SELECT customer_id, count(*) AS n FROM orders GROUP BY customer_id
+  )
+  SELECT customer_id, n FROM order_counts
+  WHERE n > (SELECT avg(n) FROM order_counts);
+distractors:
+  - WHERE n > avg(n);
+  - );

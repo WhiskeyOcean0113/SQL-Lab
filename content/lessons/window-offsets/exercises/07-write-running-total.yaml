@@ -1,0 +1,19 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 列出 Lin Wei（顾客 1）的每笔有明细的订单，列名依次为 `order_id`、`total`（这笔订单的 `quantity * unit_price` 之和）和 `running_total`（按下单时间累计到这一笔为止的总和），按下单时间排列。
+  en: List each of Lin Wei's (customer 1) orders that have items, with the columns `order_id`, `total` (the sum of `quantity * unit_price` for the order) and `running_total` (the sum of totals up to and including this order, by time), sorted by order time.
+hint:
+  zh: 按订单分组求出 `total`；累计用 `sum(sum(…)) OVER (ORDER BY o.ordered_at)`，记得把 `ordered_at` 放进 `GROUP BY`。
+  en: Group by order to get `total`; accumulate with `sum(sum(…)) OVER (ORDER BY o.ordered_at)`, remembering to put `ordered_at` in `GROUP BY`.
+solution: |
+  SELECT o.id AS order_id,
+         sum(i.quantity * i.unit_price) AS total,
+         sum(sum(i.quantity * i.unit_price)) OVER (ORDER BY o.ordered_at) AS running_total
+  FROM orders AS o
+  JOIN order_items AS i ON i.order_id = o.id
+  WHERE o.customer_id = 1
+  GROUP BY o.id, o.ordered_at
+  ORDER BY o.ordered_at;
+check: { order_matters: true, column_names: true }

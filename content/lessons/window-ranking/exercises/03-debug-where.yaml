@@ -1,0 +1,23 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想找出价格最高的 3 件商品，列名依次为 `name` 和 `price`。它报错了。修好它。
+  en: This query should find the 3 most expensive products, in the columns `name` and `price`. It fails. Fix it.
+hint:
+  zh: 窗口函数不能写在 `WHERE` 里。先在 CTE 里算出编号，再在外层筛选。
+  en: A window function cannot go in `WHERE`. Compute the number in a CTE, then filter outside.
+starter: |
+  SELECT name, price
+  FROM products
+  WHERE row_number() OVER (ORDER BY price DESC) <= 3;
+solution: |
+  WITH ranked AS (
+    SELECT name, price,
+           row_number() OVER (ORDER BY price DESC) AS rn
+    FROM products
+  )
+  SELECT name, price
+  FROM ranked
+  WHERE rn <= 3;
+check: { column_names: true }

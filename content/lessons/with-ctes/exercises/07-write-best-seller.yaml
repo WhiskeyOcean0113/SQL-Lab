@@ -1,0 +1,20 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 找出卖出件数最多的商品（按所有订单明细的 `quantity` 之和计算，取消的订单也算），列名依次为 `name` 和 `sold`。如果有并列，全部列出。
+  en: Find the product with the most units sold (the sum of `quantity` over all order items, cancelled orders included), with the columns `name` and `sold`. If several tie, list them all.
+hint:
+  zh: 先在 CTE 里按商品汇总件数，主查询再连接商品名，并只留下件数等于最大值的行。
+  en: Sum the units per product in a CTE; the main query joins the product names and keeps only the rows equal to the maximum.
+solution: |
+  WITH product_sales AS (
+    SELECT product_id, sum(quantity) AS sold
+    FROM order_items
+    GROUP BY product_id
+  )
+  SELECT p.name, s.sold
+  FROM product_sales AS s
+  JOIN products AS p ON p.id = s.product_id
+  WHERE s.sold = (SELECT max(sold) FROM product_sales);
+check: { column_names: true }

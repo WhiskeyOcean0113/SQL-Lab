@@ -1,0 +1,28 @@
+kind: debug
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 下面这条查询想列出 Sofia Rossi（顾客 4）本人和 ta 直接或间接推荐来的所有顾客，列名依次为 `id` 和 `name`。它没有报错，结果却不对。修好它。
+  en: This query should list Sofia Rossi (customer 4) together with every customer Sofia Rossi referred directly or indirectly, in the columns `id` and `name`. It runs without error, but the result is wrong. Fix it.
+hint:
+  zh: 运行一下，看看找出来的是谁。往下走的条件是“顾客 c 的推荐人是上一轮的 r”。
+  en: Run it and see who it finds. Walking down means "customer c's referrer is r from the last round".
+starter: |
+  WITH RECURSIVE referrals AS (
+    SELECT id, name, referred_by FROM customers WHERE id = 4
+    UNION ALL
+    SELECT c.id, c.name, c.referred_by
+    FROM customers AS c
+    JOIN referrals AS r ON c.id = r.referred_by
+  )
+  SELECT id, name FROM referrals;
+solution: |
+  WITH RECURSIVE referrals AS (
+    SELECT id, name, referred_by FROM customers WHERE id = 4
+    UNION ALL
+    SELECT c.id, c.name, c.referred_by
+    FROM customers AS c
+    JOIN referrals AS r ON c.referred_by = r.id
+  )
+  SELECT id, name FROM referrals;
+check: { column_names: true }

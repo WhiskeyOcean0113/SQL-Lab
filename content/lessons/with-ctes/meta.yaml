@@ -1,0 +1,6 @@
+title:   { zh: "WITH 与{{term:cte}}", en: "WITH and {{term:cte|common table expressions}}" }
+summary:
+  zh: 用 WITH 给中间结果起名字，把一条复杂的查询拆成几个从上往下读的步骤。
+  en: Name intermediate results with WITH, and turn one complex query into steps you read from top to bottom.
+dataset: shop
+prereqs: [set-operations]

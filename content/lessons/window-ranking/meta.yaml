@@ -1,0 +1,6 @@
+title:   { zh: "{{term:window-function}}：排名", en: "{{Term:window-function|Window functions}}: ranking" }
+summary:
+  zh: 用 OVER 在不合并行的情况下做计算，给每一行排名，并取出每组的前几名。
+  en: Compute across rows with OVER without collapsing them, rank every row, and pick the top few of each group.
+dataset: shop
+prereqs: [recursive-ctes]

@@ -1,0 +1,20 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条查询：从 Zhang Min（顾客 9）出发往上走，列出 ta 本人、ta 的推荐人、推荐人的推荐人……一直到没有推荐人为止，列名依次为 `id` 和 `name`。有两个片段是多余的。
+  en: Arrange the pieces into a query that starts at Zhang Min (customer 9) and walks up, listing Zhang Min, then Zhang Min's referrer, then that person's referrer and so on until there is none, in the columns `id` and `name`. Two pieces are not needed.
+hint:
+  zh: 往上走：上一轮那个人的 `referred_by` 就是这一轮要找的 `id`。
+  en: "Walking up: the last round's `referred_by` is the `id` to find this round."
+solution: |
+  WITH RECURSIVE chain AS (
+  SELECT id, name, referred_by FROM customers WHERE id = 9
+  UNION ALL
+  SELECT c.id, c.name, c.referred_by FROM customers AS c
+  JOIN chain AS ch ON c.id = ch.referred_by
+  )
+  SELECT id, name FROM chain;
+distractors:
+  - JOIN chain AS ch ON c.referred_by = ch.id
+  - WITH chain AS (

@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询会返回几行？
+  en: How many rows does this query return?
+hint:
+  zh: 一轮一轮地数：起点产生哪一行？递归项在哪一轮第一次一行都不产生？
+  en: "Count the rounds: which row does the start produce, and in which round does the recursive term first produce nothing?"
+query: |
+  WITH RECURSIVE n AS (
+    SELECT 1 AS i
+    UNION ALL
+    SELECT i + 1 FROM n WHERE i < 3
+  )
+  SELECT i FROM n;
+choices: ['2', '3', '4']
+answer: 1
+verify: { rows: 3 }
+explain:
+  zh: 3 行：1、2、3。起点产生 1；第 1 轮从 1 得到 2；第 2 轮从 2 得到 3；第 3 轮里 `3 < 3` 不成立，一行都不产生，循环停止。
+  en: "3 rows: 1, 2 and 3. The start produces 1; round 1 turns 1 into 2; round 2 turns 2 into 3; in round 3, `3 < 3` is false, nothing is produced and the loop stops."

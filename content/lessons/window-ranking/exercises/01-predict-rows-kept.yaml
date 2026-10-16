@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: "`products` 有 16 行，分属 5 个分类，另有一件没有分类。下面这条查询会返回几行？"
+  en: "`products` has 16 rows in 5 categories, plus one product without a category. How many rows does this query return?"
+hint:
+  zh: 加了 `OVER` 的 `avg` 还会把行合并吗？
+  en: Does `avg` with `OVER` still merge rows?
+query: |
+  SELECT name, category_id, price,
+         avg(price) OVER (PARTITION BY category_id) AS category_avg
+  FROM products;
+choices: ['5', '6', '16']
+answer: 2
+verify: { rows: 16 }
+explain:
+  zh: 16 行。窗口函数不合并行：每件商品都保留，旁边写上它所在分区的平均价。如果写成 `GROUP BY category_id`，才会变成 6 行（5 个分类加上 NULL）。
+  en: 16 rows. A window function does not merge rows; every product stays, with its partition's average beside it. Only `GROUP BY category_id` would give 6 rows (5 categories plus NULL).

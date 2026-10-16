@@ -1,0 +1,20 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 用下面的片段拼出一条查询：每位顾客的第一笔订单，列名依次为 `customer_id`、`order_id` 和 `ordered_at`。有两个片段是多余的。
+  en: Arrange the pieces into a query returning each customer's first order, in the columns `customer_id`, `order_id` and `ordered_at`. Two pieces are not needed.
+hint:
+  zh: 按顾客分区，按下单时间从早到晚编号，外层留下编号 1。
+  en: Partition by customer, number from the earliest order, and keep number 1 outside.
+solution: |
+  WITH ranked AS (
+  SELECT customer_id, id, ordered_at,
+  row_number() OVER (PARTITION BY customer_id ORDER BY ordered_at) AS rn
+  FROM orders
+  )
+  SELECT customer_id, id AS order_id, ordered_at FROM ranked
+  WHERE rn = 1;
+distractors:
+  - row_number() OVER (ORDER BY ordered_at) AS rn
+  - WHERE rn = 0;

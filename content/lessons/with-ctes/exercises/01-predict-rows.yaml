@@ -1,0 +1,24 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 订单按状态计数的结果是：delivered 11、paid 4、pending 4、shipped 3、cancelled 2。下面这条查询会返回几行？
+  en: "Counting orders by status gives: delivered 11, paid 4, pending 4, shipped 3, cancelled 2. How many rows does this query return?"
+hint:
+  zh: 主查询把 `status_counts` 当作一张五行的表，再用 `WHERE` 筛选。
+  en: The main query treats `status_counts` as a five-row table and filters it with `WHERE`.
+query: |
+  WITH status_counts AS (
+    SELECT status, count(*) AS n
+    FROM orders
+    GROUP BY status
+  )
+  SELECT status, n
+  FROM status_counts
+  WHERE n >= 4;
+choices: ['2', '3', '5', '24']
+answer: 1
+verify: { rows: 3 }
+explain:
+  zh: 3 行：delivered、paid 和 pending。CTE 先算出五种状态各一行，主查询像对待普通的表一样，用 `WHERE n >= 4` 留下其中三行。
+  en: "3 rows: delivered, paid and pending. The CTE produces one row per status, five in all, and the main query treats it like any table, keeping three of them with `WHERE n >= 4`."

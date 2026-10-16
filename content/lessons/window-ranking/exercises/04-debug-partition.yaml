@@ -1,0 +1,28 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想找出每个分类里最便宜的商品，列名依次为 `category_id`、`name` 和 `price`。没有分类的商品自成一组。它没有报错，结果却只有一行。修好它。
+  en: This query should find the cheapest product in each category, in the columns `category_id`, `name` and `price`. Products without a category form a group of their own. It runs without error, but returns only one row. Fix it.
+hint:
+  zh: “每个分类”就是分区的信号。
+  en: '"Each category" is the signal to partition.'
+starter: |
+  WITH ranked AS (
+    SELECT category_id, name, price,
+           row_number() OVER (ORDER BY price) AS rn
+    FROM products
+  )
+  SELECT category_id, name, price
+  FROM ranked
+  WHERE rn = 1;
+solution: |
+  WITH ranked AS (
+    SELECT category_id, name, price,
+           row_number() OVER (PARTITION BY category_id ORDER BY price) AS rn
+    FROM products
+  )
+  SELECT category_id, name, price
+  FROM ranked
+  WHERE rn = 1;
+check: { column_names: true }

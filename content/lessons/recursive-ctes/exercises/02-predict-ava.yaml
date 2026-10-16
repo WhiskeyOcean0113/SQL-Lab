@@ -1,0 +1,24 @@
+kind: predict
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: Ava Thompson（顾客 2）推荐了 Sofia Rossi 和 Noah Martin，Sofia Rossi 又推荐了 Liam O'Brien 和 Emma Dubois。Noah Martin、Liam O'Brien 和 Emma Dubois 没有推荐任何人。下面这条查询会返回几行？
+  en: Ava Thompson (customer 2) referred Sofia Rossi and Noah Martin, and Sofia Rossi referred Liam O'Brien and Emma Dubois. Noah Martin, Liam O'Brien and Emma Dubois referred nobody. How many rows does this query return?
+hint:
+  zh: 起点那一行也在结果里。
+  en: The starting row is part of the result too.
+query: |
+  WITH RECURSIVE referrals AS (
+    SELECT id, name, 0 AS depth FROM customers WHERE id = 2
+    UNION ALL
+    SELECT c.id, c.name, r.depth + 1
+    FROM customers AS c
+    JOIN referrals AS r ON c.referred_by = r.id
+  )
+  SELECT id, name, depth FROM referrals;
+choices: ['2', '4', '5']
+answer: 2
+verify: { rows: 5 }
+explain:
+  zh: 5 行：起点 Ava Thompson（depth 0），第 1 轮的 Sofia Rossi 和 Noah Martin（depth 1），第 2 轮的 Liam O'Brien 和 Emma Dubois（depth 2）。第 3 轮没有人再被推荐，循环停止。
+  en: "5 rows: the start, Ava Thompson (depth 0); Sofia Rossi and Noah Martin from round 1 (depth 1); Liam O'Brien and Emma Dubois from round 2 (depth 2). Round 3 finds nobody and the loop stops."

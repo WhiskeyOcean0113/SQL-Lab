@@ -1,0 +1,28 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出 Ava Thompson（顾客 2）本人和 ta 直接或间接推荐来的所有顾客，列名依次为 `id` 和 `name`。它报错了。修好它。
+  en: This query should list Ava Thompson (customer 2) together with every customer Ava Thompson referred directly or indirectly, in the columns `id` and `name`. It fails. Fix it.
+hint:
+  zh: 错误的 HINT 已经给出了答案。
+  en: The error's HINT already gives the answer.
+starter: |
+  WITH referrals AS (
+    SELECT id, name FROM customers WHERE id = 2
+    UNION ALL
+    SELECT c.id, c.name
+    FROM customers AS c
+    JOIN referrals AS r ON c.referred_by = r.id
+  )
+  SELECT id, name FROM referrals;
+solution: |
+  WITH RECURSIVE referrals AS (
+    SELECT id, name FROM customers WHERE id = 2
+    UNION ALL
+    SELECT c.id, c.name
+    FROM customers AS c
+    JOIN referrals AS r ON c.referred_by = r.id
+  )
+  SELECT id, name FROM referrals;
+check: { column_names: true }

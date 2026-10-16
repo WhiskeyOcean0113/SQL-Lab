@@ -1,0 +1,15 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: 按顾客人数给国家排名，人数相同的名次相同，名次之间不留空号。列名依次为 `country`、`customers`（顾客人数）和 `rank`（名次，人数最多的为 1）。
+  en: Rank the countries by number of customers, giving tied countries the same rank and leaving no gaps between ranks. Use the columns `country`, `customers` (the number of customers) and `rank` (1 for the most customers).
+hint:
+  zh: 先按国家分组计数，再用 `dense_rank() OVER (ORDER BY count(*) DESC)`。
+  en: Group by country and count, then use `dense_rank() OVER (ORDER BY count(*) DESC)`.
+solution: |
+  SELECT country, count(*) AS customers,
+         dense_rank() OVER (ORDER BY count(*) DESC) AS rank
+  FROM customers
+  GROUP BY country;
+check: { column_names: true }

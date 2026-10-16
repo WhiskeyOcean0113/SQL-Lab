@@ -1,0 +1,6 @@
+title:   { zh: "{{term:recursive-cte}}", en: "{{Term:recursive-cte|Recursive CTEs}}" }
+summary:
+  zh: 用 WITH RECURSIVE 一层层往下（或往上）走，查出推荐链、层级结构这类层数事先不知道的数据，并生成连续的序列。
+  en: Use WITH RECURSIVE to walk down (or up) one level at a time through referral chains and other hierarchies of unknown depth, and to generate sequences.
+dataset: shop
+prereqs: [with-ctes]

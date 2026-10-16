@@ -60,12 +60,8 @@ modules:
     summary:
       zh: 用 CTE 拆解复杂查询，用窗口函数在不合并行的情况下做排名和累计。
       en: Break complex queries apart with CTEs, and rank or accumulate without collapsing rows using window functions.
-    lessons: []
-    planned:
-      - { zh: CTE 与 WITH 子句, en: CTEs and the WITH clause }
-      - { zh: "{{term:recursive-cte}}", en: "{{Term:recursive-cte|Recursive CTEs}}" }
-      - { zh: "{{term:window-function}}：排名", en: "{{Term:window-function|Window functions}}: ranking" }
-      - { zh: "{{term:window-function}}：偏移与累计", en: "{{Term:window-function|Window functions}}: offsets and running totals" }
+    lessons: [with-ctes, recursive-ctes, window-ranking, window-offsets]
+    planned: []
 
   - id: m7
     title: { zh: 修改数据, en: Changing data }

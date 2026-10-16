@@ -1,0 +1,28 @@
+kind: debug
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出每个分类的名字和商品数，列名依次为 `name` 和 `products`。它报错了。修好它。
+  en: This query should list each category's name and number of products, in the columns `name` and `products`. It fails. Fix it.
+hint:
+  zh: "`WITH` 和主查询是同一条语句的两部分，中间不能有分号。"
+  en: "`WITH` and the main query are two parts of one statement, so no semicolon goes between them."
+starter: |
+  WITH category_counts AS (
+    SELECT category_id, count(*) AS products
+    FROM products
+    GROUP BY category_id
+  );
+  SELECT c.name, cc.products
+  FROM category_counts AS cc
+  JOIN categories AS c ON c.id = cc.category_id;
+solution: |
+  WITH category_counts AS (
+    SELECT category_id, count(*) AS products
+    FROM products
+    GROUP BY category_id
+  )
+  SELECT c.name, cc.products
+  FROM category_counts AS cc
+  JOIN categories AS c ON c.id = cc.category_id;
+check: { column_names: true }

@@ -1,0 +1,6 @@
+title:   { zh: "{{term:window-function}}：偏移与累计", en: "{{Term:window-function|Window functions}}: offsets and running totals" }
+summary:
+  zh: 用 lag 和 lead 拿到前一行、后一行的值，用窗口帧算累计和与移动平均。
+  en: Reach the previous and next row with lag and lead, and compute running totals and moving averages with window frames.
+dataset: shop
+prereqs: [window-ranking]

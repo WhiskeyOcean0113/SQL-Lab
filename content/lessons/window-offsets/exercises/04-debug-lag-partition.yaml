@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出顾客 1 和顾客 2 的每笔订单，以及同一位顾客的上一笔订单编号，列名依次为 `customer_id`、`id` 和 `prev_order`；顾客的第一笔订单没有上一笔，显示 NULL。它没有报错，结果却不对。修好它。
+  en: This query should list every order of customers 1 and 2 with the id of the same customer's previous order, in the columns `customer_id`, `id` and `prev_order`; a customer's first order has none and shows NULL. It runs without error, but the result is wrong. Fix it.
+hint:
+  zh: 运行一下，看看顾客 1 的订单 4 前面是谁的订单。
+  en: Run it and see whose order comes before customer 1's order 4.
+starter: |
+  SELECT customer_id, id,
+         lag(id) OVER (ORDER BY ordered_at) AS prev_order
+  FROM orders
+  WHERE customer_id IN (1, 2);
+solution: |
+  SELECT customer_id, id,
+         lag(id) OVER (PARTITION BY customer_id ORDER BY ordered_at) AS prev_order
+  FROM orders
+  WHERE customer_id IN (1, 2);
+check: { column_names: true }

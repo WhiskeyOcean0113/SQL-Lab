@@ -1,0 +1,19 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: Lin Wei（顾客 1）直接或间接推荐来了多少位顾客？不算 Lin Wei 本人。结果只有一列，列名为 `referred`。
+  en: How many customers did Lin Wei (customer 1) bring in, directly or indirectly? Do not count Lin Wei. Return a single column called `referred`.
+hint:
+  zh: 先用递归 CTE 走出整棵推荐树，汇总放在主查询里。起点那一行要减掉，或者让起点从 Lin Wei 推荐的人开始。
+  en: Walk out the whole referral tree with a recursive CTE and count in the main query. Either subtract the starting row or start from the people Lin Wei referred.
+solution: |
+  WITH RECURSIVE referrals AS (
+    SELECT id FROM customers WHERE id = 1
+    UNION ALL
+    SELECT c.id
+    FROM customers AS c
+    JOIN referrals AS r ON c.referred_by = r.id
+  )
+  SELECT count(*) - 1 AS referred FROM referrals;
+check: { column_names: true }

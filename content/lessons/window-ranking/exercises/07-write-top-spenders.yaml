@@ -1,0 +1,23 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+prompt:
+  zh: 顾客的消费额是 ta 所有未取消订单的 `quantity * unit_price` 之和。找出消费额排名前三的顾客，并列的都要，列名依次为 `name` 和 `total`。
+  en: A customer's spend is the sum of `quantity * unit_price` over all of their orders that were not cancelled. Find the customers ranked in the top three by spend, including any ties, with the columns `name` and `total`.
+hint:
+  zh: 先在 CTE 里算出每位顾客的消费额并用 `rank()` 排名，外层留下名次不大于 3 的行。并列都要，所以不用 `row_number`。
+  en: In a CTE, compute each customer's spend and rank it with `rank()`; outside, keep ranks up to 3. Ties count, so not `row_number`.
+solution: |
+  WITH ranked AS (
+    SELECT c.name, sum(i.quantity * i.unit_price) AS total,
+           rank() OVER (ORDER BY sum(i.quantity * i.unit_price) DESC) AS r
+    FROM customers AS c
+    JOIN orders AS o ON o.customer_id = c.id
+    JOIN order_items AS i ON i.order_id = o.id
+    WHERE o.status <> 'cancelled'
+    GROUP BY c.id, c.name
+  )
+  SELECT name, total
+  FROM ranked
+  WHERE r <= 3;
+check: { column_names: true }

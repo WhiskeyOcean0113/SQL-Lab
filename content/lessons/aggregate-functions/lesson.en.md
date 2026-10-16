@@ -25,6 +25,37 @@ Sixteen rows in, one row out. This is {{term:aggregation}}: no longer one result
 
 In the {{term:logical-order}}, `FROM` produces rows, `WHERE` removes the ones you do not want, only the remaining rows reach the aggregate functions, and `SELECT` outputs the totals. So `WHERE` decides which rows get summarised.
 
+## Syntax {#syntax}
+
+```syntax
+count(*)
+count([ DISTINCT ] expression)
+sum([ DISTINCT ] expression)
+avg([ DISTINCT ] expression)
+min(expression)
+max(expression)
+```
+
+| Part | What goes there | Notes |
+|---|---|---|
+| `*` | Only inside `count` | Counts rows, looking at no column's value |
+| `expression` | A column or an expression such as `quantity * unit_price` | Computed for each row; the values are then summarised |
+| `DISTINCT` | Optional | Removes duplicate values before summarising |
+
+| Function | Works on | Result type |
+|---|---|---|
+| `count` | Any type | `bigint` |
+| `sum`, `avg` | Numbers | Summing integers gives `bigint`; `avg`, and summing `numeric`, give `numeric` |
+| `min`, `max` | Anything that can be ordered: numbers, text, dates, timestamps | The same as the input |
+
+**An aggregate call is itself an expression.** So it can sit inside a larger one: `round(avg(price), 2)` and `max(price) - min(price)` are both fine. But it may appear only in the `SELECT` list, `HAVING` and `ORDER BY`; not in `WHERE`, and not inside another aggregate. The logical order explains both: when `WHERE` runs, no summarising has started yet.
+
+Some expressions, read against the shapes:
+
+- `count(*)`: count rows.
+- `count(DISTINCT customer_id)`: with `DISTINCT`, count how many different customer ids there are.
+- `sum(quantity * unit_price)`: the `expression` is a multiplication, worked out for each row before the total is taken.
+
 ## Example {#example}
 
 Task: how many orders came in during June 2024, and when were the first and the last placed?
@@ -65,6 +96,24 @@ FROM orders;
 
 Twenty-four orders, from 10 different customers.
 
+**Calculating with aggregate results.** The price range is the highest price minus the lowest, and the average is rounded to two places:
+
+```sql run
+SELECT max(price) - min(price) AS price_range,
+       round(avg(price), 2) AS avg_price
+FROM products;
+```
+
+**Summarising true and false: `bool_or` and `bool_and`.** "Is anything sold out?" "Does every product cost more than 5 dollars?":
+
+```sql run
+SELECT bool_or(stock = 0) AS any_sold_out,
+       bool_and(price > 5) AS all_over_5
+FROM products;
+```
+
+`bool_or` is true when at least one row is true; `bool_and` needs every row to be true. Standard SQL calls `bool_and` `every`, and PostgreSQL accepts both names.
+
 **Smallest and largest text and dates.** Text compares alphabetically, dates chronologically:
 
 ```sql run
@@ -93,6 +142,10 @@ WHERE price > 1000;
 ```
 
 With an aggregate and no `GROUP BY`, the result is **always exactly one row**. In that case `sum`, `avg`, `min` and `max` return NULL, which the last lesson of this chapter covers.
+
+**`count(1)` is the same as `count(*)`.** Many people write `count(1)` believing it beats `count(*)`. In PostgreSQL the results are identical and the speed difference is negligible. `count(*)` is the standard form and says most plainly what it does: count rows.
+
+**`DISTINCT` works in `sum` and `avg` too, but is rarely what you want.** `sum(DISTINCT quantity)` is 21, while `sum(quantity)` is 69: the first removes repeated quantities before adding, so two lines that each bought 2 count once. Unless a question really asks for the sum of the distinct values, do not write it.
 
 **Aggregates do not nest.** `max(avg(price))` is an error: one aggregate turns many rows into one value, and then there are no "many rows" left to aggregate again. Questions like that need chapter 5's subqueries.
 
@@ -128,7 +181,16 @@ WHERE price > avg(price);
 
 **3. `count` where `sum` was meant.** "How many items were sold" is `sum(quantity)`; `count(quantity)` only counts order lines. When a question says "how many", decide first whether it counts rows or quantities inside rows.
 
-**4. Expecting no result when nothing matches.** If `WHERE` removes every row, the result is still one row: `count` is 0 and the other functions are NULL.
+**4. Two columns inside `count(DISTINCT …)`.** MySQL allows `count(DISTINCT customer_id, status)`; PostgreSQL does not:
+
+```sql run error
+SELECT count(DISTINCT customer_id, status)
+FROM orders;
+```
+
+The error is `function count(integer, text) does not exist`: in the shape, `count`'s parentheses hold one `expression`. To count distinct combinations, wrap the two columns in parentheses as one unit: `count(DISTINCT (customer_id, status))` gives 23.
+
+**5. Expecting no result when nothing matches.** If `WHERE` removes every row, the result is still one row: `count` is 0 and the other functions are NULL.
 
 ## Summary {#summary}
 

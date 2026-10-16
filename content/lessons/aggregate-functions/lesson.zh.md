@@ -25,6 +25,37 @@ FROM products;
 
 放回{{term:logical-order}}里看：`FROM` 取出行，`WHERE` 先把不要的行筛掉，剩下的行才交给聚合函数，最后 `SELECT` 输出汇总结果。所以 `WHERE` 决定了“汇总哪些行”。
 
+## 语法 {#syntax}
+
+```syntax
+count(*)
+count([ DISTINCT ] expression)
+sum([ DISTINCT ] expression)
+avg([ DISTINCT ] expression)
+min(expression)
+max(expression)
+```
+
+| 部分 | 填什么 | 说明 |
+|---|---|---|
+| `*` | 只能用在 `count` 里 | 数行数，不看任何一列的值 |
+| `expression` | 列名或表达式，比如 `quantity * unit_price` | 对每一行算出一个值，再把这些值汇总 |
+| `DISTINCT` | 可选 | 先去掉重复的值，再汇总 |
+
+| 函数 | 能用于 | 结果的类型 |
+|---|---|---|
+| `count` | 任何类型 | `bigint` |
+| `sum`、`avg` | 数值 | 整数求和得 `bigint`；`avg` 和 `numeric` 求和得 `numeric` |
+| `min`、`max` | 能比较大小的类型：数字、文字、日期、时间戳 | 和输入相同 |
+
+**聚合函数调用本身也是一个表达式。** 所以它能放进更大的表达式里：`round(avg(price), 2)`、`max(price) - min(price)` 都可以。但它只能出现在 `SELECT` 列表、`HAVING` 和 `ORDER BY` 里，不能出现在 `WHERE` 里，也不能套在另一个聚合函数里面。原因都在逻辑顺序里：`WHERE` 执行时，还没有开始汇总。
+
+对照格式读几个表达式：
+
+- `count(*)`：数行数。
+- `count(DISTINCT customer_id)`：用了 `DISTINCT`，数有多少个不同的顾客编号。
+- `sum(quantity * unit_price)`：`expression` 是一个乘法，每一行先算出金额，再求和。
+
 ## 示例 {#example}
 
 问题：2024 年 6 月一共有多少笔订单？第一笔和最后一笔是什么时候下的？
@@ -65,6 +96,24 @@ FROM orders;
 
 24 笔订单，来自 10 位不同的顾客。
 
+**聚合结果参与计算。** 价格的跨度是最高价减最低价，平均价保留两位小数：
+
+```sql run
+SELECT max(price) - min(price) AS price_range,
+       round(avg(price), 2) AS avg_price
+FROM products;
+```
+
+**真假值的汇总：`bool_or` 和 `bool_and`。** “有没有卖完的商品？”“是不是所有商品都超过 5 美元？”：
+
+```sql run
+SELECT bool_or(stock = 0) AS any_sold_out,
+       bool_and(price > 5) AS all_over_5
+FROM products;
+```
+
+`bool_or` 在至少一行为 true 时返回 true，`bool_and` 要求每一行都为 true。标准 SQL 里 `bool_and` 叫 `every`，PostgreSQL 两个名字都认。
+
 **文字和日期的最小、最大值。** 文字按字母顺序比较，日期按先后比较：
 
 ```sql run
@@ -93,6 +142,10 @@ WHERE price > 1000;
 ```
 
 只要有聚合函数、又没有 `GROUP BY`，结果就**永远是一行**。这时 `sum`、`avg`、`min`、`max` 返回的是 NULL，本章最后一篇会专门讲。
+
+**`count(1)` 和 `count(*)` 一样。** 很多人写 `count(1)`，以为比 `count(*)` 快。在 PostgreSQL 里两者结果相同，速度也没有可感知的差别。`count(*)` 是标准写法，意思最清楚：数行。
+
+**`DISTINCT` 也能用于 `sum` 和 `avg`，但很少是你想要的。** `sum(DISTINCT quantity)` 是 21，而 `sum(quantity)` 是 69：前者先把相同的数量去重再加，两行都买了 2 件，只算一次。除非问题明确要“不同的值之和”，否则不要这样写。
 
 **聚合函数不能嵌套。** `max(avg(price))` 会报错：一层聚合把很多行变成一个值，再聚合一次就没有“很多行”了。这类问题要用第 5 章的子查询。
 
@@ -128,7 +181,16 @@ WHERE price > avg(price);
 
 **3. 该用 `sum` 的地方用了 `count`。** “卖出了多少件”是 `sum(quantity)`；`count(quantity)` 只是数有多少行明细。日常说的“多少”，要先想清楚数的是行，还是行里的数量。
 
-**4. 以为条件不满足就没有结果。** `WHERE` 筛掉了所有行，结果依然是一行：`count` 为 0，其他函数为 NULL。
+**4. 在 `count(DISTINCT …)` 里写两列。** MySQL 允许 `count(DISTINCT customer_id, status)`，PostgreSQL 不允许：
+
+```sql run error
+SELECT count(DISTINCT customer_id, status)
+FROM orders;
+```
+
+报 `function count(integer, text) does not exist`：按格式，`count` 的括号里只能有一个 `expression`。要数不同的组合，把两列用括号包成一个整体：`count(DISTINCT (customer_id, status))`，结果是 23。
+
+**5. 以为条件不满足就没有结果。** `WHERE` 筛掉了所有行，结果依然是一行：`count` 为 0，其他函数为 NULL。
 
 ## 小结 {#summary}
 

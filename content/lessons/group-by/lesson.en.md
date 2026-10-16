@@ -28,6 +28,48 @@ In the {{term:logical-order}}, `GROUP BY` comes after `WHERE` and before `SELECT
 
 That gives a hard rule: **after grouping, each group is down to one row, so every column in `SELECT` is either a grouping column or inside an aggregate.** A grouping column has the same value throughout its group and can be output directly; any other column has many values in the group and can only be summarised into one.
 
+## Syntax {#syntax}
+
+`GROUP BY` goes after `WHERE` and before `ORDER BY`:
+
+```syntax
+SELECT select_list
+FROM table_name
+[ WHERE condition ]
+[ GROUP BY grouping_element [, …] ]
+[ ORDER BY expression [, …] ]
+```
+
+| Part | What goes there | Notes |
+|---|---|---|
+| `grouping_element` | A column or an expression, such as `date_trunc('month', ordered_at)` | Rows with equal values share a group |
+| `[, …]` | More grouping columns | Rows are grouped by the combination |
+| `select_list` | Each item must be one of the three kinds below | See the next table |
+
+With `GROUP BY`, every item in the `select_list` must be one of these:
+
+| Allowed item | Example | Why it works |
+|---|---|---|
+| A grouping column, or exactly the expression grouped by | `status` | It has one value per group |
+| An aggregate | `count(*)`, `min(ordered_at)` | It reduces the group's many values to one |
+| An expression built from the two above | `count(*) * 2`, `upper(status)` | Every part has one value |
+
+Any other column has many values within a group, the database cannot tell which to show, and it reports an error. (Grouping by the primary key is the exception; see Going deeper.)
+
+Some clauses, read against the shape:
+
+- `GROUP BY status`: one grouping column.
+- `GROUP BY country, city`: two grouping columns, grouped by their combination.
+- `SELECT date_trunc('month', ordered_at) … GROUP BY date_trunc('month', ordered_at)`: the grouping element is an expression, and `SELECT` uses the very same expression, so it is allowed.
+
+`string_agg`, which joins text, is an aggregate too. Its shape:
+
+```syntax
+string_agg(expression, delimiter [ ORDER BY expression [, …] ])
+```
+
+The `ORDER BY` inside the parentheses orders the pieces within each group; it has nothing to do with the `ORDER BY` at the end of the query.
+
 ## Example {#example}
 
 Task: how many orders has each customer placed, and when was their first? Busiest customers first.
@@ -68,6 +110,16 @@ GROUP BY date_trunc('month', ordered_at)
 ORDER BY month;
 ```
 
+**Grouping by a condition.** A grouping element can be a true-or-false expression, which splits the rows into a true group and a false group. How many premium products are there, how many others, and what do they cost on average?
+
+```sql run
+SELECT price >= 100 AS premium,
+       count(*) AS products,
+       round(avg(price), 2) AS avg_price
+FROM products
+GROUP BY price >= 100;
+```
+
 **Joining a group's text: `string_agg`.** Another aggregate: it joins the group's values into one string with a separator:
 
 ```sql run
@@ -102,6 +154,17 @@ ORDER BY id;
 
 This becomes useful in chapter 4, when customers are joined to orders and counted. It only works for the primary key, though: grouping by `name` and selecting `country` is still an error.
 
+**Subtotals and totals: `ROLLUP`.** `GROUP BY ROLLUP (country)` returns a row per country plus one grand-total row, whose grouping column shows NULL:
+
+```sql run
+SELECT country, count(*) AS customers
+FROM customers
+GROUP BY ROLLUP (country)
+ORDER BY country;
+```
+
+The NULL in the last row does not mean "country unknown"; it means "all countries", 12 customers. `ROLLUP`, `CUBE` and `GROUPING SETS` are standard SQL's advanced grouping forms. MySQL writes `GROUP BY country WITH ROLLUP`, and SQLite has none of them.
+
 **PostgreSQL shorthands.** `GROUP BY` accepts an output column's alias (`GROUP BY month`) or its position (`GROUP BY 1`). Neither is standard SQL, and positions silently break when columns are added or removed, so avoid them.
 
 ## Common mistakes {#mistakes}
@@ -132,6 +195,19 @@ Each group is now "one status of one customer", 23 rows, no longer one row per c
 **3. Expecting grouped results to be sorted.** See Going deeper: for an order, write `ORDER BY`.
 
 **4. `count(*)` when counting distinct things.** "How many customers are behind each status" needs `count(DISTINCT customer_id)`; `count(*)` counts order rows. Delivered has 11 orders but only 10 customers.
+
+**5. Clauses in the wrong order.** `GROUP BY` must follow `WHERE`:
+
+```sql run error
+SELECT status, count(*)
+FROM orders
+GROUP BY status
+WHERE status <> 'cancelled';
+```
+
+That fails with `syntax error at or near "WHERE"`. The written order is `WHERE` → `GROUP BY` → `ORDER BY`, which is also the logical order: filter rows first, then group them.
+
+**6. Different expressions in `SELECT` and `GROUP BY`.** `SELECT date_trunc('month', ordered_at) … GROUP BY date_trunc('day', ordered_at)` fails with `must appear in the GROUP BY clause`. Each daily group holds a single date, but the database does not treat the month-truncated value as "the same expression". Write the two exactly alike.
 
 ## Summary {#summary}
 

@@ -36,6 +36,32 @@ ORDER BY customer_id;
 
 Three of the 10 groups qualify. `HAVING` removes whole groups, never individual rows inside a group.
 
+## Syntax {#syntax}
+
+```syntax
+SELECT select_list
+FROM table_name
+[ WHERE condition ]
+[ GROUP BY grouping_element [, …] ]
+[ HAVING condition ]
+[ ORDER BY expression [, …] ]
+```
+
+The shape has two `condition`s, written exactly alike: both are Chapter 1 conditions, combined with comparisons, `AND`, `OR`, `IN` and the rest. The only difference is what they may refer to:
+
+| Where | The `condition` may use | It may not use |
+|---|---|---|
+| `WHERE condition` | Any column of the table | Aggregates, `SELECT` aliases |
+| `HAVING condition` | Aggregates, grouping columns | Plain columns that are not grouped, `SELECT` aliases |
+
+`HAVING` goes after `GROUP BY` and before `ORDER BY`, so the written order matches the logical order. `HAVING` is allowed without `GROUP BY`; the whole table is then one group.
+
+Some clauses, read against the shape:
+
+- `WHERE price < 50`: a comparison on single rows.
+- `HAVING count(*) >= 3`: a condition containing an aggregate.
+- `HAVING count(*) >= 2 AND max(ordered_at) >= '2024-06-01'`: two aggregate conditions joined by `AND`, just as conditions are combined in `WHERE`.
+
 ## Example {#example}
 
 Task: which categories have at least 2 products under 50 dollars?
@@ -78,6 +104,28 @@ ORDER BY customer_id;
 ```
 
 Customer 3 has dropped out compared with the core example: one of customer 3's 3 orders was cancelled, `WHERE` removed it first, and 2 are not enough.
+
+**Several group conditions, sorted by an aggregate.** Customers with at least 2 orders who also ordered in June, the busiest first:
+
+```sql run
+SELECT customer_id, count(*) AS orders, max(ordered_at) AS last_order
+FROM orders
+GROUP BY customer_id
+HAVING count(*) >= 2 AND max(ordered_at) >= '2024-06-01'
+ORDER BY count(*) DESC, customer_id;
+```
+
+`ORDER BY` comes after `SELECT`, so `ORDER BY orders DESC` would also work here; `HAVING` has to repeat the aggregate.
+
+**Filtering on a total of an expression.** Orders worth more than 300 dollars:
+
+```sql run
+SELECT order_id, sum(quantity * unit_price) AS total
+FROM order_items
+GROUP BY order_id
+HAVING sum(quantity * unit_price) > 300
+ORDER BY total DESC;
+```
 
 **`HAVING` without `GROUP BY`.** The whole table is then one group, so the result is either one row or none:
 
@@ -123,7 +171,18 @@ HAVING status = 'delivered';
 
 **3. An alias in `HAVING`.** See Going deeper: PostgreSQL reports `column "n" does not exist`.
 
-**4. A missing `WHERE` that quietly changes the meaning.** "At least 3 orders that were not cancelled" needs `WHERE` to remove cancelled orders before grouping and counting. With only `HAVING count(*) >= 3`, cancelled orders are counted too, customer 3 sneaks in, and nothing reports an error. Before writing, ask: is this condition used before counting, or after?
+**4. `HAVING` before `GROUP BY`.**
+
+```sql run error
+SELECT customer_id, count(*)
+FROM orders
+HAVING count(*) >= 3
+GROUP BY customer_id;
+```
+
+That fails with `syntax error at or near "GROUP"`. In the shape, `HAVING` comes right after `GROUP BY`.
+
+**5. A missing `WHERE` that quietly changes the meaning.** "At least 3 orders that were not cancelled" needs `WHERE` to remove cancelled orders before grouping and counting. With only `HAVING count(*) >= 3`, cancelled orders are counted too, customer 3 sneaks in, and nothing reports an error. Before writing, ask: is this condition used before counting, or after?
 
 ## Summary {#summary}
 

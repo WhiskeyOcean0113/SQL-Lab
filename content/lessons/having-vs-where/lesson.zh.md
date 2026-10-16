@@ -36,6 +36,32 @@ ORDER BY customer_id;
 
 10 组里有 3 组满足条件。`HAVING` 去掉的是整组，而不是组里的某几行。
 
+## 语法 {#syntax}
+
+```syntax
+SELECT select_list
+FROM table_name
+[ WHERE condition ]
+[ GROUP BY grouping_element [, …] ]
+[ HAVING condition ]
+[ ORDER BY expression [, …] ]
+```
+
+格式里有两个 `condition`，写法完全一样，都是第 1 章学过的条件，可以用比较、`AND`、`OR`、`IN` 等组合。区别只在于条件里能用什么：
+
+| 位置 | `condition` 里能用 | 不能用 |
+|---|---|---|
+| `WHERE condition` | 表里的任何列 | 聚合函数、`SELECT` 的别名 |
+| `HAVING condition` | 聚合函数、分组列 | 不是分组列的普通列、`SELECT` 的别名 |
+
+`HAVING` 写在 `GROUP BY` 后面、`ORDER BY` 前面，书写顺序和逻辑顺序一致。没有 `GROUP BY` 时也可以写 `HAVING`，这时整张表是一组。
+
+对照格式读几条：
+
+- `WHERE price < 50`：条件是单行的比较。
+- `HAVING count(*) >= 3`：条件里是一个聚合函数。
+- `HAVING count(*) >= 2 AND max(ordered_at) >= '2024-06-01'`：两个聚合条件用 `AND` 组合，和 `WHERE` 里的组合方式一样。
+
 ## 示例 {#example}
 
 问题：哪些分类里至少有 2 件低于 50 美元的商品？
@@ -78,6 +104,28 @@ ORDER BY customer_id;
 ```
 
 比核心概念里的结果少了顾客 3：顾客 3 的 3 笔订单里有 1 笔取消了，`WHERE` 先把它去掉，剩下 2 笔，不够 3 笔。
+
+**组合多个组条件，再按聚合排序。** 下过至少 2 笔订单、而且 6 月还下过单的顾客，订单多的排前面：
+
+```sql run
+SELECT customer_id, count(*) AS orders, max(ordered_at) AS last_order
+FROM orders
+GROUP BY customer_id
+HAVING count(*) >= 2 AND max(ordered_at) >= '2024-06-01'
+ORDER BY count(*) DESC, customer_id;
+```
+
+`ORDER BY` 排在 `SELECT` 之后，所以这里写 `ORDER BY orders DESC` 也可以；`HAVING` 却只能把聚合再写一遍。
+
+**对表达式的汇总做筛选。** 金额超过 300 美元的订单：
+
+```sql run
+SELECT order_id, sum(quantity * unit_price) AS total
+FROM order_items
+GROUP BY order_id
+HAVING sum(quantity * unit_price) > 300
+ORDER BY total DESC;
+```
 
 **没有 `GROUP BY` 的 `HAVING`。** 这时整张表是一组，结果要么是一行，要么一行都没有：
 
@@ -123,7 +171,18 @@ HAVING status = 'delivered';
 
 **3. 在 `HAVING` 里用别名。** 见“深入”：PostgreSQL 会报 `column "n" does not exist`。
 
-**4. 漏了 `WHERE`，悄悄改变了意思。** “至少 3 笔未取消的订单”要先用 `WHERE` 去掉取消的订单，再分组去数。只写 `HAVING count(*) >= 3`，取消的订单也会被数进去，顾客 3 就多出来了，而且不会有任何报错。写之前先问自己：这个条件是在数之前用，还是数完之后用？
+**4. `HAVING` 写在 `GROUP BY` 前面。**
+
+```sql run error
+SELECT customer_id, count(*)
+FROM orders
+HAVING count(*) >= 3
+GROUP BY customer_id;
+```
+
+报 `syntax error at or near "GROUP"`。按格式，`HAVING` 紧跟在 `GROUP BY` 后面。
+
+**5. 漏了 `WHERE`，悄悄改变了意思。** “至少 3 笔未取消的订单”要先用 `WHERE` 去掉取消的订单，再分组去数。只写 `HAVING count(*) >= 3`，取消的订单也会被数进去，顾客 3 就多出来了，而且不会有任何报错。写之前先问自己：这个条件是在数之前用，还是数完之后用？
 
 ## 小结 {#summary}
 

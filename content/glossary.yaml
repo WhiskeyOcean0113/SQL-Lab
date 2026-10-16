@@ -96,6 +96,7 @@ string-function:  { en: string function, zh: 字符串函数 }
 scalar-subquery:  { en: scalar subquery, zh: 标量子查询 }
 recursive-cte:    { en: recursive CTE, zh: 递归 CTE }
 grouping-column:  { en: grouping column, zh: 分组列 }
+pivot:            { en: pivoting, zh: 行转列 }
 functional-dependency: { en: functional dependency, zh: 函数依赖 }
 right-join:       { en: right join, zh: 右连接 }
 full-join:        { en: full outer join, zh: 全外连接 }

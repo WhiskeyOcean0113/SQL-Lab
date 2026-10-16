@@ -24,6 +24,37 @@ FROM customers;
 
 这和讲 NULL 的那一篇是一致的：NULL 表示“未知”，聚合函数不会拿一个未知的值去求和、比较大小。
 
+## 语法 {#syntax}
+
+聚合函数的完整格式，比这一章第一课多了一个可选的 `FILTER`：
+
+```syntax
+count(*) [ FILTER ( WHERE condition ) ]
+aggregate_name ( [ DISTINCT ] expression ) [ FILTER ( WHERE condition ) ]
+```
+
+| 部分 | 填什么 | 能省略吗 |
+|---|---|---|
+| `aggregate_name` | `count`、`sum`、`avg`、`min`、`max`、`string_agg` 等 | 不能 |
+| `expression` | 要汇总的值；为 NULL 的行会被跳过 | 不能 |
+| `FILTER ( WHERE condition )` | 只让满足条件的行参加这一个函数的汇总 | 可以 |
+
+`FILTER` 里的 `condition` 和 `WHERE` 子句里的一样，看一行就能判断。注意括号和 `WHERE` 都不能少。
+
+遇到 NULL 和空集时，各个函数的结果：
+
+| 函数 | 有些值是 NULL | 全部是 NULL | 一行都没有 |
+|---|---|---|---|
+| `count(*)` | 照常数行 | 照常数行 | 0 |
+| `count(expression)` | 只数非 NULL | 0 | 0 |
+| `sum`、`avg`、`min`、`max` | 只用非 NULL 计算 | NULL | NULL |
+
+对照格式读几个表达式：
+
+- `count(email)`：`expression` 是一列，`email` 为 NULL 的行不数。
+- `count(*) FILTER (WHERE status = 'cancelled')`：数行，但只数取消的订单。
+- `COALESCE(sum(quantity), 0)`：聚合结果本身是一个表达式，可以交给 `COALESCE`，NULL 时换成 0。
+
 ## 示例 {#example}
 
 问题：顾客分布在多少个城市？
@@ -71,6 +102,20 @@ SELECT count(*) AS all_orders,
 FROM orders;
 ```
 
+**`FILTER` 和 `GROUP BY` 一起用。** 每位顾客一行，并排显示总订单数、已送达数和已取消数：
+
+```sql run
+SELECT customer_id,
+       count(*) AS orders,
+       count(*) FILTER (WHERE status = 'delivered') AS delivered,
+       count(*) FILTER (WHERE status = 'cancelled') AS cancelled
+FROM orders
+GROUP BY customer_id
+ORDER BY customer_id;
+```
+
+这种把一列的不同取值展开成几列的写法，叫{{term:pivot}}，在报表里很常见。
+
 **把“没有”显示成 0：`COALESCE`。** Folding Chair（商品 16）从没卖出过：
 
 ```sql run
@@ -108,6 +153,8 @@ GROUP BY category_id;
 
 **忽略 NULL 和把 NULL 当 0 不一样。** 如果 NULL 其实表示 0（比如“没填就是没买”），`avg(x)` 会偏高，因为它只除以非 NULL 的个数；这时要写 `avg(COALESCE(x, 0))`，先把 NULL 换成 0 再平均。NULL 表示“未知”还是“零”，取决于数据的含义，查询本身判断不了。
 
+**`FILTER` 和 `WHERE` 的区别。** `WHERE` 筛掉的行，查询里所有的聚合函数都看不到；`FILTER` 只影响它所在的那一个函数，其他函数照样看到全部的行。所以上面的例子能在同一行里既显示总数、又显示部分数量。`FILTER` 是 SQL 标准，PostgreSQL 和 SQLite 支持，MySQL 不支持，在那里要用 `sum(CASE …)`。
+
 **NULL 在 `GROUP BY` 里和在 `count` 里不一样。** `GROUP BY` 和 `DISTINCT` 把所有 NULL 当作一组，`count(x)` 和 `count(DISTINCT x)` 却跳过 NULL。
 
 ## 常见错误 {#mistakes}
@@ -127,7 +174,16 @@ Brazil 和 Ireland 都显示 0，可它们各有一位顾客，只是城市为 N
 
 **3. 用 `count` 加条件来按条件计数。** `count(status = 'cancelled')` 看起来像“数取消的订单”，其实返回 24：比较的结果是 true 或 false，都不是 NULL，所以每一行都被数了。按条件计数用 `FILTER`，或者 `sum(CASE … THEN 1 ELSE 0 END)`。
 
-**4. 拿 `count(DISTINCT x)` 和 `SELECT DISTINCT x` 的行数对比，以为数错了。** 前者不数 NULL，后者把 NULL 当作一行。
+**4. `FILTER` 少写了 `WHERE`。**
+
+```sql run error
+SELECT count(*) FILTER (status = 'cancelled')
+FROM orders;
+```
+
+报 `syntax error at or near "status"`。按格式，括号里必须以 `WHERE` 开头：`FILTER (WHERE status = 'cancelled')`。
+
+**5. 拿 `count(DISTINCT x)` 和 `SELECT DISTINCT x` 的行数对比，以为数错了。** 前者不数 NULL，后者把 NULL 当作一行。
 
 ## 小结 {#summary}
 

@@ -24,6 +24,37 @@ Twelve and 10. Two customers have a NULL `email`, and `count(email)` leaves them
 
 This is consistent with the NULL lesson: NULL means "unknown", and aggregates do not add up or compare values nobody knows.
 
+## Syntax {#syntax}
+
+The full shape of an aggregate call adds one optional part to the chapter's first lesson, `FILTER`:
+
+```syntax
+count(*) [ FILTER ( WHERE condition ) ]
+aggregate_name ( [ DISTINCT ] expression ) [ FILTER ( WHERE condition ) ]
+```
+
+| Part | What goes there | Optional? |
+|---|---|---|
+| `aggregate_name` | `count`, `sum`, `avg`, `min`, `max`, `string_agg` and others | No |
+| `expression` | The value to summarise; rows where it is NULL are skipped | No |
+| `FILTER ( WHERE condition )` | Lets only the rows meeting the condition into this one aggregate | Yes |
+
+The `condition` inside `FILTER` is like the one in a `WHERE` clause: it can be decided from a single row. Neither the parentheses nor the `WHERE` may be left out.
+
+What each function returns when it meets NULL or nothing at all:
+
+| Function | Some values NULL | All values NULL | No rows |
+|---|---|---|---|
+| `count(*)` | Counts rows as usual | Counts rows as usual | 0 |
+| `count(expression)` | Counts non-NULL only | 0 | 0 |
+| `sum`, `avg`, `min`, `max` | Uses non-NULL only | NULL | NULL |
+
+Some expressions, read against the shapes:
+
+- `count(email)`: the `expression` is a column; rows with a NULL `email` are not counted.
+- `count(*) FILTER (WHERE status = 'cancelled')`: counts rows, but only cancelled orders.
+- `COALESCE(sum(quantity), 0)`: an aggregate result is itself an expression, so `COALESCE` can turn its NULL into 0.
+
 ## Example {#example}
 
 Task: how many cities do customers live in?
@@ -71,6 +102,20 @@ SELECT count(*) AS all_orders,
 FROM orders;
 ```
 
+**`FILTER` with `GROUP BY`.** One row per customer, with total, delivered and cancelled orders side by side:
+
+```sql run
+SELECT customer_id,
+       count(*) AS orders,
+       count(*) FILTER (WHERE status = 'delivered') AS delivered,
+       count(*) FILTER (WHERE status = 'cancelled') AS cancelled
+FROM orders
+GROUP BY customer_id
+ORDER BY customer_id;
+```
+
+Spreading the values of one column across several columns like this is called {{term:pivot}}, and reports use it all the time.
+
 **Showing "none" as 0: `COALESCE`.** Folding Chair (product 16) has never been sold:
 
 ```sql run
@@ -108,6 +153,8 @@ No groups, no output. Only an aggregate without grouping is guaranteed one row.
 
 **Ignoring NULL is not the same as treating it as 0.** If NULL really means 0 (say, "left blank means bought none"), `avg(x)` comes out too high, because it divides only by the number of non-NULL values. Then write `avg(COALESCE(x, 0))`, replacing NULL with 0 before averaging. Whether NULL means "unknown" or "zero" depends on what the data means; the query cannot tell.
 
+**`FILTER` versus `WHERE`.** Rows removed by `WHERE` are invisible to every aggregate in the query; `FILTER` affects only the aggregate it is attached to, and the others still see every row. That is how the example above shows totals and partial counts in the same row. `FILTER` is standard SQL, supported by PostgreSQL and SQLite; MySQL lacks it, so there you write `sum(CASE …)`.
+
 **NULL behaves differently in `GROUP BY` and in `count`.** `GROUP BY` and `DISTINCT` put all NULLs in one group, while `count(x)` and `count(DISTINCT x)` skip them.
 
 ## Common mistakes {#mistakes}
@@ -127,7 +174,16 @@ Brazil and Ireland both show 0, yet each has one customer whose city is NULL. To
 
 **3. Counting conditionally with `count(condition)`.** `count(status = 'cancelled')` looks like "count the cancelled orders" but returns 24: the comparison yields true or false, neither of which is NULL, so every row is counted. For conditional counts use `FILTER`, or `sum(CASE … THEN 1 ELSE 0 END)`.
 
-**4. Comparing `count(DISTINCT x)` with the rows of `SELECT DISTINCT x` and suspecting a mistake.** The first does not count NULL; the second gives NULL a row.
+**4. `FILTER` without `WHERE`.**
+
+```sql run error
+SELECT count(*) FILTER (status = 'cancelled')
+FROM orders;
+```
+
+That fails with `syntax error at or near "status"`. In the shape, the parentheses must start with `WHERE`: `FILTER (WHERE status = 'cancelled')`.
+
+**5. Comparing `count(DISTINCT x)` with the rows of `SELECT DISTINCT x` and suspecting a mistake.** The first does not count NULL; the second gives NULL a row.
 
 ## Summary {#summary}
 

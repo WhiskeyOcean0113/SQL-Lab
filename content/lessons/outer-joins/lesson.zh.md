@@ -34,6 +34,39 @@ ORDER BY c.id, o.id;
 
 可以这样理解：先做内连接，再把左表里一次都没配上的行补回来。所以左连接的行数**至少**等于左表的行数。
 
+## 语法 {#syntax}
+
+外连接和内连接的格式只差连接类型这几个词：
+
+```syntax
+FROM table_name [ [ AS ] alias ]
+    { LEFT | RIGHT | FULL } [ OUTER ] JOIN table_name [ [ AS ] alias ] ON condition
+    [ … ]
+```
+
+最后一行的 `[ … ]` 表示可以继续接更多的连接，内连接、外连接都可以。
+
+| 部分 | 意思 | 能省略吗 |
+|---|---|---|
+| `LEFT` / `RIGHT` / `FULL` | 保留哪一边找不到配对的行 | 不能，三选一；不写就是内连接 |
+| `OUTER` | 只是说明“这是外连接” | 可以，写不写意思都一样 |
+| `ON condition` | 怎样算配上；可以是几个条件用 `AND` 组合 | 不能 |
+
+把这一章学过的连接类型放在一起：
+
+| 写法 | 保留什么 |
+|---|---|
+| `JOIN`、`INNER JOIN` | 只有配上的行 |
+| `LEFT [ OUTER ] JOIN` | 配上的行 + 左表没配上的行 |
+| `RIGHT [ OUTER ] JOIN` | 配上的行 + 右表没配上的行 |
+| `FULL [ OUTER ] JOIN` | 配上的行 + 两边没配上的行 |
+
+对照格式读几条：
+
+- `LEFT JOIN orders AS o ON o.customer_id = c.id`：选了 `LEFT`，省略了 `OUTER`。
+- `LEFT JOIN orders AS o ON o.customer_id = c.id AND o.status = 'pending'`：`condition` 是两个条件的 `AND`，两者都属于“怎样算配上”（见“深入”）。
+- `FULL JOIN categories AS c ON c.id = p.category_id`：选了 `FULL`。
+
 ## 示例 {#example}
 
 问题：哪些顾客从没下过订单？
@@ -71,6 +104,27 @@ SELECT p.name, c.name AS category
 FROM products AS p
 LEFT JOIN categories AS c ON c.id = p.category_id
 ORDER BY p.id;
+```
+
+**连续的左连接，一路保留。** 每位顾客、每笔订单、每条明细，没下过单的顾客和没有明细的订单都不丢：
+
+```sql run
+SELECT c.name, o.id AS order_id, i.product_id
+FROM customers AS c
+LEFT JOIN orders AS o ON o.customer_id = c.id
+LEFT JOIN order_items AS i ON i.order_id = o.id
+ORDER BY c.id, o.id, i.product_id;
+```
+
+45 行：42 条明细，加上没有明细的订单 24，再加上两位没下过单的顾客。把第二个 `LEFT JOIN` 换成 `JOIN`，就只剩 42 行（见“深入”）。
+
+**把 NULL 显示成文字。** 用第 2 章的 `COALESCE`，让没配上的行更好读：
+
+```sql run
+SELECT c.name, COALESCE(o.status, 'no orders') AS status
+FROM customers AS c
+LEFT JOIN orders AS o ON o.customer_id = c.id
+ORDER BY c.id;
 ```
 
 **`RIGHT JOIN` 只是把左右换过来。** 下面这条和上面那条结果相同：
@@ -144,7 +198,9 @@ WHERE o.shipped_at IS NULL;
 
 **4. 后面接了内连接。** 见“深入”：一个 `LEFT JOIN` 后面跟着普通的 `JOIN`，前面保留下来的行可能又被丢掉。
 
-**5. 用 `= NULL` 找没配上的行。** `WHERE o.id = NULL` 永远不成立，一行都不会返回。判断 NULL 要用 `IS NULL`。
+**5. 外连接漏写 `ON`。** `FROM customers AS c LEFT JOIN orders AS o` 后面什么都不写，会报 `syntax error at end of input`。按格式，外连接的 `ON condition` 不能省略。
+
+**6. 用 `= NULL` 找没配上的行。** `WHERE o.id = NULL` 永远不成立，一行都不会返回。判断 NULL 要用 `IS NULL`。
 
 ## 小结 {#summary}
 

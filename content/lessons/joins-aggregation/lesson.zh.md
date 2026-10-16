@@ -26,6 +26,37 @@ ORDER BY spent DESC;
 
 为什么按 `c.id, c.name` 分组，而不是只按 `c.name`？名字可能重名，主键不会。第 3 章讲过，按主键分组后 PostgreSQL 允许直接选同一张表的其他列；这里把 `c.name` 也写进 `GROUP BY`，在任何数据库里都能运行。
 
+## 语法 {#syntax}
+
+这一课没有新的关键字。把第 3 章和本章的格式拼在一起，就是一条完整的汇总查询的骨架：
+
+```syntax
+SELECT select_list
+FROM from_item [ [ AS ] alias ]
+    [ join_type ] JOIN from_item [ [ AS ] alias ] ON condition
+    [ … ]
+[ WHERE condition ]
+[ GROUP BY grouping_element [, …] ]
+[ HAVING condition ]
+[ ORDER BY expression [, …] ]
+```
+
+`join_type` 是 `INNER`、`LEFT`、`RIGHT` 或 `FULL`，不写就是 `INNER`。各部分的规则都和前面一样，难点在于选对 `select_list` 里的聚合。连接之后，每一行代表什么，决定了该怎么数：
+
+| 想数的是 | 写法 | 原因 |
+|---|---|---|
+| 连接之后的行 | `count(*)` | 外连接里没配上的行也算一行 |
+| 右表真正配上的行 | `count(右表主键)`，如 `count(o.id)` | 没配上时主键是 NULL，不会被数 |
+| 被连接放大的“一”那边 | `count(DISTINCT 主键)`，如 `count(DISTINCT o.id)` | 同一笔订单出现多次，只算一次 |
+| 明细金额之和 | `sum(i.quantity * i.unit_price)` | 每行明细只出现一次时才准确 |
+
+对照骨架读核心概念里的查询：
+
+- `FROM customers AS c JOIN orders AS o … JOIN order_items AS i …`：三个 `from_item`，两次内连接。
+- `WHERE o.status <> 'cancelled'`：连接之后、分组之前筛掉取消的订单。
+- `GROUP BY c.id, c.name`：按主键分组，名字一起写进来以便显示。
+- `sum(i.quantity * i.unit_price)`：每一行是一条明细，求和不会重复计算。
+
 ## 示例 {#example}
 
 问题：每位顾客下过几笔订单？没下过单的顾客也要列出，显示 0。
@@ -67,6 +98,19 @@ LEFT JOIN categories AS cat ON cat.id = p.category_id
 GROUP BY cat.id, cat.name
 ORDER BY revenue DESC;
 ```
+
+**每个月的订单数，包括没有订单的月份。** 用上一课的日历做左表，订单做右表，连接条件是“下单时间落在这个月里”：
+
+```sql run
+SELECT m.month::date AS month, count(o.id) AS orders
+FROM generate_series(TIMESTAMP '2024-01-01', TIMESTAMP '2024-08-01', INTERVAL '1 month') AS m(month)
+LEFT JOIN orders AS o
+  ON o.ordered_at >= m.month AND o.ordered_at < m.month + INTERVAL '1 month'
+GROUP BY m.month
+ORDER BY m.month;
+```
+
+7 月和 8 月显示 0。只对 `orders` 做 `GROUP BY date_trunc('month', ordered_at)`，这两个月根本不会出现。连接条件不一定是“等于”，任何条件都可以，这里是一个范围。
 
 **按国家同时数订单和金额。** 金额要加每一行明细，订单数却不能数明细行，要用 `count(DISTINCT o.id)`：
 

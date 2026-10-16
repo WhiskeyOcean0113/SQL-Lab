@@ -42,6 +42,43 @@ JOIN customers ON customers.id = orders.customer_id
 
 从定义上说，内连接等于先求两张表的{{term:cartesian-product}}，也就是所有可能的配对（24 笔订单 × 12 位顾客 = 288 对），再用 `ON` 的条件筛掉不成立的配对。数据库实际执行时不会真的生成 288 行，但结果一定和这个定义一致。后面遇到行数“变多”或“变少”的问题，都可以回到这个定义来想。
 
+## 语法 {#syntax}
+
+连接写在 `FROM` 子句里，是 `FROM` 的一部分：
+
+```syntax
+SELECT select_list
+FROM table_name [ [ AS ] alias ]
+    [ INNER ] JOIN table_name [ [ AS ] alias ] ON condition
+    [ [ INNER ] JOIN … ]
+[ WHERE condition ]
+```
+
+第二行之后的 `[ [ INNER ] JOIN … ]` 表示可以再接任意多个形状相同的 `JOIN … ON …`。
+
+| 部分 | 填什么 | 能省略吗 |
+|---|---|---|
+| `table_name` | 要连接的表 | 不能 |
+| `alias` | 表{{term:alias}}，通常是一两个字母，比如 `o`、`c` | 可以；`AS` 也可以省略 |
+| `INNER` | 说明是内连接 | 可以；`JOIN` 默认就是内连接 |
+| `ON condition` | {{Term:join-condition}}：任何条件都行，通常是“外键 = 主键” | 内连接里不能省略 |
+
+给表起了别名之后，这条查询里就要一直用别名称呼它，`SELECT`、`ON`、`WHERE` 都一样。列名用“别名.列名”的形式写，这叫限定列名：`o.id` 是订单编号，`c.id` 是顾客编号。
+
+两张表的连接列同名时，`ON` 还可以换成 `USING`：
+
+```syntax
+[ INNER ] JOIN table_name [ [ AS ] alias ] USING ( column_name [, …] )
+```
+
+`USING (k)` 等于 `ON 左表.k = 右表.k`，并且结果里只保留一列 `k`。shop 的外键和主键名字不同（`customer_id` 对 `id`），所以本课用不上，见“深入”。
+
+对照格式读示例里的查询：
+
+- `FROM orders AS o`：第一张表，别名 `o`。
+- `JOIN customers AS c ON c.id = o.customer_id`：省略了 `INNER`，连接条件沿着外键。
+- `WHERE o.id <= 5`：连接完成之后再筛选，它属于 `WHERE` 子句，不属于 `JOIN`。
+
 ## 示例 {#example}
 
 问题：列出前 5 笔订单的编号、下单顾客的名字和订单状态。
@@ -86,6 +123,17 @@ JOIN customers AS c ON c.id = o.customer_id
 WHERE c.country = 'Canada';
 ```
 
+**`别名.*` 只展开一张表的列。** 想要订单的所有列，再加上顾客的名字：
+
+```sql run
+SELECT o.*, c.name
+FROM orders AS o
+JOIN customers AS c ON c.id = o.customer_id
+WHERE o.id <= 3;
+```
+
+`o.*` 展开 `orders` 的 5 列，`c.name` 再加一列。单写 `*` 会把两张表的所有列都列出来，其中有两列都叫 `id`，很难分清。
+
 **连接两张以上的表。** 每多一张表，就多写一组 `JOIN ... ON`。`JOIN` 从上到下依次执行：前两张表连好的结果，再去连第三张表，以此类推，每个 `ON` 都可以引用前面出现过的任何表。下面这条查询从商品一路连到顾客，找出谁买过 Ceramic Mug：
 
 ```sql run
@@ -125,6 +173,8 @@ NATURAL JOIN customers AS c;
 
 **旧式写法：用逗号连接。** 你会在别处见到 `FROM orders, customers WHERE customers.id = orders.customer_id`。它和内连接的结果相同，但连接条件混在 `WHERE` 里，一旦漏写，得到的就是 288 行的笛卡尔积。也不要把逗号和 `JOIN` 混在一起用：`JOIN` 比逗号结合得更紧，容易得到意料之外的错误。
 
+**表别名的写法。** `FROM orders AS o` 和 `FROM orders o` 相同，`AS` 可以省略。但 Oracle 不允许在表别名前写 `AS`，所以有些团队习惯省略它。本课程始终写 `AS`，和列别名保持一致。
+
 **和其他数据库的差别。** 标准 SQL 规定内连接必须带 `ON` 或 `USING`，PostgreSQL 也这样要求，漏写会直接报语法错误。MySQL 和 SQLite 则允许不带条件的 `JOIN`，并把它当作{{term:cross-join}}，悄悄返回所有配对。换到这些数据库时，漏写 `ON` 不会有任何提示。
 
 ## 常见错误 {#mistakes}
@@ -146,7 +196,18 @@ FROM orders AS o, customers AS c;
 
 **5. 起了别名，又用回原名。** 写了 `FROM orders AS o` 之后，这条查询里就只能叫它 `o`。再写 `orders.id` 会报 `invalid reference to FROM-clause entry for table "orders"`。
 
-**6. 连了不需要的表。** 只想看 Outdoor 分类有哪些商品，却顺手连上了 `order_items`：
+**6. 把 `JOIN` 写在 `WHERE` 后面。**
+
+```sql run error
+SELECT o.id, c.name
+FROM orders AS o
+WHERE o.id <= 3
+JOIN customers AS c ON c.id = o.customer_id;
+```
+
+报 `syntax error at or near "JOIN"`。按格式，`JOIN` 属于 `FROM` 子句，所有的连接都要写完，才能开始写 `WHERE`。
+
+**7. 连了不需要的表。** 只想看 Outdoor 分类有哪些商品，却顺手连上了 `order_items`：
 
 ```sql run
 SELECT p.name, c.name AS category

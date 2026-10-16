@@ -34,6 +34,39 @@ Twenty-six rows: the 24 pairs, plus one row each for Lucas Silva and Mei Tanaka,
 
 One way to see it: do the inner join, then add back the left rows that never matched. So a left join returns **at least** as many rows as the left table has.
 
+## Syntax {#syntax}
+
+An outer join has the same shape as an inner join, apart from the words naming its type:
+
+```syntax
+FROM table_name [ [ AS ] alias ]
+    { LEFT | RIGHT | FULL } [ OUTER ] JOIN table_name [ [ AS ] alias ] ON condition
+    [ … ]
+```
+
+The last line, `[ … ]`, means further joins may follow, inner or outer.
+
+| Part | Meaning | Optional? |
+|---|---|---|
+| `LEFT` / `RIGHT` / `FULL` | Which side keeps its unmatched rows | No: pick one; leaving it out makes an inner join |
+| `OUTER` | Only says "this is an outer join" | Yes; it changes nothing |
+| `ON condition` | What counts as a match; several conditions can be combined with `AND` | No |
+
+All the join types of this chapter so far:
+
+| Written as | Keeps |
+|---|---|
+| `JOIN`, `INNER JOIN` | Matched rows only |
+| `LEFT [ OUTER ] JOIN` | Matched rows + unmatched rows of the left table |
+| `RIGHT [ OUTER ] JOIN` | Matched rows + unmatched rows of the right table |
+| `FULL [ OUTER ] JOIN` | Matched rows + unmatched rows of both |
+
+Some joins, read against the shape:
+
+- `LEFT JOIN orders AS o ON o.customer_id = c.id`: `LEFT` chosen, `OUTER` left out.
+- `LEFT JOIN orders AS o ON o.customer_id = c.id AND o.status = 'pending'`: the `condition` is two conditions joined by `AND`, and both decide what counts as a match (see Going deeper).
+- `FULL JOIN categories AS c ON c.id = p.category_id`: `FULL` chosen.
+
 ## Example {#example}
 
 Task: which customers have never placed an order?
@@ -71,6 +104,27 @@ SELECT p.name, c.name AS category
 FROM products AS p
 LEFT JOIN categories AS c ON c.id = p.category_id
 ORDER BY p.id;
+```
+
+**Left joins in a row, keeping everything.** Every customer, every order, every line item, with no customer who never ordered and no order without items lost:
+
+```sql run
+SELECT c.name, o.id AS order_id, i.product_id
+FROM customers AS c
+LEFT JOIN orders AS o ON o.customer_id = c.id
+LEFT JOIN order_items AS i ON i.order_id = o.id
+ORDER BY c.id, o.id, i.product_id;
+```
+
+45 rows: 42 line items, plus order 24, which has none, plus the two customers who never ordered. Turn the second `LEFT JOIN` into `JOIN` and only 42 remain (see Going deeper).
+
+**Showing NULL as text.** Chapter 2's `COALESCE` makes the unmatched rows easier to read:
+
+```sql run
+SELECT c.name, COALESCE(o.status, 'no orders') AS status
+FROM customers AS c
+LEFT JOIN orders AS o ON o.customer_id = c.id
+ORDER BY c.id;
 ```
 
 **`RIGHT JOIN` just swaps the sides.** This gives the same result as the query above:
@@ -144,7 +198,9 @@ Twelve rows. Orders that have not shipped have a NULL `shipped_at` already, so t
 
 **4. An inner join further down.** See Going deeper: a `LEFT JOIN` followed by a plain `JOIN` can drop the rows the outer join kept.
 
-**5. Finding unmatched rows with `= NULL`.** `WHERE o.id = NULL` is never true and returns nothing. Test for NULL with `IS NULL`.
+**5. An outer join without `ON`.** `FROM customers AS c LEFT JOIN orders AS o` with nothing after it fails with `syntax error at end of input`. In the shape, an outer join's `ON condition` cannot be left out.
+
+**6. Finding unmatched rows with `= NULL`.** `WHERE o.id = NULL` is never true and returns nothing. Test for NULL with `IS NULL`.
 
 ## Summary {#summary}
 

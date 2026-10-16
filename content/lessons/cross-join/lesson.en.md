@@ -20,6 +20,41 @@ The set of all possible pairs of two tables is their {{term:cartesian-product}}.
 
 Recall the definition from the inner join lesson: an inner join is the Cartesian product with the pairs that fail `ON` filtered out. `CROSS JOIN` is that result before any filtering.
 
+## Syntax {#syntax}
+
+```syntax
+FROM from_item [ [ AS ] alias ] CROSS JOIN from_item [ [ AS ] alias ]
+FROM from_item [ [ AS ] alias ], from_item [ [ AS ] alias ]
+```
+
+The two forms give the same result. The big difference from other joins is that **there is no `ON`**: writing `ON` after `CROSS JOIN` is a syntax error.
+
+A `from_item` is "something that can go in `FROM`". So far there are two kinds:
+
+| `from_item` | Example | How the alias is written |
+|---|---|---|
+| A table name | `categories` | `AS c` |
+| A {{term:set-returning-function}} | `generate_series(1, 3)` | `AS n(qty)`: `n` names the "table", and the parentheses name its column |
+
+Chapter 5 adds a third: a subquery in parentheses.
+
+The shape of `generate_series`:
+
+```syntax
+generate_series(start, stop [, step ])
+```
+
+| Placeholder | What goes there |
+|---|---|
+| `start`, `stop` | The first and last values, both included; integers or timestamps |
+| `step` | How much to add each time; 1 by default for integers, and an `interval` is required for timestamps |
+
+Some `FROM` clauses, read against the shapes:
+
+- `FROM customers AS u CROSS JOIN categories AS c`: two table names, each with an alias.
+- `FROM customers AS u, categories AS c`: the comma form, meaning the same.
+- `CROSS JOIN generate_series(1, 3) AS n(qty)`: the right-hand `from_item` is a function, with a column name after its alias.
+
 ## Example {#example}
 
 Task: a price list for the 3 books in the Books category, showing the total for 1, 2 and 3 copies.
@@ -61,6 +96,15 @@ ORDER BY a.id, b.id;
 ```
 
 Five categories in pairs: 10 promotions.
+
+**Generating a calendar.** `generate_series` makes times too: one row per month from January to June:
+
+```sql run
+SELECT m.month::date AS month
+FROM generate_series(TIMESTAMP '2024-01-01', TIMESTAMP '2024-06-01', INTERVAL '1 month') AS m(month);
+```
+
+A calendar like this is useful: left-join the orders to it and you can list "orders per month" including months with no orders at all, whereas grouping the orders alone would leave those months out entirely.
 
 **An explicit "no condition".** `JOIN … ON true` also gives the Cartesian product, since every pair satisfies `true`. It is less obvious at a glance than `CROSS JOIN`.
 
@@ -109,7 +153,17 @@ JOIN products AS p ON p.id = i.product_id AND o.id = i.order_id;
 
 **4. Hiding row explosion with `DISTINCT`.** When a result is full of duplicates, `DISTINCT` can make it look normal, but the extra pairs are still there, and the next `sum` or `count` will be wrong. Find the join condition that is missing or wrong.
 
-**5. Not estimating the row count.** Before running a join, estimate roughly how many rows it should return: for a one-to-many join, about the row count of the "many" side; for a Cartesian product, the product. If the result is far from your estimate, a join condition is wrong.
+**5. `ON` after `CROSS JOIN`.**
+
+```sql run error
+SELECT count(*)
+FROM customers AS u
+CROSS JOIN categories AS c ON true;
+```
+
+That fails with `syntax error at or near "ON"`. In the shape, `CROSS JOIN` has no join condition; if you need one, write `JOIN … ON`.
+
+**6. Not estimating the row count.** Before running a join, estimate roughly how many rows it should return: for a one-to-many join, about the row count of the "many" side; for a Cartesian product, the product. If the result is far from your estimate, a join condition is wrong.
 
 ## Summary {#summary}
 

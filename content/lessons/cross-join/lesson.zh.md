@@ -20,6 +20,41 @@ ORDER BY u.name, c.name;
 
 回想讲内连接时的定义：内连接就是先求笛卡尔积，再用 `ON` 筛掉不成立的配对。`CROSS JOIN` 就是那个“筛之前”的结果。
 
+## 语法 {#syntax}
+
+```syntax
+FROM from_item [ [ AS ] alias ] CROSS JOIN from_item [ [ AS ] alias ]
+FROM from_item [ [ AS ] alias ], from_item [ [ AS ] alias ]
+```
+
+两种写法结果相同。和其他连接相比，最大的区别是**没有 `ON`**：`CROSS JOIN` 后面写 `ON` 反而是语法错误。
+
+`from_item` 是“能放在 `FROM` 里的东西”。到目前为止有两种：
+
+| `from_item` | 例子 | 别名的写法 |
+|---|---|---|
+| 表名 | `categories` | `AS c` |
+| {{Term:set-returning-function}} | `generate_series(1, 3)` | `AS n(qty)`：`n` 是这张“表”的名字，括号里是列名 |
+
+第 5 章还会加上第三种：用括号括起来的子查询。
+
+`generate_series` 的格式：
+
+```syntax
+generate_series(start, stop [, step ])
+```
+
+| 占位符 | 填什么 |
+|---|---|
+| `start`、`stop` | 起点和终点，两端都包含；可以是整数，也可以是时间戳 |
+| `step` | 每次加多少；整数默认是 1，时间戳必须写一个 `interval` |
+
+对照格式读几条：
+
+- `FROM customers AS u CROSS JOIN categories AS c`：两个表名，各有别名。
+- `FROM customers AS u, categories AS c`：逗号写法，意思相同。
+- `CROSS JOIN generate_series(1, 3) AS n(qty)`：右边的 `from_item` 是一个函数，别名后面带列名。
+
 ## 示例 {#example}
 
 问题：给 Books 分类的 3 本书做价目表，列出买 1、2、3 本的总价。
@@ -61,6 +96,15 @@ ORDER BY a.id, b.id;
 ```
 
 5 个分类两两组合，10 组。
+
+**生成一份日历。** `generate_series` 也能生成时间：从 1 月到 6 月，每月一行：
+
+```sql run
+SELECT m.month::date AS month
+FROM generate_series(TIMESTAMP '2024-01-01', TIMESTAMP '2024-06-01', INTERVAL '1 month') AS m(month);
+```
+
+这样的日历表很有用：和订单做左连接，就能列出“每个月的订单数”，连一笔订单都没有的月份也会显示出来，而只按订单分组时，没有订单的月份根本不会出现。
 
 **显式的“无条件”。** `JOIN … ON true` 也会得到笛卡尔积，因为每对配对都满足 `true`。它不如 `CROSS JOIN` 一眼看得懂。
 
@@ -109,7 +153,17 @@ JOIN products AS p ON p.id = i.product_id AND o.id = i.order_id;
 
 **4. 用 `DISTINCT` 掩盖行数暴增。** 结果里出现大量重复行时，加 `DISTINCT` 能让它看起来正常，但多余的配对还在，后面一做 `sum` 或 `count` 就会算错。先找出是哪个连接条件漏了或写错了。
 
-**5. 不预估行数。** 运行连接之前，先估计结果大概有几行：一对多时约等于“多”那边的行数，笛卡尔积是乘积。结果和预估差得很远，就说明连接条件有问题。
+**5. 给 `CROSS JOIN` 写了 `ON`。**
+
+```sql run error
+SELECT count(*)
+FROM customers AS u
+CROSS JOIN categories AS c ON true;
+```
+
+报 `syntax error at or near "ON"`。按格式，`CROSS JOIN` 没有连接条件；需要条件，就写成 `JOIN … ON`。
+
+**6. 不预估行数。** 运行连接之前，先估计结果大概有几行：一对多时约等于“多”那边的行数，笛卡尔积是乘积。结果和预估差得很远，就说明连接条件有问题。
 
 ## 小结 {#summary}
 

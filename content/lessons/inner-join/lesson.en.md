@@ -42,6 +42,43 @@ In the {{term:logical-order}}, `FROM` and `JOIN` come first. The database builds
 
 Formally, an inner join is the {{term:cartesian-product}} of the two tables (every possible pairing: 24 orders × 12 customers = 288 pairs) with the `ON` condition applied as a filter. The database never actually builds those 288 rows, but its answer always matches this definition. Whenever a join gives you more or fewer rows than you expected, come back to it.
 
+## Syntax {#syntax}
+
+A join is written inside the `FROM` clause; it is part of `FROM`:
+
+```syntax
+SELECT select_list
+FROM table_name [ [ AS ] alias ]
+    [ INNER ] JOIN table_name [ [ AS ] alias ] ON condition
+    [ [ INNER ] JOIN … ]
+[ WHERE condition ]
+```
+
+The `[ [ INNER ] JOIN … ]` line means any number of further `JOIN … ON …` lines of the same shape.
+
+| Part | What goes there | Optional? |
+|---|---|---|
+| `table_name` | The table being joined | No |
+| `alias` | A table {{term:alias}}, usually a letter or two, such as `o` or `c` | Yes; `AS` can also be left out |
+| `INNER` | Says this is an inner join | Yes; `JOIN` is an inner join by default |
+| `ON condition` | The {{term:join-condition}}: any condition, usually "foreign key = primary key" | Not in an inner join |
+
+Once a table has an alias, the query calls it by that alias everywhere: in `SELECT`, `ON` and `WHERE` alike. Columns are written "alias.column", which is called qualifying them: `o.id` is the order number, `c.id` the customer number.
+
+When the linking columns have the same name in both tables, `USING` can replace `ON`:
+
+```syntax
+[ INNER ] JOIN table_name [ [ AS ] alias ] USING ( column_name [, …] )
+```
+
+`USING (k)` means `ON left.k = right.k`, and the result keeps a single `k` column. In shop the foreign and primary keys are named differently (`customer_id` against `id`), so this lesson cannot use it; see Going deeper.
+
+The example's query, read against the shape:
+
+- `FROM orders AS o`: the first table, aliased `o`.
+- `JOIN customers AS c ON c.id = o.customer_id`: `INNER` left out, the join condition following the foreign key.
+- `WHERE o.id <= 5`: filtering after the join; it belongs to the `WHERE` clause, not to the `JOIN`.
+
 ## Example {#example}
 
 Task: list the first 5 orders with their id, the name of the customer who placed each one, and the order status.
@@ -86,6 +123,17 @@ JOIN customers AS c ON c.id = o.customer_id
 WHERE c.country = 'Canada';
 ```
 
+**`alias.*` expands one table's columns.** Every column of the order, plus the customer's name:
+
+```sql run
+SELECT o.*, c.name
+FROM orders AS o
+JOIN customers AS c ON c.id = o.customer_id
+WHERE o.id <= 3;
+```
+
+`o.*` expands to the 5 columns of `orders`, and `c.name` adds one more. A bare `*` would list every column of both tables, including two called `id`, which are hard to tell apart.
+
 **Joining more than two tables.** Each extra table adds another `JOIN ... ON`. Joins run top to bottom: the first two tables are combined, that result is joined to the third, and so on, so each `ON` can refer to any table above it. This query walks from products all the way to customers to find who bought a Ceramic Mug:
 
 ```sql run
@@ -125,6 +173,8 @@ The only shared column name is `id`, so order 5 is paired with customer 5. No er
 
 **The old comma style.** You will see `FROM orders, customers WHERE customers.id = orders.customer_id` elsewhere. It returns the same rows as an inner join, but the join condition hides among the filters, and forgetting it gives you all 288 pairs. Avoid mixing commas with `JOIN` too: `JOIN` binds more tightly than a comma, which leads to surprising errors.
 
+**How table aliases are written.** `FROM orders AS o` is the same as `FROM orders o`; `AS` is optional. Oracle, however, does not allow `AS` before a table alias, so some teams leave it out by habit. This course always writes `AS`, to match column aliases.
+
 **Other databases.** Standard SQL requires an inner join to have `ON` or `USING`, and PostgreSQL enforces it with a syntax error. MySQL and SQLite accept a bare `JOIN` and treat it as a {{term:cross-join}}, silently returning every pairing. There, a forgotten `ON` raises no error at all.
 
 ## Common mistakes {#mistakes}
@@ -146,7 +196,18 @@ That is 288 rows, twelve times the number of orders. When a result has far more 
 
 **5. Using the table name after giving it an alias.** Once you write `FROM orders AS o`, the table is called `o` for the rest of the query. Writing `orders.id` fails with `invalid reference to FROM-clause entry for table "orders"`.
 
-**6. Joining a table you do not need.** To list the products in the Outdoor category, someone also joins `order_items`:
+**6. `JOIN` after `WHERE`.**
+
+```sql run error
+SELECT o.id, c.name
+FROM orders AS o
+WHERE o.id <= 3
+JOIN customers AS c ON c.id = o.customer_id;
+```
+
+That fails with `syntax error at or near "JOIN"`. In the shape, `JOIN` belongs to the `FROM` clause: every join is written before `WHERE` begins.
+
+**7. Joining a table you do not need.** To list the products in the Outdoor category, someone also joins `order_items`:
 
 ```sql run
 SELECT p.name, c.name AS category

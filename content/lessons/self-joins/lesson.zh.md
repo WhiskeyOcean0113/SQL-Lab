@@ -27,6 +27,28 @@ ORDER BY c.id;
 
 别名在这里是必需的。两边都叫 `customers`，数据库分不清 `customers.id` 指的是哪一边。
 
+## 语法 {#syntax}
+
+自连接没有新的关键字，用的就是前两课的格式。不同之处在于同一个 `table_name` 出现了两次，别名从“可以省略”变成了“必须写”：
+
+```syntax
+FROM table_name AS alias
+    [ LEFT ] JOIN table_name AS other_alias ON condition
+```
+
+| 部分 | 填什么 | 规则 |
+|---|---|---|
+| 两个 `table_name` | 同一张表 | 两处写的是同一个表名 |
+| `alias`、`other_alias` | 代表两种角色的别名，比如 `c`（顾客）和 `r`（推荐人） | 必须写，而且必须不同 |
+| `condition` | 两个别名之间的关系 | 两边要来自不同的别名 |
+| `LEFT` | 保留在另一边找不到对应行的记录 | 可以省略 |
+
+对照格式读几条：
+
+- `FROM customers AS c JOIN customers AS r ON r.id = c.referred_by`：两个别名，条件沿着自引用外键。
+- `FROM customers AS c LEFT JOIN customers AS r ON …`：加了 `LEFT`，没有推荐人的顾客也保留。
+- `FROM customers AS a JOIN customers AS b ON a.city = b.city AND a.id < b.id`：条件不是外键，而是两个比较的 `AND`。
+
 ## 示例 {#example}
 
 问题：列出每一位顾客和推荐人的名字，没有推荐人的顾客也要列出。

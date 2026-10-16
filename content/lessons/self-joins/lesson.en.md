@@ -27,6 +27,28 @@ Eight rows: 4 of the 12 customers have a NULL `referred_by`, find no partner in 
 
 The aliases are required. With both sides called `customers`, the database could not tell which side `customers.id` means.
 
+## Syntax {#syntax}
+
+A self join adds no new keywords; it uses the shapes of the previous two lessons. The difference is that the same `table_name` appears twice, and aliases go from optional to required:
+
+```syntax
+FROM table_name AS alias
+    [ LEFT ] JOIN table_name AS other_alias ON condition
+```
+
+| Part | What goes there | Rule |
+|---|---|---|
+| Both `table_name`s | The same table | The same name in both places |
+| `alias`, `other_alias` | Aliases for the two roles, such as `c` (customer) and `r` (referrer) | Required, and they must differ |
+| `condition` | How the two aliases relate | Its sides must come from different aliases |
+| `LEFT` | Keeps rows with no counterpart on the other side | Optional |
+
+Some joins, read against the shape:
+
+- `FROM customers AS c JOIN customers AS r ON r.id = c.referred_by`: two aliases, the condition following the self-referencing foreign key.
+- `FROM customers AS c LEFT JOIN customers AS r ON …`: with `LEFT`, customers without a referrer stay.
+- `FROM customers AS a JOIN customers AS b ON a.city = b.city AND a.id < b.id`: the condition is no foreign key but two comparisons joined by `AND`.
+
 ## Example {#example}
 
 Task: list every customer with the name of their referrer, including customers nobody referred.

@@ -26,6 +26,37 @@ After the joins, each row is "one line of one order of one customer"; grouping b
 
 Why group by `c.id, c.name` rather than `c.name` alone? Names can repeat; primary keys cannot. Chapter 3 showed that PostgreSQL lets you select a table's other columns once you group by its primary key; writing `c.name` into `GROUP BY` as well works in every database.
 
+## Syntax {#syntax}
+
+This lesson adds no keywords. Put Chapter 3's shapes together with this chapter's and you have the skeleton of a complete summary query:
+
+```syntax
+SELECT select_list
+FROM from_item [ [ AS ] alias ]
+    [ join_type ] JOIN from_item [ [ AS ] alias ] ON condition
+    [ … ]
+[ WHERE condition ]
+[ GROUP BY grouping_element [, …] ]
+[ HAVING condition ]
+[ ORDER BY expression [, …] ]
+```
+
+`join_type` is `INNER`, `LEFT`, `RIGHT` or `FULL`, and `INNER` when left out. Each part follows the rules from earlier lessons; the hard part is choosing the right aggregate in the `select_list`. What a row stands for after the join decides how to count:
+
+| To count | Write | Why |
+|---|---|---|
+| Rows after the join | `count(*)` | An unmatched row of an outer join counts as one |
+| Rows truly matched on the right | `count(right primary key)`, e.g. `count(o.id)` | Unmatched, the key is NULL and is not counted |
+| The "one" side the join multiplied | `count(DISTINCT primary key)`, e.g. `count(DISTINCT o.id)` | An order appearing several times counts once |
+| Total line amounts | `sum(i.quantity * i.unit_price)` | Correct only while each line appears once |
+
+The query from Core idea, read against the skeleton:
+
+- `FROM customers AS c JOIN orders AS o … JOIN order_items AS i …`: three `from_item`s, two inner joins.
+- `WHERE o.status <> 'cancelled'`: cancelled orders removed after joining and before grouping.
+- `GROUP BY c.id, c.name`: grouped by the primary key, with the name added so it can be shown.
+- `sum(i.quantity * i.unit_price)`: each row is one line, so nothing is added twice.
+
 ## Example {#example}
 
 Task: how many orders has each customer placed? Customers who never ordered must appear too, with 0.
@@ -67,6 +98,19 @@ LEFT JOIN categories AS cat ON cat.id = p.category_id
 GROUP BY cat.id, cat.name
 ORDER BY revenue DESC;
 ```
+
+**Orders per month, including months with none.** Use the previous lesson's calendar as the left table and orders as the right, joined on "placed during this month":
+
+```sql run
+SELECT m.month::date AS month, count(o.id) AS orders
+FROM generate_series(TIMESTAMP '2024-01-01', TIMESTAMP '2024-08-01', INTERVAL '1 month') AS m(month)
+LEFT JOIN orders AS o
+  ON o.ordered_at >= m.month AND o.ordered_at < m.month + INTERVAL '1 month'
+GROUP BY m.month
+ORDER BY m.month;
+```
+
+July and August show 0. Grouping `orders` alone by `date_trunc('month', ordered_at)` would leave those months out altogether. A join condition need not be an equality; any condition works, and here it is a range.
 
 **Orders and revenue per country at once.** Revenue adds up every line, but the order count must not count lines; it needs `count(DISTINCT o.id)`:
 

@@ -38,15 +38,6 @@
         "design"
       ],
       "port": 5180
-    },
-    {
-      "name": "review",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "review"
-      ],
-      "port": 5177
     }
   ]
 }

@@ -185,7 +185,6 @@ export const strings = {
     'glossary.zh': '中文',
     'glossary.en': 'English',
 
-    'review.badge': '审阅模式',
     'theme.dark': '深色模式',
     'theme.toDark': '切换到深色模式',
     'theme.toLight': '切换到浅色模式',
@@ -374,7 +373,6 @@ export const strings = {
     'glossary.zh': '中文',
     'glossary.en': 'English',
 
-    'review.badge': 'Review mode',
     'theme.dark': 'Dark mode',
     'theme.toDark': 'Switch to dark mode',
     'theme.toLight': 'Switch to light mode',

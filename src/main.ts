@@ -4,7 +4,7 @@ import { Engine } from './engine/client.ts'
 import { spaceText } from './i18n/autospace.ts'
 import { setGlossary, t, tText } from './i18n/index.ts'
 import { Progress } from './state/progress.ts'
-import { REVIEW, createCtx, parseRoute, renderTop, type Ctx } from './ui/app.ts'
+import { createCtx, parseRoute, renderTop, type Ctx } from './ui/app.ts'
 import { $, html, mount, raw } from './ui/dom.ts'
 import { onSystemThemeChange } from './ui/theme.ts'
 import { renderBank } from './ui/views/bank.ts'
@@ -23,8 +23,7 @@ function applyLang(lang: Lang) {
 
 async function boot() {
   setGlossary(course.glossary)
-  // Review mode never touches the real learning record.
-  const progress = await Progress.open(REVIEW ? 'idb://sql-lab-review' : 'idb://sql-lab')
+  const progress = await Progress.open('idb://sql-lab')
   const lang = ((await progress.getSetting('lang')) as Lang | undefined) ?? 'zh'
   applyLang(lang)
   const engine = new Engine(course.datasets)
@@ -66,9 +65,7 @@ function titleFor(ctx: Ctx, r: ReturnType<typeof parseRoute>): string {
   const l = ctx.lang
   const name = r.name === 'lesson' || r.name === 'practice' ? ctx.course.lessons[r.id]?.title[l] : undefined
   const page = name ?? tText(l, r.name === 'mistakes' ? 'nav.mistakes' : r.name === 'glossary' ? 'nav.glossary' : 'nav.map')
-  // Review mode is only marked in the tab title: it is a tool for checking
-  // content, and a badge in the page looked like a control.
-  return `${page} · SQL Lab${REVIEW ? ` (${tText(l, 'review.badge')})` : ''}`
+  return `${page} · SQL Lab`
 }
 
 mount(main, html`<div class="boot">${raw(t('zh', 'boot.loading'))}</div>`)

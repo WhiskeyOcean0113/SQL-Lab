@@ -11,8 +11,7 @@
     "validate": "tsx scripts/validate.ts",
     "typecheck": "tsc --noEmit",
     "prepare": "git config core.hooksPath .githooks",
-    "dev:fixture": "SQL_LAB_CONTENT=tests/fixtures/content vite",
-    "review": "VITE_SQL_LAB_REVIEW=1 vite --port 5177 --strictPort"
+    "dev:fixture": "SQL_LAB_CONTENT=tests/fixtures/content vite"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

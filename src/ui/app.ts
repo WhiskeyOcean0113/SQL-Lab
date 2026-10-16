@@ -7,8 +7,6 @@ import { currentTheme, setTheme } from './theme.ts'
 
 // Shared state for every view, plus the hash router and the top bar.
 
-/** `npm run review`: progress kept in a separate database, for checking content. */
-export const REVIEW = import.meta.env.VITE_SQL_LAB_REVIEW === '1'
 
 export interface Ctx {
   course: Course

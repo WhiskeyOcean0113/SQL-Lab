@@ -28,6 +28,39 @@ ORDER BY p.category_id, p.price;
 
 Gift Card 不在结果里：它的 `category_id` 是 NULL，`p2.category_id = NULL` 找不到任何行，平均价是 NULL，比较结果是 unknown。
 
+## 语法 {#syntax}
+
+关联子查询没有新的关键字。它和普通子查询的区别只有一处：子查询的 `WHERE` 里用到了外层的别名。最常见的形状是：
+
+```syntax
+SELECT select_list
+FROM table_name AS outer_alias
+WHERE expression comparison_operator (
+    SELECT aggregate_function
+    FROM table_name AS inner_alias
+    WHERE inner_alias.column_name = outer_alias.column_name
+)
+```
+
+| 部分 | 填什么 | 说明 |
+|---|---|---|
+| `outer_alias` | 外层表的别名，比如 `p` | 代表“正在判断的那一行” |
+| `inner_alias` | 子查询里表的别名，比如 `p2` | 代表“拿来比较的那些行”；同一张表时必须和外层不同 |
+| `aggregate_function` | `avg(p2.price)`、`max(o2.ordered_at)`、`count(*)` 等 | 保证子查询只返回一个值 |
+| 关联条件 | `inner_alias.column_name = outer_alias.column_name` | 把外层当前行的值代进子查询 |
+
+数据库按下面的规则找一个列名属于哪张表，这决定了写不写别名会有什么后果：
+
+| 写法 | 指向 |
+|---|---|
+| `p2.category_id` | 别名 `p2` 那张表的列 |
+| `p.category_id`（在子查询里） | 外层别名 `p` 那张表的列 |
+| 只写 `category_id` | 由内往外找，先找子查询自己的 `FROM`；那里有这一列，就不会再去外层找 |
+
+这一课的子查询，和上一篇的 `EXISTS`、上上篇的标量子查询，格式都一样；放在 `SELECT` 里、`WHERE` 里，规则也一样。
+
+对照格式读核心概念里的查询：外层别名 `p`，内层别名 `p2`，`aggregate_function` 是 `avg(p2.price)`，关联条件是 `p2.category_id = p.category_id`。
+
 ## 示例 {#example}
 
 问题：每位顾客最近一笔订单是哪一笔？
@@ -95,7 +128,22 @@ FROM customers AS c;
 
 要么聚合成一个值（`max`、`count`），要么改用连接。
 
-**`LATERAL`。** PostgreSQL 和标准 SQL 还允许 `FROM` 里的子查询引用它左边的表，写作 `JOIN LATERAL (…)` 或 `CROSS JOIN LATERAL (…)`。它像一个能返回多行多列的关联子查询，比如“每位顾客最近的 3 笔订单”。现在只需要知道有这种写法。
+**`LATERAL`：能返回多行的关联子查询。** 普通的派生表看不到它左边的表；在前面加上 `LATERAL`，它就能引用左边的列，对左边的每一行各执行一次，返回多少行都行。每位顾客最近的 2 笔订单：
+
+```sql run
+SELECT c.name, r.id AS order_id, r.ordered_at
+FROM customers AS c
+CROSS JOIN LATERAL (
+  SELECT o.id, o.ordered_at
+  FROM orders AS o
+  WHERE o.customer_id = c.id
+  ORDER BY o.ordered_at DESC
+  LIMIT 2
+) AS r
+ORDER BY c.id, r.ordered_at DESC;
+```
+
+子查询里的 `c.id` 来自左边的 `customers`。`LATERAL` 是标准 SQL，PostgreSQL 和 MySQL 8 支持，SQLite 不支持；SQL Server 里类似的写法叫 `CROSS APPLY`。用 `CROSS JOIN LATERAL` 时，没下过单的顾客会消失，要保留就写 `LEFT JOIN LATERAL (…) AS r ON true`。
 
 ## 常见错误 {#mistakes}
 

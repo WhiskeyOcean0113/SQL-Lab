@@ -93,10 +93,9 @@ prereqs: [select-basics, where-filter]    # must come earlier in curriculum
 
 Every `##` heading ends with a fixed id. Sections appear in this order;
 `variants` and `deeper` are optional, the rest are required. Both languages
-have exactly the same sections. `syntax` is being added lesson by lesson
-(`sql-syntax` and `select-basics` are the models); validate warns where it is
-missing, and it becomes required once every lesson has it. Lessons before
-`sql-syntax`, which teaches the notation, have no `syntax` section.
+have exactly the same sections. `syntax` is required from `sql-syntax`, the
+lesson that teaches the notation, onwards; the lessons before it have none.
+`select-basics` is the model for a lesson's `syntax` section.
 
 | id         | zh heading    | en heading       | What goes in it |
 |------------|---------------|------------------|-----------------|

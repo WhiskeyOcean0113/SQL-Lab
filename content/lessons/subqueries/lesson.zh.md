@@ -37,6 +37,35 @@ ORDER BY price DESC;
 
 数据库先执行括号里的查询，得到平均价 78.84，再把这个值放回 `WHERE`。外层查询看到的就是 `WHERE price > 78.84`。
 
+## 语法 {#syntax}
+
+子查询本身就是一条完整的 `SELECT`，套上一对括号：
+
+```syntax
+( select_statement )
+```
+
+它能放在哪里，取决于它返回什么形状：
+
+- **标量子查询**，最多返回一行一列：前面所有格式里写着 `expression` 的地方，都可以换成 `( select_statement )`。选择列表、`WHERE` 的比较、算术、函数参数都行。
+- **派生表**，返回一张表：写在 `FROM` 里，格式是
+
+```syntax
+FROM ( select_statement ) [ AS ] alias [ ( column_alias [, …] ) ]
+```
+
+| 部分 | 填什么 | 规则 |
+|---|---|---|
+| `select_statement` | 一条完整的查询，可以有自己的 `WHERE`、`GROUP BY` 等 | 不加分号；标量子查询最多返回一行一列 |
+| `alias` | 派生表的名字 | 本课程总是写上（见“深入”） |
+| `column_alias` | 给派生表的列重新起名 | 可以省略；省略时沿用子查询里的列名 |
+
+对照格式读几条：
+
+- `WHERE price > (SELECT avg(price) FROM products)`：比较的右边本该是一个 `expression`，这里换成了标量子查询。
+- `round(100.0 * stock / (SELECT sum(stock) FROM products), 1)`：标量子查询出现在一个算术表达式的中间，它就是一个值。
+- `FROM (SELECT order_id, sum(…) AS total … GROUP BY order_id) AS t`：派生表，别名 `t`，外层用 `t.total` 引用它的列。
+
 ## 示例 {#example}
 
 问题：平均每笔订单的金额是多少？
@@ -85,6 +114,28 @@ WHERE t.orders >= 4;
 ```
 
 外层可以直接用别名 `orders`，因为它在内层已经是一个真正的列了。
+
+**给派生表的列起名。** 别名后面跟一个括号，可以一次给所有列重新命名。内层没给 `count(*)` 起名时，这样做尤其方便：
+
+```sql run
+SELECT t.status, t.n
+FROM (
+  SELECT status, count(*)
+  FROM orders
+  GROUP BY status
+) AS t(status, n)
+ORDER BY t.n DESC;
+```
+
+**和平均值的差距。** 标量子查询可以出现在任何表达式里，比如做减法：
+
+```sql run
+SELECT name, price,
+       round(price - (SELECT avg(price) FROM products), 2) AS above_avg
+FROM products
+ORDER BY above_avg DESC
+LIMIT 3;
+```
 
 **分别汇总，再连起来。** 上一篇的扇形陷阱：同时连接订单和被推荐的顾客，两边会相乘。正确做法是各自先汇总成一行一位顾客，再把两个派生表连起来：
 
@@ -137,7 +188,9 @@ Books 有 3 件商品，子查询返回 3 个价格。想和一组值比较，�
 
 **4. 子查询意外地返回了零行。** 条件写错时，标量子查询返回 NULL，外层查询悄悄返回空结果。结果为空时，先单独运行子查询，看它返回了什么。
 
-**5. 把子查询里的条件和外层的条件搞混。** “比 Electronics 平均价贵的商品”，`category_id = 2` 要写在子查询里，用来算 Electronics 的平均价；写在外层，筛的就是商品本身了。
+**5. 子查询忘了括号，或者在里面写了分号。** `WHERE price > SELECT avg(price) FROM products` 报 `syntax error at or near "SELECT"`；`(SELECT avg(price) FROM products;)` 报 `syntax error at or near ";"`。按格式，子查询必须整个包在括号里，分号只能写在最外层语句的末尾。
+
+**6. 把子查询里的条件和外层的条件搞混。** “比 Electronics 平均价贵的商品”，`category_id = 2` 要写在子查询里，用来算 Electronics 的平均价；写在外层，筛的就是商品本身了。
 
 ## 小结 {#summary}
 

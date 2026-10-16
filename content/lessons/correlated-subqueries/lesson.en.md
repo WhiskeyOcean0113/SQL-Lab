@@ -28,6 +28,39 @@ The two aliases `p` and `p2` are the key: two roles for one table, with `p` the 
 
 Gift Card is missing from the result: its `category_id` is NULL, `p2.category_id = NULL` finds no rows, the average is NULL, and the comparison is unknown.
 
+## Syntax {#syntax}
+
+A correlated subquery adds no keywords. It differs from an ordinary subquery in one place only: its `WHERE` uses an alias from the outer query. The most common shape:
+
+```syntax
+SELECT select_list
+FROM table_name AS outer_alias
+WHERE expression comparison_operator (
+    SELECT aggregate_function
+    FROM table_name AS inner_alias
+    WHERE inner_alias.column_name = outer_alias.column_name
+)
+```
+
+| Part | What goes there | Notes |
+|---|---|---|
+| `outer_alias` | The outer table's alias, such as `p` | Stands for "the row being tested" |
+| `inner_alias` | The alias of the subquery's table, such as `p2` | Stands for "the rows to compare with"; must differ from the outer alias when the table is the same |
+| `aggregate_function` | `avg(p2.price)`, `max(o2.ordered_at)`, `count(*)` and so on | Makes sure the subquery returns one value |
+| The correlating condition | `inner_alias.column_name = outer_alias.column_name` | Brings the outer row's value into the subquery |
+
+The database decides which table a column name belongs to by these rules, which is why aliases matter:
+
+| Written as | Refers to |
+|---|---|
+| `p2.category_id` | The column of the table aliased `p2` |
+| `p.category_id` (inside the subquery) | The column of the outer table aliased `p` |
+| Just `category_id` | Searched from the inside out: the subquery's own `FROM` first, and if that has the column, the outer query is never consulted |
+
+This lesson's subqueries have the same shape as the previous lesson's `EXISTS` and the scalar subqueries before that, with the same rules in `SELECT` or `WHERE`.
+
+The query from Core idea, read against the shape: outer alias `p`, inner alias `p2`, `aggregate_function` `avg(p2.price)`, and the correlating condition `p2.category_id = p.category_id`.
+
 ## Example {#example}
 
 Task: which is each customer's most recent order?
@@ -95,7 +128,22 @@ FROM customers AS c;
 
 Either aggregate to one value (`max`, `count`) or use a join instead.
 
-**`LATERAL`.** PostgreSQL and standard SQL also let a subquery in `FROM` refer to the tables to its left, written `JOIN LATERAL (…)` or `CROSS JOIN LATERAL (…)`. It works like a correlated subquery that can return several rows and columns, for example "each customer's latest 3 orders". For now it is enough to know it exists.
+**`LATERAL`: a correlated subquery that returns several rows.** An ordinary derived table cannot see the tables to its left. Put `LATERAL` before it and it can refer to their columns, running once for each row on the left and returning as many rows as it likes. Each customer's two latest orders:
+
+```sql run
+SELECT c.name, r.id AS order_id, r.ordered_at
+FROM customers AS c
+CROSS JOIN LATERAL (
+  SELECT o.id, o.ordered_at
+  FROM orders AS o
+  WHERE o.customer_id = c.id
+  ORDER BY o.ordered_at DESC
+  LIMIT 2
+) AS r
+ORDER BY c.id, r.ordered_at DESC;
+```
+
+The `c.id` inside the subquery comes from `customers` on the left. `LATERAL` is standard SQL, supported by PostgreSQL and MySQL 8 but not SQLite; SQL Server's equivalent is `CROSS APPLY`. With `CROSS JOIN LATERAL`, customers who never ordered disappear; to keep them, write `LEFT JOIN LATERAL (…) AS r ON true`.
 
 ## Common mistakes {#mistakes}
 

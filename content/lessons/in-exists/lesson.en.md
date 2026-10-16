@@ -41,6 +41,35 @@ WHERE EXISTS (
 
 For each customer, the subquery looks for that customer's cancelled orders; if it finds at least one row, `EXISTS` is true. Note that `c.id` inside the subquery comes from the outer query: the subquery refers to an outer column, and the next lesson is about such correlated subqueries. `SELECT 1` is just a convention; `EXISTS` checks whether rows exist, not what they contain.
 
+## Syntax {#syntax}
+
+All three conditions use a subquery as "a set of values" or as "are there any rows". Each is a `condition`: it goes in `WHERE` and combines with other conditions:
+
+```syntax
+expression [ NOT ] IN ( select_statement )
+[ NOT ] EXISTS ( select_statement )
+expression comparison_operator { ANY | ALL } ( select_statement )
+```
+
+| Shape | The subquery must return | True when |
+|---|---|---|
+| `x IN (…)` | One column, any number of rows | `x` equals one of the values |
+| `x NOT IN (…)` | One column | `x` differs from every value; never true once the subquery holds a NULL |
+| `EXISTS (…)` | Any columns; what is selected does not matter | The subquery returns at least one row |
+| `NOT EXISTS (…)` | As above | The subquery returns no rows |
+| `x > ANY (…)` | One column | `x` is greater than at least one value |
+| `x > ALL (…)` | One column | `x` is greater than every value |
+
+`comparison_operator` can be any comparison: `= ANY` is the same as `IN`, and `<> ALL` the same as `NOT IN`.
+
+Compare Chapter 1's `IN ( value [, …] )`: the shape is identical, except that a query has taken the place of the value list.
+
+Some conditions, read against the shapes:
+
+- `id IN (SELECT customer_id FROM orders WHERE status = 'delivered')`: the first line, with a subquery returning one column of customer ids.
+- `EXISTS (SELECT 1 FROM orders AS o WHERE o.customer_id = c.id AND …)`: the second line, with a subquery referring to the outer `c.id`.
+- `price > ALL (SELECT price FROM products WHERE category_id = 1)`: the third line, operator `>`, `ALL` chosen.
+
 ## Example {#example}
 
 Task: which products has Kenji Sato (customer 3) bought? List each product once.
@@ -127,6 +156,16 @@ ORDER BY c.id;
 Seven rows. The rule: **when the subquery's column can contain NULL, use `NOT EXISTS`, or add `WHERE column IS NOT NULL` inside the subquery.** In the variation above, `orders.customer_id` is declared `NOT NULL`, so that `NOT IN` is safe.
 
 **The difference between `IN` and a join is duplication.** A join repeats the "one" side of a one-to-many relationship; `IN` and `EXISTS` do not, so each outer row appears at most once. Use a join when you need columns from the other table, and `IN` or `EXISTS` when you only need to know whether a match exists.
+
+**`ALL` with an empty subquery.** When the subquery returns no rows, `> ALL` is true for every row and `> ANY` false for every row:
+
+```sql run
+SELECT count(*) AS products
+FROM products
+WHERE price > ALL (SELECT price FROM products WHERE category_id = 99);
+```
+
+All 16 rows pass: there is no category 99, so "dearer than every one of them" has no counterexample. That is logically sound but easily surprising: when the subquery's condition is wrong, `ALL` makes the outer query return everything.
 
 **`IN` works on several columns too.** `(a, b) IN (SELECT x, y …)` compares whole rows: a match needs both columns equal.
 

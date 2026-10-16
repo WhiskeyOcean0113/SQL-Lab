@@ -22,6 +22,27 @@ The two queries must follow two rules:
 
 The result takes its column names from the first query, and `ORDER BY` goes at the very end and sorts the whole result.
 
+## Syntax {#syntax}
+
+```syntax
+select_statement { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] select_statement
+[ ORDER BY expression [, …] ]
+[ LIMIT count ]
+```
+
+| Part | What goes there | Notes |
+|---|---|---|
+| `select_statement` | A query, with its own `WHERE`, `GROUP BY` and `HAVING` if needed | It cannot carry its own `ORDER BY` or `LIMIT` unless wrapped in parentheses (see Variations) |
+| `UNION` / `INTERSECT` / `EXCEPT` | One of the three operations | The result can feed another set operation: `A UNION B EXCEPT C` |
+| `ALL` | Keep duplicate rows | Optional |
+| `DISTINCT` | Remove duplicate rows | Optional; with neither `ALL` nor `DISTINCT`, it is `DISTINCT` |
+| `ORDER BY expression` | Sorts the whole combined result | Only result column names or positions, no expressions |
+| `LIMIT count` | Takes the first rows of the combined result | Optional |
+
+In the shape, `ORDER BY` and `LIMIT` follow the last query and look as if they belong to it, but they belong to the result of the whole set operation.
+
+The example's query, read against the shape: the first `select_statement` picks order events, then `UNION ALL`, the second picks shipping events, and the final `ORDER BY at` sorts by `at`, the column name given in the first query.
+
 ## Example {#example}
 
 Task: Lin Wei's (customer 1) placed and shipped events for each order, in time order.
@@ -76,6 +97,17 @@ ORDER BY customer_id;
 ```
 
 The direction of `EXCEPT` matters: `A EXCEPT B` and `B EXCEPT A` are different questions.
+
+**Sorting and limiting each side separately.** Wrap a `select_statement` in parentheses and it may have its own `ORDER BY` and `LIMIT`. The two most expensive and the two cheapest products together:
+
+```sql run
+(SELECT name, price FROM products ORDER BY price DESC LIMIT 2)
+UNION ALL
+(SELECT name, price FROM products ORDER BY price LIMIT 2)
+ORDER BY price DESC;
+```
+
+The `ORDER BY … LIMIT 2` inside each pair of parentheses decides which two rows each side contributes; the final `ORDER BY` outside sorts the 4 combined rows.
 
 **Combining different tables.** As long as the columns line up, the two sides can come from different tables; a constant column labels the source:
 
@@ -139,7 +171,18 @@ Sixteen rows of cities and countries jumbled together, under the name `city`. Be
 
 **4. `ORDER BY` in the middle.** `ORDER BY` can only go at the end of the whole set operation, sorting the combined result; after the first query it is a syntax error.
 
-**5. `UNION` where `UNION ALL` was needed.** Combining two sets of sales records and then summing them, `UNION` merges two rows that happen to be identical into one, and the total comes out too low. When every row must be kept, use `UNION ALL`.
+**5. An expression in the final `ORDER BY`.**
+
+```sql run error
+SELECT name FROM customers WHERE country = 'Canada'
+UNION
+SELECT name FROM products WHERE category_id = 4
+ORDER BY lower(name);
+```
+
+That fails with `invalid UNION/INTERSECT/EXCEPT ORDER BY clause`, and the detail says only result column names can be used, not expressions or functions. In the shape, this `ORDER BY` sorts the combined result, and it knows only the result's columns. To sort by an expression, compute it in each side's select list and sort by that column.
+
+**6. `UNION` where `UNION ALL` was needed.** Combining two sets of sales records and then summing them, `UNION` merges two rows that happen to be identical into one, and the total comes out too low. When every row must be kept, use `UNION ALL`.
 
 ## Summary {#summary}
 

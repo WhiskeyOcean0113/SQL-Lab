@@ -41,6 +41,35 @@ WHERE EXISTS (
 
 对每一位顾客，子查询找这位顾客的已取消订单；找到至少一行，`EXISTS` 就是 true。注意子查询里的 `c.id` 来自外层：子查询引用了外层的列，下一篇专门讲这种关联子查询。`SELECT 1` 只是个习惯写法，`EXISTS` 只看有没有行，不看选了什么。
 
+## 语法 {#syntax}
+
+三种条件都把一个子查询当作“一组值”或“有没有行”来用。它们都是 `condition`，可以放进 `WHERE`，也可以和其他条件组合：
+
+```syntax
+expression [ NOT ] IN ( select_statement )
+[ NOT ] EXISTS ( select_statement )
+expression comparison_operator { ANY | ALL } ( select_statement )
+```
+
+| 形状 | 子查询要返回 | 什么时候为 true |
+|---|---|---|
+| `x IN (…)` | 一列，多少行都行 | `x` 等于其中某一个值 |
+| `x NOT IN (…)` | 一列 | `x` 和每一个值都不相等；子查询里有 NULL 时永远不会为 true |
+| `EXISTS (…)` | 任意几列，选什么都无所谓 | 子查询至少返回一行 |
+| `NOT EXISTS (…)` | 同上 | 子查询一行都没返回 |
+| `x > ANY (…)` | 一列 | `x` 比其中至少一个值大 |
+| `x > ALL (…)` | 一列 | `x` 比其中每一个值都大 |
+
+`comparison_operator` 可以是任何比较运算符：`= ANY` 等于 `IN`，`<> ALL` 等于 `NOT IN`。
+
+和第 1 章的 `IN ( value [, …] )` 比较一下：格式完全一样，只是括号里的值列表换成了一条查询。
+
+对照格式读几条：
+
+- `id IN (SELECT customer_id FROM orders WHERE status = 'delivered')`：第一行，子查询返回一列顾客编号。
+- `EXISTS (SELECT 1 FROM orders AS o WHERE o.customer_id = c.id AND …)`：第二行，子查询里引用了外层的 `c.id`。
+- `price > ALL (SELECT price FROM products WHERE category_id = 1)`：第三行，运算符是 `>`，选了 `ALL`。
+
 ## 示例 {#example}
 
 问题：Kenji Sato（顾客 3）买过哪些商品？每件商品列一次。
@@ -127,6 +156,16 @@ ORDER BY c.id;
 7 行。规则：**子查询的列可能有 NULL 时，用 `NOT EXISTS`，或者在子查询里加上 `WHERE 列 IS NOT NULL`。** 上一个变体里 `orders.customer_id` 定义为 `NOT NULL`，所以那里的 `NOT IN` 是安全的。
 
 **`IN` 和连接的区别在于重复。** 连接会让一对多的“一”那边重复出现；`IN` 和 `EXISTS` 不会，每个外层行最多出现一次。要显示另一张表的列时用连接，只需要判断“有没有”时用 `IN` 或 `EXISTS`。
+
+**`ALL` 遇到空的子查询。** 子查询一行都没返回时，`> ALL` 对每一行都是 true，`> ANY` 对每一行都是 false：
+
+```sql run
+SELECT count(*) AS products
+FROM products
+WHERE price > ALL (SELECT price FROM products WHERE category_id = 99);
+```
+
+16 行全部返回，因为没有分类 99，“比其中每一个都贵”没有任何反例。这在逻辑上说得通，却很容易出乎意料：子查询的条件写错时，`ALL` 会让外层返回所有行。
 
 **多列也可以用 `IN`。** `(a, b) IN (SELECT x, y …)` 比较的是整行：两列都相等才算出现。
 

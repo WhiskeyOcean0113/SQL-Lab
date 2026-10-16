@@ -37,6 +37,35 @@ ORDER BY price DESC;
 
 The database runs the query in parentheses first, gets the average price, 78.84, and puts that value back into `WHERE`. The outer query effectively sees `WHERE price > 78.84`.
 
+## Syntax {#syntax}
+
+A subquery is a complete `SELECT` of its own, wrapped in parentheses:
+
+```syntax
+( select_statement )
+```
+
+Where it can go depends on the shape it returns:
+
+- **A scalar subquery** returns at most one row and one column: anywhere an earlier shape says `expression`, `( select_statement )` can stand instead. The select list, a comparison in `WHERE`, arithmetic, a function argument: all work.
+- **A derived table** returns a whole table and goes in `FROM`, in this shape:
+
+```syntax
+FROM ( select_statement ) [ AS ] alias [ ( column_alias [, …] ) ]
+```
+
+| Part | What goes there | Rule |
+|---|---|---|
+| `select_statement` | A complete query, with its own `WHERE`, `GROUP BY` and so on | No semicolon; a scalar subquery returns at most one row and one column |
+| `alias` | The derived table's name | Always written in this course (see Going deeper) |
+| `column_alias` | New names for the derived table's columns | Optional; without it, the subquery's column names are kept |
+
+Some uses, read against the shapes:
+
+- `WHERE price > (SELECT avg(price) FROM products)`: the right side of the comparison would be an `expression`; here a scalar subquery takes its place.
+- `round(100.0 * stock / (SELECT sum(stock) FROM products), 1)`: a scalar subquery in the middle of arithmetic; it is simply a value.
+- `FROM (SELECT order_id, sum(…) AS total … GROUP BY order_id) AS t`: a derived table aliased `t`, whose columns the outer query reaches as `t.total`.
+
 ## Example {#example}
 
 Task: what is the average value of an order?
@@ -85,6 +114,28 @@ WHERE t.orders >= 4;
 ```
 
 The outer query can use the alias `orders` directly, because inside the derived table it has become a real column.
+
+**Naming a derived table's columns.** A parenthesised list after the alias renames every column at once, which is handy when the inner query left `count(*)` unnamed:
+
+```sql run
+SELECT t.status, t.n
+FROM (
+  SELECT status, count(*)
+  FROM orders
+  GROUP BY status
+) AS t(status, n)
+ORDER BY t.n DESC;
+```
+
+**Distance from the average.** A scalar subquery can appear in any expression, a subtraction for instance:
+
+```sql run
+SELECT name, price,
+       round(price - (SELECT avg(price) FROM products), 2) AS above_avg
+FROM products
+ORDER BY above_avg DESC
+LIMIT 3;
+```
 
 **Summarise separately, then join.** The last lesson's fan trap: joining both orders and referred customers multiplies them. The fix is to summarise each to one row per customer first, then join the two derived tables:
 
@@ -137,7 +188,9 @@ Books has 3 products, so the subquery returns 3 prices. To compare with a set of
 
 **4. A subquery that unexpectedly returns zero rows.** With a wrong condition, the scalar subquery returns NULL and the outer query quietly returns nothing. When a result is empty, run the subquery on its own and look at what it returns.
 
-**5. Mixing up the subquery's condition and the outer one.** For "products dearer than the Electronics average", `category_id = 2` belongs inside the subquery, to compute the Electronics average; in the outer query it would filter the products themselves.
+**5. A subquery without parentheses, or with a semicolon inside.** `WHERE price > SELECT avg(price) FROM products` fails with `syntax error at or near "SELECT"`; `(SELECT avg(price) FROM products;)` fails with `syntax error at or near ";"`. In the shape, the whole subquery sits in parentheses, and a semicolon goes only at the end of the outermost statement.
+
+**6. Mixing up the subquery's condition and the outer one.** For "products dearer than the Electronics average", `category_id = 2` belongs inside the subquery, to compute the Electronics average; in the outer query it would filter the products themselves.
 
 ## Summary {#summary}
 

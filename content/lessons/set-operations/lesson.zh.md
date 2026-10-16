@@ -22,6 +22,27 @@
 
 结果的列名取自第一条查询，`ORDER BY` 写在最后，对整个结果排序。
 
+## 语法 {#syntax}
+
+```syntax
+select_statement { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] select_statement
+[ ORDER BY expression [, …] ]
+[ LIMIT count ]
+```
+
+| 部分 | 填什么 | 说明 |
+|---|---|---|
+| `select_statement` | 一条查询，可以有自己的 `WHERE`、`GROUP BY`、`HAVING` | 不能单独带 `ORDER BY` 或 `LIMIT`，除非整条用括号括起来（见“变体”） |
+| `UNION` / `INTERSECT` / `EXCEPT` | 三种运算选一种 | 结果还可以接着再做集合运算：`A UNION B EXCEPT C` |
+| `ALL` | 保留重复的行 | 可以省略 |
+| `DISTINCT` | 去掉重复的行 | 可以省略；`ALL` 和 `DISTINCT` 都不写时就是 `DISTINCT` |
+| `ORDER BY expression` | 对合并后的整个结果排序 | 只能用结果的列名或列的位置，不能写表达式 |
+| `LIMIT count` | 对合并后的结果取前几行 | 可以省略 |
+
+格式里的 `ORDER BY` 和 `LIMIT` 写在最后一条查询的后面，看起来像是属于它，其实属于整个集合运算的结果。
+
+对照格式读示例里的查询：第一条 `select_statement` 选下单事件，`UNION ALL`，第二条选发货事件，最后的 `ORDER BY at` 按第一条查询起的列名 `at` 排序。
+
 ## 示例 {#example}
 
 问题：Lin Wei（顾客 1）每笔订单的下单和发货事件，按时间排列。
@@ -76,6 +97,17 @@ ORDER BY customer_id;
 ```
 
 `EXCEPT` 的方向很重要：`A EXCEPT B` 和 `B EXCEPT A` 是两个不同的问题。
+
+**每一边各自排序、取前几行。** 把一条 `select_statement` 用括号括起来，它就可以有自己的 `ORDER BY` 和 `LIMIT`。最贵的 2 件和最便宜的 2 件商品放在一起：
+
+```sql run
+(SELECT name, price FROM products ORDER BY price DESC LIMIT 2)
+UNION ALL
+(SELECT name, price FROM products ORDER BY price LIMIT 2)
+ORDER BY price DESC;
+```
+
+括号里的 `ORDER BY … LIMIT 2` 决定每一边取哪两行；括号外最后的 `ORDER BY` 再给合并后的 4 行排序。
 
 **合并不同的表。** 只要列对得上，两边可以来自不同的表，用一个常量列标明来源：
 
@@ -139,7 +171,18 @@ SELECT country FROM customers;
 
 **4. 在中间写了 `ORDER BY`。** `ORDER BY` 只能写在整个集合运算的最后，对合并后的结果排序；写在第一条查询后面是语法错误。
 
-**5. 该用 `UNION ALL` 时用了 `UNION`。** 合并两份销售记录再求和时，`UNION` 会把恰好相同的两行合并成一行，总数就少了。需要保留每一行时，用 `UNION ALL`。
+**5. 最后的 `ORDER BY` 写了表达式。**
+
+```sql run error
+SELECT name FROM customers WHERE country = 'Canada'
+UNION
+SELECT name FROM products WHERE category_id = 4
+ORDER BY lower(name);
+```
+
+报 `invalid UNION/INTERSECT/EXCEPT ORDER BY clause`，详情是“只能用结果的列名，不能用表达式或函数”。按格式，这里的 `ORDER BY` 排的是合并后的结果，它只认识结果里的列。需要按表达式排序，就在每一边的选择列表里把表达式算出来，再按那一列排。
+
+**6. 该用 `UNION ALL` 时用了 `UNION`。** 合并两份销售记录再求和时，`UNION` 会把恰好相同的两行合并成一行，总数就少了。需要保留每一行时，用 `UNION ALL`。
 
 ## 小结 {#summary}
 

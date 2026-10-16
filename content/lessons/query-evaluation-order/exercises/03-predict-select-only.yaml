@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询只有一个子句，没有 `FROM`。运行它会得到什么？
+  en: This query has a single clause and no `FROM`. What do you get when you run it?
+hint:
+  zh: 看语法骨架：哪些行套着方括号？
+  en: "Look at the syntax skeleton: which lines are in brackets?"
+query: |
+  SELECT 2 + 3 AS total;
+choices:
+  - { zh: "语法错误：每条查询都必须有 `FROM`", en: "A syntax error: every query needs a `FROM`" }
+  - { zh: "一行一列，`total` 是 5", en: "One row with one column, `total`, holding 5" }
+  - { zh: 0 行，因为没有表可读, en: "Zero rows, because there is no table to read" }
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: "一行一列，`total` 是 5。骨架里除了 `SELECT` 那一行，其余每一行都套着方括号，都可以省略。没有 `FROM` 就没有表要读，`SELECT` 只把它的表达式算一次，所以结果正好一行。"
+  en: "One row, one column: `total` is 5. Every line of the skeleton except `SELECT` is in brackets, so each can be left out. With no `FROM` there is no table to read, and `SELECT` computes its expressions once, which gives exactly one row."

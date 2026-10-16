@@ -1,0 +1,16 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 每件商品的库存要摆成一个正方形。下面这条查询想列出商品名和正方形的边长（库存的平方根），保留两位小数，列名依次为 `name` 和 `side`。它报错了。修好它。
+  en: Each product's stock is to be laid out in a square. This query should list the product name and the side of that square (the square root of the stock), rounded to two decimal places, as the columns `name` and `side`. It fails. Fix it.
+hint:
+  zh: "`sqrt` 返回浮点数，而两个参数的 `round` 只接受 `numeric`。先把值转成 `numeric`：`::numeric`。"
+  en: "`sqrt` returns a floating-point number, but two-argument `round` only accepts `numeric`. Convert the value to `numeric` first with `::numeric`."
+starter: |
+  SELECT name, round(sqrt(stock), 2) AS side
+  FROM products;
+solution: |
+  SELECT name, round(sqrt(stock)::numeric, 2) AS side
+  FROM products;
+check: { column_names: true }

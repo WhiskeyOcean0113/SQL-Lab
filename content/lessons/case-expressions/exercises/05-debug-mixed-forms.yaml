@@ -1,0 +1,26 @@
+kind: debug
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想给每件商品的库存贴标签：库存为 0 是 `out`，低于 10 是 `low`，其余是 `ok`，列名依次为 `name` 和 `level`。它报错了。修好它。
+  en: This query should label each product's stock, `out` when it is 0, `low` when it is under 10 and `ok` otherwise, as the columns `name` and `level`. It fails. Fix it.
+hint:
+  zh: "`CASE` 后面跟了一个值，就是简单 CASE，它只会拿这个值和每个 `WHEN` 后面的值比相等。要测范围，用搜索型 CASE：去掉 `CASE` 后面的 `stock`。"
+  en: "A value after `CASE` makes it a simple CASE, which only tests that value for equality with each `WHEN`. To test ranges, use the searched form: drop the `stock` after `CASE`."
+starter: |
+  SELECT name,
+         CASE stock
+           WHEN stock = 0 THEN 'out'
+           WHEN stock < 10 THEN 'low'
+           ELSE 'ok'
+         END AS level
+  FROM products;
+solution: |
+  SELECT name,
+         CASE
+           WHEN stock = 0 THEN 'out'
+           WHEN stock < 10 THEN 'low'
+           ELSE 'ok'
+         END AS level
+  FROM products;
+check: { column_names: true }

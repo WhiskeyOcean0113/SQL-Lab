@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出订单 3 的每一行明细：商品 id，以及换算成整数（`integer`）的金额（数量乘以单价），列名依次为 `product_id` 和 `amount`。它报错了。修好它。
+  en: This query should list the lines of order 3, with the product id and the amount (quantity times unit price) converted to a whole number (`integer`), as the columns `product_id` and `amount`. It fails. Fix it.
+hint:
+  zh: "`CAST` 的形状是 `CAST(expression AS type)`，中间是关键字 `AS`，不是逗号。"
+  en: "The shape of `CAST` is `CAST(expression AS type)`, with the keyword `AS` in the middle, not a comma."
+starter: |
+  SELECT product_id,
+         CAST(quantity * unit_price, integer) AS amount
+  FROM order_items
+  WHERE order_id = 3;
+solution: |
+  SELECT product_id,
+         CAST(quantity * unit_price AS integer) AS amount
+  FROM order_items
+  WHERE order_id = 3;
+check: { column_names: true }

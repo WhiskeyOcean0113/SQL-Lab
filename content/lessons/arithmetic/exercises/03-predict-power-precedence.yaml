@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 3
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询返回哪两个值？先对照语法一节里的优先级表想一想，再运行。
+  en: What two values does this query return? Think it through with the precedence table in Syntax before you run it.
+hint:
+  zh: 取负比 `^` 先算；同一级的运算从左到右算，`^` 也不例外。
+  en: Negation comes before `^`, and operators of the same level go left to right, `^` included.
+query: |
+  SELECT -3 ^ 2 AS a, 2 ^ 3 ^ 2 AS b;
+choices:
+  - { zh: "`a` 是 -9，`b` 是 512", en: "`a` is -9, `b` is 512" }
+  - { zh: "`a` 是 9，`b` 是 512", en: "`a` is 9, `b` is 512" }
+  - { zh: "`a` 是 -9，`b` 是 64", en: "`a` is -9, `b` is 64" }
+  - { zh: "`a` 是 9，`b` 是 64", en: "`a` is 9, `b` is 64" }
+answer: 3
+explain:
+  zh: "`a` 是 9，`b` 是 64。取负的优先级最高，所以 `-3 ^ 2` 是 (−3)² = 9，而数学里 −3² 是 −9。`^` 从左到右算，所以 `2 ^ 3 ^ 2` 是 (2³)² = 64，而数学里是 2⁹ = 512。用到乘方时，加上表明意图的括号最稳妥。"
+  en: "`a` is 9 and `b` is 64. Negation has the highest precedence, so `-3 ^ 2` is (−3)² = 9, where mathematics reads −3² as −9. `^` is evaluated left to right, so `2 ^ 3 ^ 2` is (2³)² = 64, where mathematics gives 2⁹ = 512. With powers, parentheses that state the intent are the safe choice."

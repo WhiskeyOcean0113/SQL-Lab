@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: SQL Pocket Guide（商品 3）的价格是 19.99。下面这条查询里，`p` 是多少？
+  en: SQL Pocket Guide (product 3) costs 19.99. In this query, what is `p`?
+hint:
+  zh: "`numeric(5, 1)` 只留 1 位小数。转换时是直接截掉，还是四舍五入？"
+  en: "`numeric(5, 1)` keeps one decimal place. Does the cast cut off the rest, or round?"
+query: |
+  SELECT price, price::numeric(5, 1) AS p
+  FROM products
+  WHERE id = 3;
+choices: ['19.9', '20.0', '19.99', '20']
+answer: 1
+explain:
+  zh: 20.0。`numeric(5, 1)` 规定总共最多 5 位数字、其中 1 位小数，转换时会四舍五入到这一位，所以 19.99 变成 20.0。小数位数现在是结果类型的一部分，所以显示的是 20.0 而不是 20。
+  en: 20.0. `numeric(5, 1)` allows up to 5 digits with 1 after the decimal point, and the cast rounds to that place, so 19.99 becomes 20.0. The number of decimal places is now part of the result's type, which is why it shows 20.0 rather than 20.

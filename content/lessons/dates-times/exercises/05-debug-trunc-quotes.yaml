@@ -1,0 +1,16 @@
+kind: debug
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出每个订单的 id 和下单所在的月份（把下单时间截到当月 1 日零点），列名依次为 `id` 和 `month`。它报错了。修好它。
+  en: This query should list each order's id and the month it was placed in (the order time cut down to midnight on the 1st of its month), as the columns `id` and `month`. It fails. Fix it.
+hint:
+  zh: "`date_trunc` 的第一个参数是一段普通的文字，要加单引号；不加引号的 `month` 会被当成列名。"
+  en: "`date_trunc`'s first argument is an ordinary piece of text and needs single quotes; an unquoted `month` is read as a column name."
+starter: |
+  SELECT id, date_trunc(month, ordered_at) AS month
+  FROM orders;
+solution: |
+  SELECT id, date_trunc('month', ordered_at) AS month
+  FROM orders;
+check: { column_names: true }

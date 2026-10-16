@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 有 3 位顾客来自中国，`country` 里存的是 `China`。下面这条查询会返回几行？
+  en: Three customers are from China, stored in `country` as `China`. How many rows does this query return?
+hint:
+  zh: "`lower` 处理之后，左边还会出现大写字母吗？"
+  en: After `lower`, can the left side still contain a capital letter?
+query: |
+  SELECT name
+  FROM customers
+  WHERE lower(country) = 'China';
+choices: ['0', '3', '12']
+answer: 0
+verify: { rows: 0 }
+explain:
+  zh: 0 行。`lower(country)` 把左边变成了 `china`，而右边的 `'China'` 还带着大写的 C，两边永远不相等。两边的大小写要一致：写成 `lower(country) = 'china'`。
+  en: 0 rows. `lower(country)` turns the left side into `china`, while `'China'` on the right still has a capital C, so the two never match. Both sides must agree, as in `lower(country) = 'china'`.

@@ -1,0 +1,16 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 下面这条查询返回什么？
+  en: What does this query return?
+hint:
+  zh: 对一个 `interval` 取 `epoch`，得到的是它包含多少秒。
+  en: The `epoch` of an `interval` is the number of seconds it lasts.
+query: |
+  SELECT extract(epoch FROM INTERVAL '1 day 6 hours') / 3600 AS hours;
+choices: ['6', '30', '1.25', '108000']
+answer: 1
+explain:
+  zh: 30（显示为 30.0000000000000000）。1 天 6 小时一共 30 小时，也就是 108000 秒，这是 `extract(epoch FROM …)` 的结果；除以 3600 就换成了小时。6 是只取了 `hour` 字段，`extract(hour FROM …)` 会给出这个值。
+  en: 30 (shown as 30.0000000000000000). One day and 6 hours is 30 hours, or 108000 seconds, which is what `extract(epoch FROM …)` returns; dividing by 3600 turns it into hours. 6 is only the `hour` field, which `extract(hour FROM …)` would give.

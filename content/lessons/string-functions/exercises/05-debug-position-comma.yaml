@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出每位有邮箱的顾客的邮箱和域名（`@` 后面的部分），列名依次为 `email` 和 `domain`。它报错了。修好它。
+  en: This query should list the email and the domain (the part after `@`) of every customer who has an email, as the columns `email` and `domain`. It fails. Fix it.
+hint:
+  zh: "`position` 的形状是 `position(search IN string)`，括号里用的是关键字 `IN`，不是逗号。"
+  en: "The shape of `position` is `position(search IN string)`: the parentheses hold the keyword `IN`, not a comma."
+starter: |
+  SELECT email,
+         substring(email FROM position('@', email) + 1) AS domain
+  FROM customers
+  WHERE email IS NOT NULL;
+solution: |
+  SELECT email,
+         substring(email FROM position('@' IN email) + 1) AS domain
+  FROM customers
+  WHERE email IS NOT NULL;
+check: { column_names: true }

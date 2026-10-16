@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 下面这条查询返回哪两个值？
+  en: What two values does this query return?
+hint:
+  zh: 在 PostgreSQL 里，`greatest` 遇到 NULL 会怎样处理？`nullif` 什么时候返回 NULL？
+  en: What does PostgreSQL's `greatest` do with a NULL? When does `nullif` return NULL?
+query: |
+  SELECT greatest(2, NULL, 5) AS a, nullif(3, 3) AS b;
+choices:
+  - { zh: "`a` 是 5，`b` 是 NULL", en: "`a` is 5, `b` is NULL" }
+  - { zh: "`a` 是 NULL，`b` 是 NULL", en: "`a` is NULL, `b` is NULL" }
+  - { zh: "`a` 是 5，`b` 是 3", en: "`a` is 5, `b` is 3" }
+  - { zh: "`a` 是 NULL，`b` 是 3", en: "`a` is NULL, `b` is 3" }
+answer: 0
+explain:
+  zh: "`a` 是 5，`b` 是 NULL。PostgreSQL 的 `greatest` 会跳过 NULL，在剩下的 2 和 5 里取最大的；MySQL 的同名函数这里会返回 NULL。`nullif` 的两个参数相等时返回 NULL，不相等时才返回第一个参数。"
+  en: "`a` is 5 and `b` is NULL. PostgreSQL's `greatest` skips NULLs and takes the largest of the remaining 2 and 5; MySQL's function of the same name would return NULL here. `nullif` returns NULL when its two arguments are equal, and the first argument only when they differ."

@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: shop 有 5 个分类。下面这条查询会返回几行？
+  en: shop has 5 categories. How many rows does this query return?
+hint:
+  zh: 先数 `generate_series(1, 10, 3)` 产生几行：从 1 开始，每次加 3，不超过 10。再乘以分类数。
+  en: "First count the rows from `generate_series(1, 10, 3)`: start at 1, add 3 each time, stop at 10. Then multiply by the number of categories."
+query: |
+  SELECT c.name, s.n
+  FROM categories AS c
+  CROSS JOIN generate_series(1, 10, 3) AS s(n);
+choices: ['15', '20', '50']
+answer: 1
+verify: { rows: 20 }
+explain:
+  zh: 20 行。`generate_series(1, 10, 3)` 产生 1、4、7、10 这 4 行，两端都包含，10 正好落在序列上。笛卡儿积的行数是两边相乘：5 × 4 = 20。
+  en: 20 rows. `generate_series(1, 10, 3)` produces the 4 rows 1, 4, 7 and 10; both ends are included, and 10 falls exactly on the sequence. A Cartesian product has the two sides' row counts multiplied, 5 × 4 = 20.

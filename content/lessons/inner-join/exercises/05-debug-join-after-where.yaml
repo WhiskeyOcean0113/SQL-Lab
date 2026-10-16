@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出住在 Osaka 的顾客下的订单，列依次为订单 id 和顾客名字。它报错了。修好它。
+  en: This query should list the orders of customers who live in Osaka, with the columns order id and customer name. It fails. Fix it.
+hint:
+  zh: "`JOIN` 是 `FROM` 子句的一部分，所有的 join 都要写在 `WHERE` 开始之前。"
+  en: "`JOIN` is part of the `FROM` clause, so every join is written before `WHERE` begins."
+starter: |
+  SELECT o.id, c.name
+  FROM orders AS o
+  WHERE c.city = 'Osaka'
+  JOIN customers AS c ON c.id = o.customer_id;
+solution: |
+  SELECT o.id, c.name
+  FROM orders AS o
+  JOIN customers AS c ON c.id = o.customer_id
+  WHERE c.city = 'Osaka';

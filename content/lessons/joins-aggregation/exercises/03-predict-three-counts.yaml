@@ -1,0 +1,24 @@
+kind: predict
+difficulty: 3
+lesson_ref: syntax
+prompt:
+  zh: Kenji Sato（顾客 3）有 3 个订单：订单 3 有 3 行明细，订单 12 有 1 行，订单 24 一行都没有。在这条查询里，Kenji Sato 那一行的 `all_rows`、`order_ids` 和 `orders` 分别是多少？
+  en: Kenji Sato (customer 3) has 3 orders. Order 3 has 3 lines, order 12 has 1, and order 24 has none. In this query, what are `all_rows`, `order_ids` and `orders` on Kenji Sato's row?
+hint:
+  zh: 先数 join 之后有几行（没有明细的订单在 `LEFT JOIN` 里也占一行），再看每种 `count` 数的是什么。
+  en: First count the rows after the joins (an order without lines still takes one row in a `LEFT JOIN`), then ask what each `count` counts.
+query: |
+  SELECT c.name,
+         count(*) AS all_rows,
+         count(o.id) AS order_ids,
+         count(DISTINCT o.id) AS orders
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id
+  LEFT JOIN order_items AS i ON i.order_id = o.id
+  WHERE c.id = 3
+  GROUP BY c.name;
+choices: ['5, 5, 3', '5, 3, 3', '4, 4, 3', '3, 3, 3']
+answer: 0
+explain:
+  zh: 5、5、3。join 之后订单 3 占 3 行，订单 12 占 1 行，订单 24 没有明细，`LEFT JOIN` 仍给它留 1 行，一共 5 行，所以 `count(*)` 是 5。这 5 行的 `o.id` 都不是 NULL，`count(o.id)` 也是 5。只有 `count(DISTINCT o.id)` 把重复出现的订单只算一次，得到 3。
+  en: 5, 5 and 3. After the joins, order 3 takes 3 rows, order 12 one, and order 24, which has no lines, still keeps one row thanks to the `LEFT JOIN`, so there are 5 rows and `count(*)` is 5. None of those rows has a NULL `o.id`, so `count(o.id)` is 5 as well. Only `count(DISTINCT o.id)` counts a repeated order once, giving 3.

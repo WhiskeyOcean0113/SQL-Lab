@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出由住在加拿大（`Canada`）的顾客推荐来的顾客，列名依次为 `customer` 和 `referrer`（推荐人的名字）。它报错了。修好它。
+  en: This query should list the customers referred by someone who lives in Canada, as the columns `customer` and `referrer` (the referrer's name). It fails. Fix it.
+hint:
+  zh: 同一张表出现两次时，别名从可选变成了必需，而且两个别名不能相同。给两个角色各起一个别名，再用别名来写每一列。
+  en: When the same table appears twice, aliases go from optional to required, and the two must differ. Give each role its own alias, then write every column through an alias.
+starter: |
+  SELECT customers.name AS customer, customers.name AS referrer
+  FROM customers
+  JOIN customers ON customers.id = customers.referred_by
+  WHERE customers.country = 'Canada';
+solution: |
+  SELECT c.name AS customer, r.name AS referrer
+  FROM customers AS c
+  JOIN customers AS r ON r.id = c.referred_by
+  WHERE r.country = 'Canada';
+check: { column_names: true }

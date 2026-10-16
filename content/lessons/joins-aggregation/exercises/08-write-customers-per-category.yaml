@@ -1,0 +1,17 @@
+kind: write
+difficulty: 3
+lesson_ref: syntax
+prompt:
+  zh: 每个分类各有多少位不同的顾客买过其中的商品？所有订单都算，包括已取消的。列名依次为 `category`（分类名）和 `customers`。
+  en: For each category, how many different customers have bought something from it? Count every order, cancelled ones included. Use the columns `category` (the category name) and `customers`.
+hint:
+  zh: 从 `categories` 经过 `products`、`order_items` 连到 `orders`。同一位顾客会在多行里出现，所以要数 `DISTINCT o.customer_id`。
+  en: Join `categories` through `products` and `order_items` to `orders`. The same customer appears on many rows, so count `DISTINCT o.customer_id`.
+solution: |
+  SELECT g.name AS category, count(DISTINCT o.customer_id) AS customers
+  FROM categories AS g
+  JOIN products AS p ON p.category_id = g.id
+  JOIN order_items AS i ON i.product_id = p.id
+  JOIN orders AS o ON o.id = i.order_id
+  GROUP BY g.id, g.name;
+check: { column_names: true }

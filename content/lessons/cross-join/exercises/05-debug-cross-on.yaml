@@ -1,0 +1,19 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想把每位来自中国的顾客和每个商品分类配成一对，列名依次为 `customer` 和 `category`。它报错了。修好它。
+  en: This query should pair every customer from China with every product category, as the columns `customer` and `category`. It fails. Fix it.
+hint:
+  zh: "`CROSS JOIN` 没有连接条件，后面不能接 `ON`。筛选顾客的条件该放在哪个子句里？"
+  en: "`CROSS JOIN` has no join condition, so `ON` cannot follow it. Which clause should hold the condition on customers?"
+starter: |
+  SELECT u.name AS customer, c.name AS category
+  FROM customers AS u
+  CROSS JOIN categories AS c ON u.country = 'China';
+solution: |
+  SELECT u.name AS customer, c.name AS category
+  FROM customers AS u
+  CROSS JOIN categories AS c
+  WHERE u.country = 'China';
+check: { column_names: true }

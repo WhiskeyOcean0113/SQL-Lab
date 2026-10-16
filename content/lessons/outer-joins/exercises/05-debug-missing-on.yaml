@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想列出每位顾客的名字和他们每个订单的 id，列名依次为 `name` 和 `order_id`；没下过单的顾客也要出现，订单 id 为空。它报错了。修好它。
+  en: This query should list every customer's name with the id of each of their orders, as the columns `name` and `order_id`. Customers who have never ordered must appear too, with an empty order id. It fails. Fix it.
+hint:
+  zh: 在外连接的形状里，`ON condition` 不能省略。
+  en: In the shape of an outer join, `ON condition` cannot be left out.
+starter: |
+  SELECT c.name, o.id AS order_id
+  FROM customers AS c
+  LEFT JOIN orders AS o;
+solution: |
+  SELECT c.name, o.id AS order_id
+  FROM customers AS c
+  LEFT JOIN orders AS o ON o.customer_id = c.id;
+check: { column_names: true }

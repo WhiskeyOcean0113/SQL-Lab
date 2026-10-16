@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: "`orders` 有 5 列，`customers` 有 7 列。下面这条查询的结果有几列？"
+  en: "`orders` has 5 columns and `customers` has 7. How many columns does this query's result have?"
+hint:
+  zh: "`o.*` 展开的是哪张表的列？"
+  en: Whose columns does `o.*` expand to?
+query: |
+  SELECT o.*, c.name
+  FROM orders AS o
+  JOIN customers AS c ON c.id = o.customer_id
+  WHERE o.id = 1;
+choices: ['2', '6', '12', '13']
+answer: 1
+explain:
+  zh: 6 列。`o.*` 只展开别名 `o` 那张表，也就是 `orders` 的 5 列，`c.name` 再加 1 列。只写 `*` 才会列出两张表的全部 12 列，其中还有两列都叫 `id`。
+  en: 6 columns. `o.*` expands only the table aliased `o`, the 5 columns of `orders`, and `c.name` adds one more. Only a bare `*` would list all 12 columns of both tables, including two called `id`.

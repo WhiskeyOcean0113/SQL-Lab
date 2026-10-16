@@ -1,0 +1,6 @@
+title:   { zh: "{{term:index}}", en: "{{Term:index|Indexes}}" }
+summary:
+  zh: 理解索引为什么能让查找变快、它要付出什么代价，并为常用的条件、排序和唯一性规则建合适的索引。
+  en: Understand why an index makes lookups fast and what it costs, and build the right index for common conditions, sort orders and uniqueness rules.
+dataset: shop
+prereqs: [views]

@@ -1,0 +1,17 @@
+kind: write
+difficulty: 1
+lesson_ref: deeper
+prompt:
+  zh: "`order_items.product_id` 是外键，常用来连接 `products`，也会在删除商品时被检查，但它没有自己的索引（主键 `(order_id, product_id)` 以 `order_id` 开头）。给它建一个索引。"
+  en: "`order_items.product_id` is a foreign key, often used to join `products` and checked whenever a product is deleted, yet it has no index of its own (the primary key `(order_id, product_id)` starts with `order_id`). Create an index on it."
+hint:
+  zh: "`CREATE INDEX 名字 ON 表 (列)`。"
+  en: "`CREATE INDEX name ON table (column)`."
+solution: CREATE INDEX order_items_product_id_idx ON order_items (product_id);
+check:
+  mode: probe
+  probe: |
+    SELECT regexp_replace(pg_get_indexdef(indexrelid), 'INDEX \S+ ON', 'INDEX ON') AS definition
+    FROM pg_index
+    WHERE indrelid = 'order_items'::regclass AND NOT indisprimary
+    ORDER BY 1;

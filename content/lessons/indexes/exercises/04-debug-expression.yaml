@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 登录时按邮箱查顾客，不区分大小写：`WHERE lower(email) = lower(…)`。下面建的索引用不上。修好它，让这个条件能用上索引。
+  en: Logging in looks customers up by email regardless of case, with `WHERE lower(email) = lower(…)`. The index below cannot be used for it. Fix it so that the condition can use an index.
+hint:
+  zh: 条件里对 `email` 做了计算，索引也要建在同样的计算上。
+  en: The condition computes on `email`, so the index must be on the same computation.
+starter: CREATE INDEX customers_email_idx ON customers (email);
+solution: CREATE INDEX customers_email_idx ON customers (lower(email));
+check:
+  mode: probe
+  probe: |
+    SELECT regexp_replace(pg_get_indexdef(indexrelid), 'INDEX \S+ ON', 'INDEX ON') AS definition
+    FROM pg_index
+    WHERE indrelid = 'customers'::regclass AND NOT indisprimary
+    ORDER BY 1;

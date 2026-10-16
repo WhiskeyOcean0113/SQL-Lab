@@ -1,0 +1,22 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 运行下面的 `EXPLAIN`。计划里哪个节点完成的是 `GROUP BY c.name`？
+  en: Run the `EXPLAIN` below. Which node in the plan carries out `GROUP BY c.name`?
+hint:
+  zh: 找 `Group Key` 那一行属于哪个节点。
+  en: Find which node the `Group Key` line belongs to.
+query: |
+  EXPLAIN (COSTS OFF)
+  SELECT c.name, count(*) AS orders
+  FROM customers AS c
+  JOIN orders AS o ON o.customer_id = c.id
+  GROUP BY c.name
+  ORDER BY orders DESC;
+choices: ['Sort', 'HashAggregate', 'Hash Join', 'Hash']
+answer: 1
+verify: { rows: 9 }
+explain:
+  zh: "`HashAggregate`，它下面一行就是 `Group Key: c.name`。它在 `Hash Join` 之后、`Sort` 之前：先连接，再分组，最后排序，和逻辑执行顺序一致。"
+  en: "`HashAggregate`, directly above `Group Key: c.name`. It sits after the `Hash Join` and before the `Sort`: join, then group, then sort, matching the logical processing order."

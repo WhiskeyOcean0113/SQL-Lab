@@ -1,0 +1,19 @@
+kind: parsons
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 用下面的片段拼出一条语句：不显示估算，只看这条查询的计划形状：Electronics（`category_id` 为 2）里最贵的两件商品的名字和价格。有两个片段是多余的。
+  en: "Arrange the pieces into a statement showing only the shape of the plan, without estimates, for this query: the names and prices of the two most expensive Electronics products (`category_id` 2). Two pieces are not needed."
+hint:
+  zh: 选项写在 `EXPLAIN` 后面的括号里。
+  en: Options go in brackets after `EXPLAIN`.
+solution: |
+  EXPLAIN (COSTS OFF)
+  SELECT name, price
+  FROM products
+  WHERE category_id = 2
+  ORDER BY price DESC
+  LIMIT 2;
+distractors:
+  - EXPLAIN COSTS OFF
+  - ORDER BY price

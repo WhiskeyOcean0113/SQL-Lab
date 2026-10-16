@@ -1,0 +1,21 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条语句：让顾客的邮箱不区分大小写也不能重复。有两个片段是多余的。
+  en: Arrange the pieces into a statement that keeps customer emails from repeating, regardless of case. Two pieces are not needed.
+hint:
+  zh: 唯一索引，建在 `lower(email)` 上；表达式外面还要一对括号。
+  en: A unique index on `lower(email)`; the expression needs its own brackets.
+solution: |
+  CREATE UNIQUE INDEX customers_email_lower_key
+  ON customers (lower(email));
+distractors:
+  - ON customers lower(email);
+  - CREATE INDEX customers_email_lower_key
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO customers (id, name, email, country, joined_on) VALUES (13, 'Lin W.', 'LIN.WEI@example.com', 'China', '2024-07-01')
+    - INSERT INTO customers (id, name, email, country, joined_on) VALUES (14, 'Olivia Brown', 'olivia.b@example.com', 'Australia', '2024-07-01')
+    - INSERT INTO customers (id, name, email, country, joined_on) VALUES (15, 'Olivia B.', 'Olivia.B@Example.com', 'Australia', '2024-07-02')

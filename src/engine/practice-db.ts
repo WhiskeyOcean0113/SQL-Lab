@@ -19,6 +19,10 @@ export class PracticeDb {
     const db = await PGlite.create({ parsers })
     await db.exec("SET TimeZone = 'UTC'; SET DateStyle = 'ISO, YMD'; SET IntervalStyle = 'postgres';")
     await db.exec(datasetSql)
+    // Planner statistics up front, so EXPLAIN shows the same estimates on every
+    // run. ANALYZE writes row counts in place, outside any transaction, so a
+    // learner's own ANALYZE of a dataset table would otherwise leak into later runs.
+    await db.exec('ANALYZE')
     return new PracticeDb(db)
   }
 

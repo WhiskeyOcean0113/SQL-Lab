@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 客服后台总是这样查：`WHERE customer_id = … ORDER BY ordered_at DESC`。下面这个索引的列顺序不对，几乎帮不上忙。修好它，仍然是一个两列的索引。
+  en: The support dashboard always queries `WHERE customer_id = … ORDER BY ordered_at DESC`. The column order of this index is wrong, so it barely helps. Fix it, keeping a single two-column index.
+hint:
+  zh: 等值条件的列放在前面，排序的列放在后面。
+  en: Equality columns first, sort columns after.
+starter: CREATE INDEX orders_customer_idx ON orders (ordered_at, customer_id);
+solution: CREATE INDEX orders_customer_idx ON orders (customer_id, ordered_at);
+check:
+  mode: probe
+  probe: |
+    SELECT regexp_replace(pg_get_indexdef(indexrelid), 'INDEX \S+ ON', 'INDEX ON') AS definition
+    FROM pg_index
+    WHERE indrelid = 'orders'::regclass AND NOT indisprimary
+    ORDER BY 1;

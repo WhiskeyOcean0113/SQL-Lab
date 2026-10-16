@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 订单 3 有 3 行明细。下面这段 SQL 最后的查询返回的数字是多少？
+  en: Order 3 has 3 item rows. What number does the final query return?
+hint:
+  zh: "`EXPLAIN ANALYZE` 会不会真的执行语句？"
+  en: Does `EXPLAIN ANALYZE` really run the statement?
+query: |
+  EXPLAIN (ANALYZE, COSTS OFF, BUFFERS OFF, TIMING OFF, SUMMARY OFF)
+  DELETE FROM order_items WHERE order_id = 3;
+
+  SELECT count(*) FROM order_items WHERE order_id = 3;
+choices: ['0', '3']
+answer: 0
+verify: { rows: 1 }
+explain:
+  zh: 0。`ANALYZE` 让数据库真的执行了 `DELETE`，三行明细被删掉了。只有不带 `ANALYZE` 的 `EXPLAIN` 才只做计划、不执行。
+  en: 0. `ANALYZE` made the database really run the `DELETE`, so the three items are gone. Only `EXPLAIN` without `ANALYZE` plans without running.

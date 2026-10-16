@@ -1,0 +1,22 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 下面的 SQL 新建了一张 10 万行的表，再用 `EXPLAIN` 看一条查询的估算。因为没有统计信息，估算的行数是 506，而实际只有 50。补上一条语句，让 `EXPLAIN` 的估算变准确（最后仍然是这条 `EXPLAIN`）。
+  en: The SQL below creates a 100,000-row table, then uses `EXPLAIN` to see a query's estimate. With no statistics, the estimate is 506 rows against an actual 50. Add one statement so that the `EXPLAIN` estimate becomes accurate (the same `EXPLAIN` stays last).
+hint:
+  zh: 收集统计信息的命令，放在建表之后、`EXPLAIN` 之前。
+  en: The command that collects statistics, after creating the table and before the `EXPLAIN`.
+starter: |
+  CREATE TABLE visits AS
+  SELECT g AS id, g % 2000 AS customer_id
+  FROM generate_series(1, 100000) AS g;
+
+  EXPLAIN SELECT * FROM visits WHERE customer_id = 7;
+solution: |
+  CREATE TABLE visits AS
+  SELECT g AS id, g % 2000 AS customer_id
+  FROM generate_series(1, 100000) AS g;
+  ANALYZE visits;
+  EXPLAIN SELECT * FROM visits WHERE customer_id = 7;
+check: { order_matters: true }

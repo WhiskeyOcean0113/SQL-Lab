@@ -1,0 +1,6 @@
+title:   { zh: "用 EXPLAIN 读{{term:query-plan}}", en: "Reading {{term:query-plan|query plans}} with EXPLAIN" }
+summary:
+  zh: 用 EXPLAIN 看数据库打算怎样执行一条查询，读懂计划树里的扫描、连接、聚合和排序，并用 EXPLAIN ANALYZE 比较估算和实际。
+  en: See how the database plans to run a query with EXPLAIN, read the scans, joins, aggregates and sorts in the plan tree, and compare estimates with reality using EXPLAIN ANALYZE.
+dataset: shop
+prereqs: [indexes]

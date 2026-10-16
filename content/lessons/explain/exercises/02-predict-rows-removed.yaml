@@ -1,0 +1,18 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: "`orders` 有 24 行，其中 4 行是 pending。下面的 `EXPLAIN ANALYZE` 里，`Rows Removed by Filter` 是多少？"
+  en: "`orders` has 24 rows, 4 of them pending. In this `EXPLAIN ANALYZE`, what is `Rows Removed by Filter`?"
+hint:
+  zh: 顺序扫描读了多少行，又留下了多少行？
+  en: How many rows does the sequential scan read, and how many does it keep?
+query: |
+  EXPLAIN (ANALYZE, COSTS OFF, BUFFERS OFF, TIMING OFF, SUMMARY OFF)
+  SELECT * FROM orders WHERE status = 'pending';
+choices: ['4', '20', '24']
+answer: 1
+verify: { rows: 3 }
+explain:
+  zh: 20。`Seq Scan` 读了全部 24 行，`Filter` 留下 4 行（`actual rows=4`），扔掉了 20 行。扔掉的比留下的多得多时，就值得考虑索引了，前提是表足够大。
+  en: 20. The `Seq Scan` read all 24 rows, the `Filter` kept 4 (`actual rows=4`) and threw away 20. When far more rows are thrown away than kept, an index is worth considering, provided the table is large enough.

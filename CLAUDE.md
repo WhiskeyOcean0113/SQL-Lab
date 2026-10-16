@@ -229,6 +229,10 @@ exercises depend on it, and validate will catch breakage.
   exercise page shows the probe or the attempts, so the learner knows what is
   checked.
 - Dates and timestamps come back as Postgres text; the session is UTC.
+- The dataset is `ANALYZE`d once on load, so `EXPLAIN` estimates are the same on
+  every run. `ANALYZE` writes row counts in place, outside any transaction, so
+  lessons and exercises `ANALYZE` only tables they create in the same run, never
+  the dataset's own tables.
 - The grader picks the last statement that returned columns. It reports
   structured issues (`column-count`, `column-order`, `duplicates`,
   `row-explosion`, `order`, …) plus the indexes of missing and extra rows. The

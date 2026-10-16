@@ -1,0 +1,17 @@
+kind: debug
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 下面的 SQL 想看删除订单 3 的明细时的实际执行情况，但不能真的删掉它们：最后的查询应该仍然返回 3。现在它返回 0。修好它。
+  en: This SQL wants to see how deleting order 3's items actually runs, without really deleting them, so the final query should still return 3. It returns 0. Fix it.
+hint:
+  zh: 把 `EXPLAIN ANALYZE` 放进一个事务里，看完就回滚。
+  en: Put the `EXPLAIN ANALYZE` inside a transaction and roll back afterwards.
+starter: |
+  EXPLAIN ANALYZE DELETE FROM order_items WHERE order_id = 3;
+  SELECT count(*) AS still_there FROM order_items WHERE order_id = 3;
+solution: |
+  BEGIN;
+  EXPLAIN ANALYZE DELETE FROM order_items WHERE order_id = 3;
+  ROLLBACK;
+  SELECT count(*) AS still_there FROM order_items WHERE order_id = 3;

@@ -1,0 +1,24 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 下面的 SQL 建了一张 10 万行的表，查询某位顾客的访问记录，计划是 `Seq Scan`。补上一个名为 `visits_customer_id_idx` 的索引，让最后这条 `EXPLAIN (COSTS OFF)` 的计划改为通过它查找。
+  en: The SQL below builds a 100,000-row table, and the plan for looking up one customer's visits is a `Seq Scan`. Add an index named `visits_customer_id_idx` so that the plan of the final `EXPLAIN (COSTS OFF)` looks rows up through it.
+hint:
+  zh: 查询的条件是 `customer_id = 7`，索引就建在这一列上，放在 `EXPLAIN` 之前。
+  en: The condition is `customer_id = 7`, so index that column, before the `EXPLAIN`.
+starter: |
+  CREATE TABLE visits AS
+  SELECT g AS id, g % 2000 AS customer_id
+  FROM generate_series(1, 100000) AS g;
+  ANALYZE visits;
+
+  EXPLAIN (COSTS OFF) SELECT * FROM visits WHERE customer_id = 7;
+solution: |
+  CREATE TABLE visits AS
+  SELECT g AS id, g % 2000 AS customer_id
+  FROM generate_series(1, 100000) AS g;
+  ANALYZE visits;
+  CREATE INDEX visits_customer_id_idx ON visits (customer_id);
+  EXPLAIN (COSTS OFF) SELECT * FROM visits WHERE customer_id = 7;
+check: { order_matters: true }

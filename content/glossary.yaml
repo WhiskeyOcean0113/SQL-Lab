@@ -141,3 +141,13 @@ partial-dependency: { en: partial dependency, zh: 部分依赖 }
 transitive-dependency: { en: transitive dependency, zh: 传递依赖 }
 denormalization:  { en: denormalization, zh: 反范式化 }
 materialized-view: { en: materialized view, zh: 物化视图 }
+b-tree:           { en: B-tree, zh: B 树 }
+sequential-scan:  { en: sequential scan, zh: 顺序扫描 }
+selectivity:      { en: selectivity, zh: 选择性 }
+composite-index:  { en: composite index, zh: 复合索引 }
+partial-index:    { en: partial index, zh: 部分索引 }
+expression-index: { en: expression index, zh: 表达式索引 }
+query-planner:    { en: query planner, zh: 查询规划器 }
+table-statistics: { en: table statistics, zh: 统计信息 }
+plan-node:        { en: plan node, zh: 计划节点 }
+cost-estimate:    { en: cost estimate, zh: 代价估算 }

@@ -84,7 +84,5 @@ modules:
     summary:
       zh: 理解索引为什么快，以及怎样读懂执行计划。
       en: Understand why indexes are fast, and how to read a query plan.
-    lessons: []
-    planned:
-      - { zh: "{{term:index}}", en: "{{Term:index|Indexes}}" }
-      - { zh: "用 EXPLAIN 读{{term:query-plan}}", en: "Reading {{term:query-plan|query plans}} with EXPLAIN" }
+    lessons: [indexes, explain]
+    planned: []

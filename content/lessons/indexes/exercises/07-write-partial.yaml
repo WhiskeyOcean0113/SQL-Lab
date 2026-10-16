@@ -1,0 +1,17 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 仓库的待办页面只查待处理（`status` 为 pending）的订单，并按 `ordered_at` 排序。建一个只包含待处理订单、按 `ordered_at` 排序的索引。
+  en: The warehouse to-do page only ever looks at pending orders (`status` pending), sorted by `ordered_at`. Create an index on `ordered_at` that covers only the pending orders.
+hint:
+  zh: 在 `CREATE INDEX … ON orders (ordered_at)` 后面加上 `WHERE` 条件。
+  en: Add a `WHERE` condition after `CREATE INDEX … ON orders (ordered_at)`.
+solution: CREATE INDEX orders_pending_idx ON orders (ordered_at) WHERE status = 'pending';
+check:
+  mode: probe
+  probe: |
+    SELECT regexp_replace(pg_get_indexdef(indexrelid), 'INDEX \S+ ON', 'INDEX ON') AS definition
+    FROM pg_index
+    WHERE indrelid = 'orders'::regclass AND NOT indisprimary
+    ORDER BY 1;

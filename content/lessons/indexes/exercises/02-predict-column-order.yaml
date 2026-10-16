@@ -1,0 +1,27 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: "`visits` 有一个 `(customer_id, visited_at)` 的索引。下面这条只按 `visited_at` 查找的查询，计划的第一行是什么？"
+  en: "`visits` has an index on `(customer_id, visited_at)`. What is the first line of the plan for this query, which filters only on `visited_at`?"
+hint:
+  zh: 多列索引先按第一列排序。不知道 `customer_id` 时，能在索引里跳到某个时间吗？
+  en: A multi-column index is sorted by its first column first. Without a `customer_id`, can the index jump to a time?
+query: |
+  CREATE TABLE visits AS
+  SELECT g AS id,
+         g % 2000 AS customer_id,
+         TIMESTAMP '2024-01-01' + g * INTERVAL '1 minute' AS visited_at
+  FROM generate_series(1, 100000) AS g;
+  CREATE INDEX ON visits (customer_id, visited_at);
+  ANALYZE visits;
+
+  EXPLAIN (COSTS OFF)
+  SELECT * FROM visits
+  WHERE visited_at >= '2024-03-01' AND visited_at < '2024-03-01 00:10';
+choices: ['Seq Scan on visits', 'Index Scan using visits_customer_id_visited_at_idx on visits', 'Bitmap Heap Scan on visits']
+answer: 0
+verify: { rows: 2 }
+explain:
+  zh: "`Seq Scan`。索引先按 `customer_id` 排，同一个时间散落在每位顾客的那一段里，没法一下子跳过去。条件里要有索引的第一列，这个索引才用得上；只按时间查找，需要一个以 `visited_at` 开头的索引。"
+  en: "`Seq Scan`. The index is sorted by `customer_id` first, so one time is scattered across every customer's section and cannot be jumped to. The index helps only when the condition includes its first column; searching by time alone needs an index starting with `visited_at`."

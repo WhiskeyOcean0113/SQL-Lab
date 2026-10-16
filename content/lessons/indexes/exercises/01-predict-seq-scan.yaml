@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: "`visits` 有 10 万行，还没有建任何索引。下面这条 `EXPLAIN` 的第一行是什么？"
+  en: "`visits` has 100,000 rows and no indexes yet. What is the first line of this `EXPLAIN`?"
+hint:
+  zh: 没有索引时，数据库只有一种办法找到这些行。
+  en: Without an index, the database has only one way to find the rows.
+query: |
+  CREATE TABLE visits AS
+  SELECT g AS id, g % 2000 AS customer_id
+  FROM generate_series(1, 100000) AS g;
+  ANALYZE visits;
+
+  EXPLAIN (COSTS OFF)
+  SELECT * FROM visits WHERE customer_id = 42;
+choices: ['Seq Scan on visits', 'Index Scan on visits', 'Bitmap Heap Scan on visits']
+answer: 0
+verify: { rows: 2 }
+explain:
+  zh: "`Seq Scan on visits`：顺序扫描，读遍 10 万行，用下一行的 `Filter` 逐行检查。建了 `customer_id` 的索引之后，计划才会变成通过索引查找。"
+  en: "`Seq Scan on visits`: a sequential scan reading all 100,000 rows and checking each with the `Filter` on the next line. Only after an index on `customer_id` exists does the plan look rows up through it."

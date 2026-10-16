@@ -39,14 +39,20 @@ export interface RunOutcome {
 
 /** How an exercise decides correctness. */
 export interface CheckSpec {
-  /** `result`: compare the last result set. `tables`: compare table contents after the SQL runs. */
-  mode: 'result' | 'tables'
+  /**
+   * `result`: compare the last result set. `tables`: compare table contents
+   * after the SQL runs. `probe`: run `probe` after the SQL and compare its
+   * result, for changes a table snapshot cannot see (new tables, views, indexes).
+   */
+  mode: 'result' | 'tables' | 'probe'
   /** Compare rows in order (the task asked for ORDER BY). */
   orderMatters: boolean
   /** Require the same column names, not just the same column count. */
   columnNames: boolean
   /** For mode `tables`: which tables to snapshot. */
   tables: string[]
+  /** For mode `probe`: the query that inspects the database afterwards. */
+  probe?: string
 }
 
 export type IssueCode =
@@ -61,6 +67,7 @@ export type IssueCode =
   | 'duplicates'
   | 'row-explosion'
   | 'tables-differ'
+  | 'probe-differs'
 
 export interface Issue {
   code: IssueCode

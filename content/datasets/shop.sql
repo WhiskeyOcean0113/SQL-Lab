@@ -1,4 +1,4 @@
--- shop: a small online store. The main practice dataset for M0–M5.
+-- shop: a small online store. The practice dataset for every chapter.
 --
 -- Small enough to trace by hand, but built to surface the classic traps:
 --   * customers 11 and 12 have never ordered        (LEFT JOIN, NOT EXISTS)

@@ -144,8 +144,10 @@ starter: …             # optional; required for debug (the broken query)
 check:                 # all optional
   order_matters: false # true only when the prompt asks for an order
   column_names: false  # true only when the prompt names the output columns
-  mode: result         # result | tables (for INSERT / UPDATE / DELETE)
+  mode: result         # result | tables (for INSERT / UPDATE / DELETE) | probe
   tables: []           # mode tables: which tables to compare afterwards
+  probe: |             # mode probe: a query run after the SQL; its result is graded
+    SELECT …           # (for CREATE TABLE / VIEW / INDEX: changes a snapshot cannot see)
 ```
 
 - `parsons`: the solution's lines become pieces; add `distractors: [ … ]`.
@@ -205,7 +207,7 @@ precise sentence to three loose ones. No filler, no exclamation marks.
 
 ## Datasets
 
-`content/datasets/shop.sql` is the main dataset (M0–M5). Its header lists the
+`content/datasets/shop.sql` is the dataset for every chapter. Its header lists the
 traps it is built to surface (customers without orders, a product without a
 category, NULL cities, a self-referencing column). Keep it small enough to
 trace by hand. Change it only with care: every lesson's examples and
@@ -214,8 +216,13 @@ exercises depend on it, and validate will catch breakage.
 ## Engine
 
 - `PracticeDb` runs learner SQL in `BEGIN … ROLLBACK`, so every run starts from
-  the same data. Learners cannot use transaction control (`BEGIN`, `COMMIT`,
-  `SAVEPOINT`, …); the M7 transactions lesson will need a dedicated sandbox mode.
+  the same data. A learner's own `BEGIN` / `COMMIT` / `ROLLBACK` becomes a
+  savepoint inside that transaction (`compileTransactions` in `sql-scan.ts`),
+  so transactions behave as in Postgres within a run, and the run is still
+  undone afterwards. `PREPARE` and two-phase commit are refused.
+- An exercise in `probe` mode is graded on the result of its probe query, run
+  after the SQL inside the same transaction. The exercise page shows the probe,
+  so the learner knows what is checked.
 - Dates and timestamps come back as Postgres text; the session is UTC.
 - The grader picks the last statement that returned columns. It reports
   structured issues (`column-count`, `column-order`, `duplicates`,

@@ -313,6 +313,8 @@ table.grid { width: 100%; border-collapse: collapse; font: var(--fs-xs)/1.45 var
 .task .req { list-style: none; padding: 16px 0 0; margin: 20px 0 0; border-top: 1px solid var(--line); font-size: var(--fs-sm); color: var(--ink-2); }
 .task .req li { padding: 4px 0 4px 18px; position: relative; }
 .task .req li::before { content: ""; position: absolute; left: 2px; top: 15px; width: 6px; height: 1px; background: var(--ink-3); }
+.task .req pre.probe { margin: 6px 0 2px; padding: 10px 14px; background: var(--well); border-radius: 8px; font: var(--fs-xs)/1.7 var(--mono); color: var(--ink); overflow-x: auto; white-space: pre; }
+.task .req pre.probe code { font: inherit; background: none; box-shadow: none; padding: 0; }
 .hint { margin-top: 20px; }
 .hint-body { margin-top: 12px; padding: 14px 18px; border-radius: 10px; background: var(--well); font-size: var(--fs-md); line-height: 1.85; }
 .hint-body p { margin: 0; }

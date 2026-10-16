@@ -1,5 +1,5 @@
 import { PGlite } from '@electric-sql/pglite'
-import { findTransactionControl } from './sql-scan.ts'
+import { compileTransactions, hasTransactionControl } from './sql-scan.ts'
 import { MAX_ROWS, type Cell, type CheckSpec, type ResultSet, type RunOutcome, type SqlError } from './types.ts'
 
 // Date and time types come back as the exact text Postgres prints, so the
@@ -22,35 +22,68 @@ export class PracticeDb {
     return new PracticeDb(db)
   }
 
-  /** Run learner SQL and roll it back. `snapshot` lists tables to read before the rollback. */
-  async run(sql: string, opts: { limit?: number; snapshot?: string[] } = {}): Promise<RunOutcome & { tables?: Record<string, ResultSet> }> {
+  /**
+   * Run learner SQL and roll it back. `snapshot` lists tables to read before the
+   * rollback; `probe` is a query run after the learner's SQL, whose result is
+   * what a `probe` exercise is graded on.
+   */
+  async run(sql: string, opts: { limit?: number; snapshot?: string[]; probe?: string } = {}): Promise<RunOutcome & { tables?: Record<string, ResultSet>; probe?: ResultSet }> {
     const limit = opts.limit ?? MAX_ROWS
     const t0 = performance.now()
-    const control = findTransactionControl(sql)
-    if (control) {
-      return {
-        ok: false,
-        results: [],
-        ms: 0,
-        error: { message: `Transaction control (${control.keyword}) is managed by SQL Lab and cannot be used here.`, code: 'SQLLAB_TXN' },
-      }
-    }
-
     await this.db.exec('BEGIN')
     try {
-      const raw = await this.db.exec(sql, { rowMode: 'array' })
-      const results = raw.map(r => toResultSet(r, limit))
+      const outcome = hasTransactionControl(sql) ? await this.runSteps(sql, limit) : await this.runScript(sql, limit)
+      if (!outcome.ok) return { ...outcome, ms: performance.now() - t0 }
       let tables: Record<string, ResultSet> | undefined
       if (opts.snapshot?.length) {
         tables = {}
         for (const t of opts.snapshot) tables[t] = await this.snapshot(t)
       }
-      return { ok: true, results, tables, ms: performance.now() - t0 }
+      let probe: ResultSet | undefined
+      if (opts.probe) {
+        const r = await this.runScript(opts.probe, Number.POSITIVE_INFINITY)
+        if (!r.ok) return { ...r, results: outcome.results, ms: performance.now() - t0 }
+        probe = [...r.results].reverse().find(x => x.columns.length > 0)
+      }
+      return { ok: true, results: outcome.results, tables, probe, ms: performance.now() - t0 }
     } catch (e) {
       return { ok: false, results: [], error: toSqlError(e), ms: performance.now() - t0 }
     } finally {
       await this.db.exec('ROLLBACK')
     }
+  }
+
+  private async runScript(sql: string, limit: number): Promise<{ ok: boolean; results: ResultSet[]; error?: SqlError }> {
+    try {
+      const raw = await this.db.exec(sql, { rowMode: 'array' })
+      return { ok: true, results: raw.map(r => toResultSet(r, limit)) }
+    } catch (e) {
+      return { ok: false, results: [], error: toSqlError(e) }
+    }
+  }
+
+  /** Statement by statement, with the learner's transaction control mapped onto savepoints. */
+  private async runSteps(sql: string, limit: number): Promise<{ ok: boolean; results: ResultSet[]; error?: SqlError }> {
+    const results: ResultSet[] = []
+    for (const step of compileTransactions(sql)) {
+      if (step.kind === 'error') {
+        return { ok: false, results, error: { message: step.message, code: step.code, position: step.start + 1 } }
+      }
+      if (step.kind === 'internal') {
+        await this.db.exec(step.sql)
+        results.push({ columns: [], rows: [], affectedRows: 0, truncated: false })
+        continue
+      }
+      try {
+        const raw = await this.db.exec(step.sql, { rowMode: 'array' })
+        results.push(...raw.map(r => toResultSet(r, limit)))
+      } catch (e) {
+        const error = toSqlError(e)
+        if (error.position !== undefined) error.position += step.start
+        return { ok: false, results, error }
+      }
+    }
+    return { ok: true, results }
   }
 
   /** Every row of a table, sorted by all columns so snapshots compare as plain lists. */
@@ -69,7 +102,8 @@ export class PracticeDb {
   /** Run the learner's SQL and the reference solution the same way, ready for grading. */
   async runPair(learnerSql: string, solutionSql: string, check: CheckSpec) {
     const snapshot = check.mode === 'tables' ? check.tables : undefined
-    const opts = { limit: Number.POSITIVE_INFINITY, snapshot }
+    const probe = check.mode === 'probe' ? check.probe : undefined
+    const opts = { limit: Number.POSITIVE_INFINITY, snapshot, probe }
     const expected = await this.run(solutionSql, opts)
     const actual = await this.run(learnerSql, opts)
     return { expected, actual }

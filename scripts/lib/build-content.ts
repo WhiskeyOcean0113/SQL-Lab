@@ -165,12 +165,15 @@ function buildExercise(lesson: string, stem: string, raw: Raw, glossary: Map<str
   const solution = String(raw.solution ?? '').trim()
   if (!solution) problems.push(where('missing solution'))
   const c = (raw.check ?? {}) as Raw
+  const mode = c.mode === undefined ? 'result' : String(c.mode)
+  if (!['result', 'tables', 'probe'].includes(mode)) problems.push(where(`unknown check mode "${mode}"`))
   const check: CheckSpec = {
-    mode: c.mode === 'tables' ? 'tables' : 'result',
+    mode: mode === 'tables' || mode === 'probe' ? mode : 'result',
     orderMatters: Boolean(c.order_matters),
     columnNames: Boolean(c.column_names),
     tables: ((c.tables as string[] | undefined) ?? []).map(String),
   }
+  if (check.mode === 'probe') check.probe = String(c.probe ?? '').trim()
   const starter = String(raw.starter ?? '').trim()
   if (kind === 'debug' && !starter) problems.push(where('debug needs a starter (the broken query)'))
 

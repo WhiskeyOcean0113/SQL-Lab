@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { gradeRuns } from '../src/engine/grade.ts'
 import { PracticeDb } from '../src/engine/practice-db.ts'
-import { findTransactionControl, splitStatements } from '../src/engine/sql-scan.ts'
+import { compileTransactions, hasTransactionControl, splitStatements } from '../src/engine/sql-scan.ts'
 import type { CheckSpec } from '../src/engine/types.ts'
 
 const shop = readFileSync(new URL('../content/datasets/shop.sql', import.meta.url), 'utf8')
@@ -24,8 +24,20 @@ describe('sql-scan', () => {
     expect(s.map(x => x.keyword)).toEqual(['SELECT', 'SELECT', 'SELECT'])
   })
   it('finds transaction control after a comment', () => {
-    expect(findTransactionControl('SELECT 1; /* sneaky */ COMMIT;')?.keyword).toBe('COMMIT')
-    expect(findTransactionControl("SELECT 'commit'")).toBeUndefined()
+    expect(hasTransactionControl('SELECT 1; /* sneaky */ COMMIT;')).toBe(true)
+    expect(hasTransactionControl("SELECT 'commit'")).toBe(false)
+  })
+  it('records where each statement starts', () => {
+    expect(splitStatements('SELECT 1;\n  SELECT 2').map(s => s.start)).toEqual([0, 12])
+  })
+  it('maps a learner transaction onto a savepoint', () => {
+    const steps = compileTransactions('BEGIN; UPDATE t SET x = 1; ROLLBACK; COMMIT; SAVEPOINT a')
+    expect(steps.map(s => s.kind === 'internal' ? s.sql : s.kind === 'learner' ? 'learner' : s.code)).toEqual([
+      'SAVEPOINT sqllab_txn',
+      'learner',
+      'ROLLBACK TO SAVEPOINT sqllab_txn; RELEASE SAVEPOINT sqllab_txn',
+      '25P01',
+    ])
   })
 })
 
@@ -51,9 +63,25 @@ describe('PracticeDb', () => {
     expect(r.error?.code).toBe('42803')
     expect(r.error?.position).toBeGreaterThan(0)
   })
-  it('refuses transaction control', async () => {
-    const r = await db.run('COMMIT')
-    expect(r.error?.code).toBe('SQLLAB_TXN')
+  it('runs a learner transaction inside its own', async () => {
+    const rolledBack = await db.run('BEGIN; DELETE FROM order_items; ROLLBACK; SELECT count(*) FROM order_items')
+    expect(rolledBack.results.at(-1)!.rows[0]![0]).toBe(42)
+    const committed = await db.run('BEGIN; DELETE FROM order_items; COMMIT; SELECT count(*) FROM order_items')
+    expect(committed.results.at(-1)!.rows[0]![0]).toBe(0)
+    const after = await db.run('SELECT count(*) FROM order_items')
+    expect(after.results[0]!.rows[0]![0]).toBe(42)
+  })
+  it('keeps savepoints and error positions working in a learner transaction', async () => {
+    const r = await db.run("BEGIN; UPDATE products SET stock = 0; SAVEPOINT s; DELETE FROM order_items; ROLLBACK TO s; COMMIT; SELECT count(*) FROM order_items, (SELECT max(stock) AS m FROM products) p WHERE p.m = 0")
+    expect(r.results.at(-1)!.rows[0]![0]).toBe(42)
+    const sql = 'BEGIN;\nSELECT nme FROM customers;'
+    const bad = await db.run(sql)
+    expect(bad.error?.code).toBe('42703')
+    expect(sql.slice(bad.error!.position! - 1, bad.error!.position! + 2)).toBe('nme')
+  })
+  it('refuses savepoints outside a transaction and PREPARE', async () => {
+    expect((await db.run('SAVEPOINT a')).error?.code).toBe('25P01')
+    expect((await db.run('PREPARE q AS SELECT 1')).error?.code).toBe('SQLLAB_TXN')
   })
 })
 
@@ -106,6 +134,15 @@ describe('grading', () => {
     expect((await grade('UPDATE products SET stock = stock + 10 WHERE stock <= 9', sol, check)).correct).toBe(true)
     const g = await grade('UPDATE products SET stock = stock + 10', sol, check)
     expect(g.issues[0]).toEqual({ code: 'tables-differ', data: { table: 'products' } })
+  })
+  it('grades schema changes with a probe query', async () => {
+    const check: CheckSpec = { mode: 'probe', orderMatters: false, columnNames: false, tables: [], probe: 'SELECT name FROM cheap' }
+    const sol = 'CREATE VIEW cheap AS SELECT name, price FROM products WHERE price < 20'
+    expect((await grade('CREATE VIEW cheap AS SELECT name FROM products WHERE price <= 19.99', sol, check)).correct).toBe(true)
+    const wrong = await grade('CREATE VIEW cheap AS SELECT name FROM products WHERE price < 10', sol, check)
+    expect(wrong.issues[0]!.code).toBe('probe-differs')
+    const missing = await grade('SELECT 1', sol, check)
+    expect(missing.error?.code).toBe('42P01')
   })
   it('passes the SQL error through', async () => {
     const g = await grade('SELECT nme FROM customers', 'SELECT name FROM customers')

@@ -149,6 +149,7 @@ async function renderQuery(env: Env, ex: QueryExercise) {
   // Requirements the grader checks, stated next to the task.
   const req: Raw[] = []
   if (ex.check.mode === 'tables') req.push(html`<li>${raw(t(lang, 'ex.req.tables', { tables: ex.check.tables.join(', ') }))}</li>`)
+  else if (ex.check.mode === 'probe') req.push(html`<li>${raw(t(lang, 'ex.req.probe'))}<pre class="probe"><code>${raw(highlightSql(ex.check.probe ?? ''))}</code></pre></li>`)
   else req.push(html`<li>${raw(t(lang, ex.check.orderMatters ? 'ex.req.ordered' : 'ex.req.unordered'))}</li>`)
   req.push(html`<li>${raw(t(lang, 'ex.req.dataset', { name: lesson.dataset }))}</li>`)
   mount($('.req', root), html`${req}`)

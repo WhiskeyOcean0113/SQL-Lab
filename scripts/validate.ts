@@ -96,14 +96,25 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
         continue
       }
 
-      const solved = await db.run(ex.solution, { limit: Infinity, snapshot: ex.check.mode === 'tables' ? ex.check.tables : undefined })
+      if (ex.check.mode === 'probe' && !ex.check.probe) { problems.push(at('check mode "probe" needs a probe query')); continue }
+      const solved = await db.run(ex.solution, {
+        limit: Infinity,
+        snapshot: ex.check.mode === 'tables' ? ex.check.tables : undefined,
+        probe: ex.check.mode === 'probe' ? ex.check.probe : undefined,
+      })
       if (!solved.ok) { problems.push(at(`solution fails: ${solved.error?.message}`)); continue }
       if (ex.check.mode === 'result') {
         const rs = finalResult(solved)
         if (!rs) problems.push(at('solution returns no result set'))
         else if (rs.rows.length === 0) warnings.push(at('solution returns zero rows; an empty answer is easy to match by accident'))
-      } else if (!ex.check.tables.length) {
+      } else if (ex.check.mode === 'tables' && !ex.check.tables.length) {
         problems.push(at('check mode "tables" needs a list of tables'))
+      } else if (ex.check.mode === 'probe') {
+        if (!solved.probe) problems.push(at('the probe query returns no result set'))
+        else if (solved.probe.rows.length === 0) warnings.push(at('the probe query returns zero rows after the solution'))
+        const untouched = await db.run('SELECT 1', { probe: ex.check.probe })
+        if (untouched.ok && untouched.probe && solved.probe
+          && gradeRuns(untouched, solved, ex.check).correct) problems.push(at('the probe gives the same result whether or not the solution ran'))
       }
 
       if (ex.kind === 'debug') {

@@ -86,8 +86,8 @@ export function compareResultSets(expected: ResultSet, actual: ResultSet, check:
 }
 
 export function gradeRuns(
-  expected: RunOutcome & { tables?: Record<string, ResultSet> },
-  actual: RunOutcome & { tables?: Record<string, ResultSet> },
+  expected: RunOutcome & { tables?: Record<string, ResultSet>; probe?: ResultSet },
+  actual: RunOutcome & { tables?: Record<string, ResultSet>; probe?: ResultSet },
   check: CheckSpec,
 ): Grade {
   if (!expected.ok) throw new Error(`Reference solution failed: ${expected.error?.message}`)
@@ -104,6 +104,12 @@ export function gradeRuns(
       if (!g.correct) return { ...g, issues: [{ code: 'tables-differ', data: { table } }, ...g.issues] }
     }
     return { correct: true, issues: [], missing: [], extra: [] }
+  }
+
+  if (check.mode === 'probe') {
+    if (!expected.probe || !actual.probe) throw new Error('The probe query returned no result set')
+    const g = compareResultSets(expected.probe, actual.probe, { orderMatters: check.orderMatters, columnNames: false })
+    return g.correct ? g : { ...g, issues: [{ code: 'probe-differs' }, ...g.issues] }
   }
 
   const e = finalResult(expected)

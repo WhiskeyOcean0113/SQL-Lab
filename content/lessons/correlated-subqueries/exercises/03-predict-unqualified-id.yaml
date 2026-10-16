@@ -1,0 +1,25 @@
+kind: predict
+difficulty: 3
+lesson_ref: syntax
+prompt:
+  zh: Lin Wei（顾客 1）下过 4 个订单。在这条查询里，Lin Wei 那一行的 `n` 是多少？
+  en: Lin Wei (customer 1) has placed 4 orders. In this query, what is `n` on Lin Wei's row?
+hint:
+  zh: 子查询里不带别名的 `id` 指的是哪张表的列？按语法一节里的规则，从里往外找。
+  en: Which table does the unqualified `id` inside the subquery belong to? Follow the rule in Syntax and search from the inside out.
+query: |
+  SELECT c.name,
+         (SELECT count(*)
+          FROM orders AS o
+          WHERE o.customer_id = id) AS n
+  FROM customers AS c
+  WHERE c.id = 1;
+choices:
+  - '4'
+  - '3'
+  - '24'
+  - { zh: "报错：`id` 有歧义", en: "An error: `id` is ambiguous" }
+answer: 1
+explain:
+  zh: 3。不带别名的 `id` 先在子查询自己的 `FROM` 里找，`orders` 正好有 `id` 列，所以它就是 `o.id`，外层的 `c.id` 根本不会被考虑。条件变成了 `o.customer_id = o.id`，只有订单 1、2、3 满足，所以每位顾客的 `n` 都是 3。要数 Lin Wei 自己的订单，得写 `o.customer_id = c.id`。
+  en: 3. The unqualified `id` is looked up in the subquery's own `FROM` first, and `orders` has an `id` column, so it means `o.id` and the outer `c.id` is never considered. The condition becomes `o.customer_id = o.id`, which holds only for orders 1, 2 and 3, so every customer's `n` is 3. To count Lin Wei's own orders, write `o.customer_id = c.id`.

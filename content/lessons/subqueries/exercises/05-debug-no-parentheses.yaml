@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想列出每件商品的名字，以及它的库存占全部库存的百分比，保留一位小数，列名依次为 `name` 和 `share`。它报错了。修好它。
+  en: This query should list each product's name and its share of all units in stock, as a percentage rounded to one decimal place, with the columns `name` and `share`. It fails. Fix it.
+hint:
+  zh: 在语法里，子查询是 `( select_statement )`：整条 `SELECT` 都要包在括号里。
+  en: "In the syntax, a subquery is `( select_statement )`: the whole `SELECT` sits inside parentheses."
+starter: |
+  SELECT name,
+         round(100.0 * stock / SELECT sum(stock) FROM products, 1) AS share
+  FROM products;
+solution: |
+  SELECT name,
+         round(100.0 * stock / (SELECT sum(stock) FROM products), 1) AS share
+  FROM products;
+check: { column_names: true }

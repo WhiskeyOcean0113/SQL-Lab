@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: Books（`category_id` 1）有 3 件商品，Stationery（`category_id` 4）有 2 件。下面这条查询会返回几行？
+  en: Books (`category_id` 1) has 3 products and Stationery (`category_id` 4) has 2. How many rows does this query return?
+hint:
+  zh: 最后的 `LIMIT` 写在第二条查询后面，它属于谁？
+  en: The final `LIMIT` is written after the second query. What does it belong to?
+query: |
+  SELECT name FROM products WHERE category_id = 1
+  UNION ALL
+  SELECT name FROM products WHERE category_id = 4
+  LIMIT 2;
+choices: ['2', '4', '5']
+answer: 0
+verify: { rows: 2 }
+explain:
+  zh: 2 行。在语法里，`ORDER BY` 和 `LIMIT` 跟在最后一条查询后面，看上去像是它的，其实属于整个集合运算的结果。`UNION ALL` 先合并出 5 行，`LIMIT 2` 再从中取前两行。想让某一边自己限制行数，要把那一边包进括号里。
+  en: 2 rows. In the syntax, `ORDER BY` and `LIMIT` follow the last query and look as if they belong to it, but they belong to the result of the whole set operation. `UNION ALL` combines 5 rows first, and `LIMIT 2` then keeps the first two. To limit one side on its own, wrap that side in parentheses.

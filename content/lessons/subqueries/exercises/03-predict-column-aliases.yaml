@@ -1,0 +1,27 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 下面这条查询返回什么？
+  en: What does this query return?
+hint:
+  zh: 别名后面括号里的名字，按顺序重新命名派生表的每一列。
+  en: The names in parentheses after the alias rename the derived table's columns in order.
+query: |
+  SELECT t.n
+  FROM (
+    SELECT status, count(*)
+    FROM orders
+    GROUP BY status
+  ) AS t(s, n)
+  ORDER BY t.n DESC
+  LIMIT 1;
+choices:
+  - '11'
+  - 'delivered'
+  - '24'
+  - { zh: "报错：子查询的第二列没有名字", en: "An error: the subquery's second column has no name" }
+answer: 0
+explain:
+  zh: 11。`t(s, n)` 把派生表的两列依次改名为 `s` 和 `n`，所以 `t.n` 就是 `count(*)` 那一列。按 `n` 从大到小排，第一行是 `delivered` 的 11 个订单。子查询里的 `count(*)` 没起名字也没关系，外面的列名列表已经给了它名字。
+  en: 11. `t(s, n)` renames the derived table's two columns to `s` and `n`, in order, so `t.n` is the `count(*)` column. Sorted by `n` from high to low, the first row is the 11 delivered orders. That `count(*)` has no name inside the subquery does not matter, because the column list outside gives it one.

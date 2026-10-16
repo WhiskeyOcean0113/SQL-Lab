@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条查询想把日本顾客的名字和 Outdoor 商品（`category_id` 5）的名字合成一个列表，列名依次为 `name` 和 `letters`（名字的字符数），先按 `letters` 再按 `name` 排序。它报错了。修好它，保留这两个列名。
+  en: This query should combine the names of the customers from Japan and of the Outdoor products (`category_id` 5) into one list, with the columns `name` and `letters` (the number of characters in the name), sorted by `letters` and then by `name`. It fails. Fix it, keeping both column names.
+hint:
+  zh: 集合运算最后的 `ORDER BY` 只认得结果里的列名，不能写表达式。在两边的 select 列表里各算出 `length(name)`，再按那一列排序。
+  en: The final `ORDER BY` of a set operation knows only the result's column names, not expressions. Compute `length(name)` in each side's select list, then sort by that column.
+starter: |
+  SELECT name FROM customers WHERE country = 'Japan'
+  UNION
+  SELECT name FROM products WHERE category_id = 5
+  ORDER BY length(name), name;
+solution: |
+  SELECT name, length(name) AS letters FROM customers WHERE country = 'Japan'
+  UNION
+  SELECT name, length(name) FROM products WHERE category_id = 5
+  ORDER BY letters, name;
+check: { order_matters: true, column_names: true }

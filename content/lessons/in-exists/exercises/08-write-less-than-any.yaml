@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 列出至少比一件 Stationery 商品（`category_id` 4）便宜的商品，列依次为名字和价格。
+  en: List the products that cost less than at least one Stationery product (`category_id` 4), with the columns name and price.
+hint:
+  zh: 形状是 `expression comparison_operator { ANY | ALL } ( select_statement )`。“至少比一件便宜”用 `< ANY`。
+  en: The shape is `expression comparison_operator { ANY | ALL } ( select_statement )`. "Cheaper than at least one" is `< ANY`.
+solution: |
+  SELECT name, price
+  FROM products
+  WHERE price < ANY (SELECT price FROM products WHERE category_id = 4);

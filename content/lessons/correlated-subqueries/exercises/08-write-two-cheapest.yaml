@@ -1,0 +1,20 @@
+kind: write
+difficulty: 3
+lesson_ref: deeper
+prompt:
+  zh: 列出每个分类里最便宜的两件商品，列名依次为 `category`（分类名）、`product`（商品名）和 `price`。没有分类的商品不用列出。
+  en: List the two cheapest products in each category, with the columns `category` (the category name), `product` (the product name) and `price`. Products without a category are left out.
+hint:
+  zh: 用 `CROSS JOIN LATERAL`：对左边的每个分类，跑一次按价格排序、`LIMIT 2` 的子查询，子查询里可以用左边分类的 `id`。
+  en: Use `CROSS JOIN LATERAL`. For each category on the left, run a subquery that sorts by price and takes `LIMIT 2`; inside it you can use the category's `id` from the left.
+solution: |
+  SELECT g.name AS category, r.name AS product, r.price
+  FROM categories AS g
+  CROSS JOIN LATERAL (
+    SELECT p.name, p.price
+    FROM products AS p
+    WHERE p.category_id = g.id
+    ORDER BY p.price
+    LIMIT 2
+  ) AS r;
+check: { column_names: true }

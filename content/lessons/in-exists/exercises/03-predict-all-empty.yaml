@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 有人想找出比每一件 Outdoor 商品（`category_id` 5）都贵的商品，却把 5 打成了 6，而 shop 里没有分类 6。shop 一共有 16 件商品。下面这条查询会返回几行？
+  en: Someone wanted the products dearer than every Outdoor product (`category_id` 5) but typed 6, and shop has no category 6. shop has 16 products in all. How many rows does this query return?
+hint:
+  zh: 子查询一行都没返回。“比其中每一个都大”找得到反例吗？
+  en: The subquery returns no rows. Is there any counterexample to "greater than every one of them"?
+query: |
+  SELECT name
+  FROM products
+  WHERE price > ALL (SELECT price FROM products WHERE category_id = 6);
+choices: ['0', '1', '16']
+answer: 2
+verify: { rows: 16 }
+explain:
+  zh: 16 行。子查询为空时，`> ALL` 对每一行都为真：没有任何值可以当反例。这在逻辑上说得通，却很容易让人意外：子查询的条件写错时，`ALL` 会让外层查询把所有行都返回。换成 `> ANY`，结果则是 0 行。
+  en: 16 rows. When the subquery is empty, `> ALL` is true for every row, because there is no value to serve as a counterexample. That is logically sound but easily surprising, since a wrong condition in the subquery makes the outer query return everything. With `> ANY` the result would be 0 rows.

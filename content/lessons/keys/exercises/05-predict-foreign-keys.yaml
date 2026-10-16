@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 下面这条查询列出 `order_items` 的所有外键。它会返回几行？
+  en: This query lists every foreign key of `order_items`. How many rows does it return?
+hint:
+  zh: "`order_items` 是一张关联表，它指向哪几张表？"
+  en: "`order_items` is a junction table. Which tables does it point at?"
+query: |
+  SELECT constraint_name
+  FROM information_schema.table_constraints
+  WHERE table_name = 'order_items' AND constraint_type = 'FOREIGN KEY';
+choices: ['0', '1', '2', '3']
+answer: 2
+verify: { rows: 2 }
+explain:
+  zh: 2 行：`order_items_order_id_fkey` 指向 `orders`，`order_items_product_id_fkey` 指向 `products`。关联表连接多对多的两边，所以有两个外键。名字按 `表名_列名_fkey` 的规则生成。
+  en: "2 rows: `order_items_order_id_fkey` points at `orders` and `order_items_product_id_fkey` at `products`. A junction table links the two sides of a many-to-many relationship, so it has two foreign keys. The names follow the `table_column_fkey` rule."

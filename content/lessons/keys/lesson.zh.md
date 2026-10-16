@@ -70,6 +70,18 @@ SELECT id, name, referred_by FROM customers;
 
 Kenji Sato 的 `referred_by` 是 1，表示 Kenji Sato 是被顾客 1（Lin Wei）推荐的。
 
+**查看一张表有哪些键。** 键都记录在 `information_schema.table_constraints` 里：
+
+```sql run
+SELECT table_name, constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_schema = 'public'
+  AND constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
+ORDER BY table_name, constraint_type, constraint_name;
+```
+
+PostgreSQL 按固定的规则给这些键起名字：主键叫 `表名_pkey`，外键叫 `表名_列名_fkey`，唯一约束叫 `表名_列名_key`。记住这个规则很有用，因为违反约束时，错误信息里给出的就是这个名字。看到 `order_items_order_id_fkey`，你马上知道是 `order_items.order_id` 这个外键没通过。
+
 ## 深入 {#deeper}
 
 **外键可以是 NULL。** 外键只检查“有值的时候，这个值必须存在”。没有值是允许的：Gift Card 的 `category_id` 是 NULL，表示它不属于任何分类；Lin Wei 的 `referred_by` 是 NULL，表示没有人推荐。如果不允许为空，需要另外加上 `NOT NULL`，比如 `orders.customer_id` 就是这样定义的。
@@ -83,6 +95,15 @@ DELETE FROM customers WHERE id = 1;
 ```
 
 报错提到的约束是 `customers_referred_by_fkey`：Kenji Sato 和 Chen Yu 的 `referred_by` 都指向顾客 1。就算没有这一层，Lin Wei 的订单也会阻止删除。这是外键的默认行为；定义外键时也可以选择 `ON DELETE CASCADE`（连带删除引用它的行），但这类设计要非常谨慎。
+
+**复合主键检查的是整个组合。** `order_items` 里已经有“订单 3 + 商品 3”这一行，再插一次会被拒绝：
+
+```sql run error
+INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+VALUES (3, 3, 1, 19.99);
+```
+
+DETAIL 里写的是 `Key (order_id, product_id)=(3, 3) already exists`，两列一起报出来。换成“订单 3 + 商品 4”就可以插入，因为这个组合还没有出现过，虽然 3 和 4 单独看都已经存在。
 
 **主键的值没有含义。** `id` 只是一个标签。它不代表顺序或数量，也不保证连续：删掉一行后，中间会留下空号，这完全正常。不要用 `id` 做计算，也不要根据 `id` 的大小推断谁先注册。
 
@@ -103,6 +124,25 @@ INSERT INTO categories (id, name) VALUES (1, 'Garden');
 `duplicate key value violates unique constraint "categories_pkey"`：编号 1 已经属于 Books 了。
 
 **5. 把唯一约束当成主键。** `email` 也是唯一的，但它允许为空，一张表也可以有好几个唯一约束；主键只有一个，而且永远不为空。
+
+**6. 先写引用别人的行，再写被引用的行。** 为一笔新订单记录明细，如果订单本身还没写进去，外键会拒绝：
+
+```sql run error
+INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+VALUES (25, 3, 1, 19.99);
+```
+
+`Key (order_id)=(25) is not present in table "orders"`：明细指向的订单 25 还不存在。顺序要反过来，先有订单，再有明细：
+
+```sql run
+INSERT INTO orders (id, customer_id, ordered_at, status)
+VALUES (25, 11, '2024-07-01 10:00', 'pending');
+INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+VALUES (25, 3, 1, 19.99);
+SELECT * FROM order_items WHERE order_id = 25;
+```
+
+删除时正好相反：先删明细，再删订单。
 
 ## 小结 {#summary}
 

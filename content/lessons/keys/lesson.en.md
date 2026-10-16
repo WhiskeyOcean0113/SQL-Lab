@@ -70,6 +70,18 @@ SELECT id, name, referred_by FROM customers;
 
 Kenji Sato's `referred_by` is 1, meaning Kenji Sato was referred by customer 1, Lin Wei.
 
+**Listing a table's keys.** Every key is recorded in `information_schema.table_constraints`:
+
+```sql run
+SELECT table_name, constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_schema = 'public'
+  AND constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
+ORDER BY table_name, constraint_type, constraint_name;
+```
+
+PostgreSQL names these keys by a fixed rule: a primary key is `table_pkey`, a foreign key `table_column_fkey` and a unique constraint `table_column_key`. The rule is worth knowing, because a violated constraint is reported by this name. Seeing `order_items_order_id_fkey`, you know at once that the foreign key on `order_items.order_id` failed.
+
 ## Going deeper {#deeper}
 
 **A foreign key may be NULL.** A foreign key only checks that a value, when present, exists. No value is allowed: Gift Card's `category_id` is NULL because it belongs to no category, and Lin Wei's `referred_by` is NULL because nobody referred Lin Wei. To forbid that, add `NOT NULL`, as `orders.customer_id` does.
@@ -83,6 +95,15 @@ DELETE FROM customers WHERE id = 1;
 ```
 
 The error names the constraint `customers_referred_by_fkey`: the `referred_by` of both Kenji Sato and Chen Yu is 1. Even without that, Lin Wei's orders would block the delete. This is the default behaviour of a foreign key. A foreign key can instead be declared `ON DELETE CASCADE`, which deletes the referencing rows too, but that is a design choice to make with great care.
+
+**A composite key checks the whole combination.** `order_items` already has the row "order 3 + product 3", so inserting it again is refused:
+
+```sql run error
+INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+VALUES (3, 3, 1, 19.99);
+```
+
+The DETAIL reads `Key (order_id, product_id)=(3, 3) already exists`, naming both columns together. "Order 3 + product 4" would go in, because that pair has not appeared yet, even though 3 and 4 each exist on their own.
 
 **Primary key values mean nothing.** An `id` is a label. It does not encode order or quantity, and it need not be continuous: deleting a row leaves a gap, which is perfectly normal. Do not calculate with ids, and do not infer who signed up first from their size.
 
@@ -103,6 +124,25 @@ INSERT INTO categories (id, name) VALUES (1, 'Garden');
 `duplicate key value violates unique constraint "categories_pkey"`: number 1 already belongs to Books.
 
 **5. Mistaking a unique constraint for a primary key.** `email` is unique too, but it allows NULL, and a table can have several unique constraints. There is exactly one primary key, and it is never NULL.
+
+**6. Writing the referencing row before the row it references.** Recording the items of a new order fails if the order itself is not there yet:
+
+```sql run error
+INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+VALUES (25, 3, 1, 19.99);
+```
+
+`Key (order_id)=(25) is not present in table "orders"`: the item points at an order 25 that does not exist. Reverse the order of the statements, the order first and its items second:
+
+```sql run
+INSERT INTO orders (id, customer_id, ordered_at, status)
+VALUES (25, 11, '2024-07-01 10:00', 'pending');
+INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+VALUES (25, 3, 1, 19.99);
+SELECT * FROM order_items WHERE order_id = 25;
+```
+
+Deleting works the other way round: the items first, then the order.
 
 ## Summary {#summary}
 

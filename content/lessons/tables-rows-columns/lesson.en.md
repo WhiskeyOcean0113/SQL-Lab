@@ -81,6 +81,14 @@ ORDER BY table_name;
 
 **Upper and lower case in names.** Unquoted table and column names are case-insensitive in PostgreSQL. `SELECT * FROM Products;` is the same as `SELECT * FROM products;`, because the database folds unquoted names to lower case first. Double quotes make a name case-sensitive, so `"Products"` refers to a different table, one that does not exist.
 
+**Just some columns.** Replace `*` with a comma-separated list of column names and the result has only those columns, in the order you wrote them:
+
+```sql run
+SELECT name, price FROM products;
+```
+
+Still 16 rows; each now has two columns. The first lesson of Chapter 1 covers this in detail.
+
 ## Going deeper {#deeper}
 
 **{{Term:null}} is not 0 and not an empty string.** Some cells show NULL, which means "no value here" or "unknown":
@@ -96,6 +104,27 @@ The `city` of Liam O'Brien and of Lucas Silva is NULL: the city is unknown, not 
 - A table has no "row 3". Rows have no fixed position.
 - A column holds one type only. One cell cannot be a number and the next a sentence.
 - A cell holds a single value: no merged cells, no formulas. Calculations belong in queries.
+
+**Common column types.** shop uses only five types:
+
+| Type | Holds | Examples in shop |
+|---|---|---|
+| `integer` | Whole numbers | `id`, `stock`, `quantity` |
+| `numeric(8, 2)` | Exact decimals: up to 8 digits, 2 of them after the point | `price`, `unit_price` |
+| `text` | Text of any length | `name`, `city`, `status` |
+| `date` | A date without a time | `joined_on`, `launched_on` |
+| `timestamp` | A date and a time | `ordered_at`, `shipped_at` |
+
+`information_schema` also tells you which columns may be NULL:
+
+```sql run
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'customers'
+ORDER BY ordinal_position;
+```
+
+A column whose `is_nullable` is `NO` must always have a value: every customer has a name and a country. One marked `YES` may be empty, like `email` and `city`. `timestamp` shows up here as `timestamp without time zone`, meaning it carries no {{term:time-zone}}; Chapter 2 comes back to this with dates.
 
 **Naming conventions.** shop uses plural table names (`orders`) and lower-case column names with underscores (`customer_id`), a style called snake_case. Nothing enforces it, but it is common and never needs quoting.
 

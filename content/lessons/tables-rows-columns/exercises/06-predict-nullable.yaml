@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 1
+lesson_ref: deeper
+prompt:
+  zh: 运行下面的查询，看 `customers` 每一列的 `is_nullable`。下面哪一列允许为 NULL？
+  en: Run the query below and look at `is_nullable` for each column of `customers`. Which of these columns may be NULL?
+hint:
+  zh: "`is_nullable` 为 `YES` 的列可以空着。"
+  en: A column whose `is_nullable` is `YES` may be left empty.
+query: |
+  SELECT column_name, data_type, is_nullable
+  FROM information_schema.columns
+  WHERE table_name = 'customers'
+  ORDER BY ordinal_position;
+choices: ['name', 'country', 'city', 'joined_on']
+answer: 2
+verify: { rows: 7 }
+explain:
+  zh: "`city`。它的 `is_nullable` 是 `YES`，所以有的顾客没有城市，比如 Liam O'Brien。`name`、`country`、`joined_on` 都是 `NO`，每位顾客都必须有值。"
+  en: "`city`. Its `is_nullable` is `YES`, so some customers have no city, Liam O'Brien among them. `name`, `country` and `joined_on` are all `NO`: every customer must have a value."

@@ -81,6 +81,14 @@ ORDER BY table_name;
 
 **名字的大小写。** 不加引号的表名和列名在 PostgreSQL 里不分大小写，`SELECT * FROM Products;` 和 `SELECT * FROM products;` 完全一样，因为数据库会先把名字转成小写。但加了双引号就区分大小写了，`"Products"` 指的是另一张（并不存在的）表。
 
+**只看几列。** 把 `*` 换成用逗号隔开的列名，结果就只有这几列，顺序也按你写的来：
+
+```sql run
+SELECT name, price FROM products;
+```
+
+行数不变，还是 16 行，只是每一行只剩两列。第 1 章第一篇会细讲这种写法。
+
 ## 深入 {#deeper}
 
 **{{term:null}} 不是 0，也不是空字符串。** 有些格子里显示的是 NULL，意思是“这里没有值”或“不知道”：
@@ -96,6 +104,27 @@ Liam O'Brien 和 Lucas Silva 的 `city` 是 NULL，这表示城市未知，而�
 - 表没有“第 3 行”这种位置，行没有固定顺序。
 - 每一列只能存一种类型的值，不能这一格是数字、下一格是文字。
 - 每个格子只存一个值，不能合并单元格，也不能存公式。需要计算时，写在查询里。
+
+**常见的列类型。** shop 只用到了五种类型：
+
+| 类型 | 存什么 | shop 里的例子 |
+|---|---|---|
+| `integer` | 整数 | `id`、`stock`、`quantity` |
+| `numeric(8, 2)` | 精确的小数：最多 8 位数字，其中 2 位在小数点后 | `price`、`unit_price` |
+| `text` | 任意长度的文字 | `name`、`city`、`status` |
+| `date` | 日期，没有时间 | `joined_on`、`launched_on` |
+| `timestamp` | 日期加时间 | `ordered_at`、`shipped_at` |
+
+`information_schema` 还能告诉你哪些列允许是 NULL：
+
+```sql run
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'customers'
+ORDER BY ordinal_position;
+```
+
+`is_nullable` 为 `NO` 的列必须有值，比如每位顾客都有名字和国家；为 `YES` 的列可以空着，比如 `email` 和 `city`。`timestamp` 在这里显示成 `timestamp without time zone`，意思是它不带{{term:time-zone}}信息，第 2 章讲日期时会再遇到。
 
 **列名的约定。** shop 的表名用复数（`orders`），列名用小写加下划线（`customer_id`），这种写法叫 snake_case。它不是强制规定，但很常见，而且不用加引号。
 

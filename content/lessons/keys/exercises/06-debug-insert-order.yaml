@@ -1,0 +1,22 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: |
+    Lucas Silva（顾客 11）下了订单 25：下单时间 2024-07-01 10:00，状态 pending，买了 1 本 SQL Pocket Guide（商品 3，单价 19.99）。下面两条语句想把订单和明细都记下来，却报错了。修好它们。
+  en: |
+    Lucas Silva (customer 11) placed order 25 at 2024-07-01 10:00, status pending, buying one SQL Pocket Guide (product 3, unit price 19.99). These two statements should record the order and its item, but they fail. Fix them.
+hint:
+  zh: 错误说订单 25 不存在。明细引用订单，哪一条应该先执行？
+  en: The error says order 25 does not exist. The item references the order, so which statement must run first?
+starter: |
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (25, 3, 1, 19.99);
+  INSERT INTO orders (id, customer_id, ordered_at, status)
+  VALUES (25, 11, '2024-07-01 10:00', 'pending');
+solution: |
+  INSERT INTO orders (id, customer_id, ordered_at, status)
+  VALUES (25, 11, '2024-07-01 10:00', 'pending');
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (25, 3, 1, 19.99);
+check: { mode: tables, tables: [orders, order_items] }

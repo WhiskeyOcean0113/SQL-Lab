@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 有两位顾客的 `city` 是 NULL。下面这条语句的 `RETURNING` 会返回几行？
+  en: Two customers have a NULL `city`. How many rows does this statement's `RETURNING` give back?
+hint:
+  zh: "`city = NULL` 的结果是什么？"
+  en: What does `city = NULL` evaluate to?
+query: |
+  UPDATE customers
+  SET city = 'Unknown'
+  WHERE city = NULL
+  RETURNING id, city;
+choices: ['0', '2', '12']
+answer: 0
+verify: { rows: 0 }
+explain:
+  zh: 0 行。`city = NULL` 对每一行都是 NULL，不是真，所以一行都没被选中。语句不会报错，只是什么也没改。要写 `WHERE city IS NULL`。
+  en: 0 rows. `city = NULL` is NULL for every row, never true, so no row is picked. The statement raises no error; it just changes nothing. Write `WHERE city IS NULL`.

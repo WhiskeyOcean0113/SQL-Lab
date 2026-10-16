@@ -1,0 +1,11 @@
+kind: write
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 库存不足 10 件的商品，每件补货 20 件：在原来的库存上加 20。其他商品不变。
+  en: Restock every product with fewer than 10 in stock by adding 20 to its current stock. Leave the other products unchanged.
+hint:
+  zh: "`SET stock = stock + 20`，再用 `WHERE` 选出库存小于 10 的商品。"
+  en: "`SET stock = stock + 20`, with a `WHERE` picking the products whose stock is below 10."
+solution: UPDATE products SET stock = stock + 20 WHERE stock < 10;
+check: { mode: tables, tables: [products] }

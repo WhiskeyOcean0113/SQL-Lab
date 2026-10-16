@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句想给订单 22 加 1 支 Fountain Pen（商品 11，单价 28.00）：订单里还没有就新增一行，已经有了就在原来的件数上加 1。它报错了。修好它。
+  en: This statement should add one Fountain Pen (product 11, 28.00) to order 22, inserting a line if the order has none and otherwise adding 1 to the existing quantity. It fails. Fix it.
+hint:
+  zh: "`DO UPDATE` 必须写出冲突目标，也就是 `order_items` 主键的列。"
+  en: "`DO UPDATE` needs a conflict target: the columns of `order_items`'s primary key."
+starter: |
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (22, 11, 1, 28.00)
+  ON CONFLICT
+  DO UPDATE SET quantity = order_items.quantity + EXCLUDED.quantity;
+solution: |
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (22, 11, 1, 28.00)
+  ON CONFLICT (order_id, product_id)
+  DO UPDATE SET quantity = order_items.quantity + EXCLUDED.quantity;
+check: { mode: tables, tables: [order_items] }

@@ -1,0 +1,24 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这个事务想给 4K Monitor（商品 7）补货 10 件，试过打五折之后又撤销了打折，最后价格不变、补货保留。它报错了。修好它。
+  en: This transaction should restock the 4K Monitor (product 7) with 10 units, try half price, then undo the discount, so that the price ends unchanged and the restock remains. It fails. Fix it.
+hint:
+  zh: 对照一下 `SAVEPOINT` 和 `ROLLBACK TO` 后面的名字。
+  en: Compare the names after `SAVEPOINT` and after `ROLLBACK TO`.
+starter: |
+  BEGIN;
+  UPDATE products SET stock = stock + 10 WHERE id = 7;
+  SAVEPOINT restocked;
+  UPDATE products SET price = price * 0.5 WHERE id = 7;
+  ROLLBACK TO SAVEPOINT restock;
+  COMMIT;
+solution: |
+  BEGIN;
+  UPDATE products SET stock = stock + 10 WHERE id = 7;
+  SAVEPOINT restocked;
+  UPDATE products SET price = price * 0.5 WHERE id = 7;
+  ROLLBACK TO SAVEPOINT restocked;
+  COMMIT;
+check: { mode: tables, tables: [products] }

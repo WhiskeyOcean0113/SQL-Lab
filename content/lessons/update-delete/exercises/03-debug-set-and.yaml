@@ -1,0 +1,12 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句想把 SQL Pocket Guide（商品 3）的价格改成 17.99，同时把库存改成 50。它报错了。修好它。
+  en: This statement should set the price of SQL Pocket Guide (product 3) to 17.99 and its stock to 50. It fails. Fix it.
+hint:
+  zh: "`SET` 里的多列之间用什么隔开？"
+  en: What separates several columns in `SET`?
+starter: UPDATE products SET price = 17.99 AND stock = 50 WHERE id = 3;
+solution: UPDATE products SET price = 17.99, stock = 50 WHERE id = 3;
+check: { mode: tables, tables: [products] }

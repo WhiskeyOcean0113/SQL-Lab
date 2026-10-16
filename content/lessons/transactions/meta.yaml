@@ -1,0 +1,6 @@
+title:   { zh: "{{term:transaction}}与 ACID", en: "{{Term:transaction|Transactions}} and ACID" }
+summary:
+  zh: 用 BEGIN、COMMIT 和 ROLLBACK 把几条修改绑成一个整体，要么全部生效、要么全部撤销，并理解 ACID 四个字母各保证了什么。
+  en: Bind several changes into one unit with BEGIN, COMMIT and ROLLBACK, so they all take effect or none do, and learn what each letter of ACID guarantees.
+dataset: shop
+prereqs: [upsert]

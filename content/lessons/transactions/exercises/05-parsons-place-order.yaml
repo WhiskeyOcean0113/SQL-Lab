@@ -1,0 +1,19 @@
+kind: parsons
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: Priya Nair（顾客 7）买了 1 本 Dot Grid Notebook（商品 12，单价 9.50）。用下面的片段拼出一个事务：新建订单 25（2024-07-01 10:00，状态 paid），记下明细，库存减 1，最后提交。有两个片段是多余的。
+  en: Priya Nair (customer 7) buys one Dot Grid Notebook (product 12, 9.50). Arrange the pieces into a transaction that creates order 25 (2024-07-01 10:00, status paid), records the item, takes 1 off the stock and commits. Two pieces are not needed.
+hint:
+  zh: 先有订单，才能有明细；事务以 `BEGIN` 开头，以 `COMMIT` 结尾。
+  en: The order must exist before its item; a transaction opens with `BEGIN` and closes with `COMMIT`.
+solution: |
+  BEGIN;
+  INSERT INTO orders (id, customer_id, ordered_at, status) VALUES (25, 7, '2024-07-01 10:00', 'paid');
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (25, 12, 1, 9.50);
+  UPDATE products SET stock = stock - 1 WHERE id = 12;
+  COMMIT;
+distractors:
+  - ROLLBACK;
+  - UPDATE products SET stock = stock + 1 WHERE id = 12;
+check: { mode: tables, tables: [orders, order_items, products] }

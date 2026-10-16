@@ -1,0 +1,21 @@
+kind: predict
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 订单 22 里已经有 1 个 Ceramic Mug（商品 8）。下面这条语句运行之后，`RETURNING` 显示的 `quantity` 是多少？
+  en: Order 22 already has one Ceramic Mug (product 8). After this statement runs, what `quantity` does `RETURNING` show?
+hint:
+  zh: "`EXCLUDED.quantity` 是哪一个值？"
+  en: Which value is `EXCLUDED.quantity`?
+query: |
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (22, 8, 2, 12.50)
+  ON CONFLICT (order_id, product_id)
+  DO UPDATE SET quantity = EXCLUDED.quantity
+  RETURNING quantity;
+choices: ['1', '2', '3']
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 2。`EXCLUDED.quantity` 是这次想插入的 2，`SET quantity = EXCLUDED.quantity` 是“替换”，不是“累加”。要累加，写 `order_items.quantity + EXCLUDED.quantity`，结果才是 3。
+  en: 2. `EXCLUDED.quantity` is the 2 you tried to insert, and `SET quantity = EXCLUDED.quantity` replaces rather than adds. To add, write `order_items.quantity + EXCLUDED.quantity`, which gives 3.

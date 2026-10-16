@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 上架一件新商品：编号 17，名字 Plant Pot，属于 Home 分类（`category_id` 为 3），价格 9.99，库存 40，上架日期 2024-07-01。
+  en: "Add a new product: id 17, named Plant Pot, in the Home category (`category_id` 3), priced 9.99, with 40 in stock, launched on 2024-07-01."
+hint:
+  zh: "`products` 的列依次是 `id`、`name`、`category_id`、`price`、`stock`、`launched_on`，都不能为 NULL，只有 `category_id` 可以。"
+  en: "`products` has the columns `id`, `name`, `category_id`, `price`, `stock` and `launched_on`; all must have values except `category_id`."
+solution: |
+  INSERT INTO products (id, name, category_id, price, stock, launched_on)
+  VALUES (17, 'Plant Pot', 3, 9.99, 40, '2024-07-01');
+check: { mode: tables, tables: [products] }

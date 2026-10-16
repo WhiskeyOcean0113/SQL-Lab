@@ -1,0 +1,16 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+prompt:
+  zh: 给订单 22 加 1 本 Designing Data Apps（商品 2，单价 55.50）和 1 个 Camping Lantern（商品 13，单价 39.00）。订单里已经有的商品，在原来的件数上加；还没有的，新增一行。用一条语句完成。
+  en: Add one Designing Data Apps (product 2, 55.50) and one Camping Lantern (product 13, 39.00) to order 22. For a product already in the order, add to its quantity; otherwise add a line. Do it in one statement.
+hint:
+  zh: 两行一起插入，冲突目标是 `(order_id, product_id)`，冲突时把已有的件数和 `EXCLUDED` 的件数相加。
+  en: Insert both rows together with the conflict target `(order_id, product_id)`, adding the existing quantity and `EXCLUDED`'s on a conflict.
+solution: |
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (22, 2, 1, 55.50),
+         (22, 13, 1, 39.00)
+  ON CONFLICT (order_id, product_id)
+  DO UPDATE SET quantity = order_items.quantity + EXCLUDED.quantity;
+check: { mode: tables, tables: [order_items] }

@@ -122,3 +122,14 @@ window-frame:     { en: window frame, zh: 窗口帧 }
 running-total:    { en: running total, zh: 累计和 }
 moving-average:   { en: moving average, zh: 移动平均 }
 peer-row:         { en: peer row, zh: 同级行 }
+default-value:    { en: default value, zh: 默认值 }
+atomicity:        { en: atomicity, zh: 原子性 }
+consistency:      { en: consistency, zh: 一致性 }
+isolation:        { en: isolation, zh: 隔离性 }
+durability:       { en: durability, zh: 持久性 }
+savepoint:        { en: savepoint, zh: 保存点 }
+autocommit:       { en: autocommit, zh: 自动提交 }
+isolation-level:  { en: isolation level, zh: 隔离级别 }
+upsert:           { en: upsert, zh: 插入或更新 }
+check-constraint: { en: check constraint, zh: 检查约束 }
+not-null-constraint: { en: NOT NULL constraint, zh: 非空约束 }

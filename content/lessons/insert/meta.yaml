@@ -1,0 +1,6 @@
+title:   { zh: INSERT, en: INSERT }
+summary:
+  zh: 往表里添加新的行：指定列、一次插入多行、把查询结果插进去，并用 RETURNING 看到刚插入的行。
+  en: Add rows to a table by naming the columns, inserting several rows at once or a query's result, and see the new rows with RETURNING.
+dataset: shop
+prereqs: [window-offsets]

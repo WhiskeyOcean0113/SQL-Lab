@@ -1,0 +1,6 @@
+title:   { zh: UPDATE 与 DELETE, en: UPDATE and DELETE }
+summary:
+  zh: 修改和删除已有的行，用 WHERE 精确地选中它们，参照别的表来改或删，并在动手之前先确认会影响哪些行。
+  en: Change and delete existing rows, pick exactly the right ones with WHERE, use other tables to decide what to change, and check which rows will be affected before you act.
+dataset: shop
+prereqs: [insert]

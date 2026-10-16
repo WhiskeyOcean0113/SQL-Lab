@@ -1,0 +1,16 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句想登记一位新顾客：编号 13，Olivia Brown，澳大利亚（Australia），2024-07-01 注册，邮箱、城市和推荐人都没有。它报错了。读懂错误信息，修好它。
+  en: This statement should register a new customer, id 13, Olivia Brown, from Australia, joined 2024-07-01, with no email, city or referrer. It fails. Read the error and fix it.
+hint:
+  zh: 错误说哪一列是 null？DETAIL 列出了这一行的所有值。
+  en: Which column does the error say is null? The DETAIL lists every value of the row.
+starter: |
+  INSERT INTO customers (id, name, joined_on)
+  VALUES (13, 'Olivia Brown', '2024-07-01');
+solution: |
+  INSERT INTO customers (id, name, country, joined_on)
+  VALUES (13, 'Olivia Brown', 'Australia', '2024-07-01');
+check: { mode: tables, tables: [customers] }

@@ -68,12 +68,8 @@ modules:
     summary:
       zh: 插入、更新、删除数据，以及用事务保证一组修改要么全部生效、要么全部不生效。
       en: Insert, update and delete rows, and use transactions so a group of changes happens entirely or not at all.
-    lessons: []
-    planned:
-      - { zh: INSERT, en: INSERT }
-      - { zh: UPDATE 与 DELETE, en: UPDATE and DELETE }
-      - { zh: UPSERT（ON CONFLICT）, en: UPSERT (ON CONFLICT) }
-      - { zh: "{{term:transaction}}与 ACID", en: "{{Term:transaction|Transactions}} and ACID" }
+    lessons: [insert, update-delete, upsert, transactions]
+    planned: []
 
   - id: m8
     title: { zh: 数据库设计, en: Database design }

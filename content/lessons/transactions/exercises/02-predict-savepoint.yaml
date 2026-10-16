@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: Linen Throw（商品 10）现在的库存是 7。下面这段 SQL 最后查到的库存是多少？
+  en: Linen Throw (product 10) currently has 7 in stock. What stock does the final query show?
+hint:
+  zh: "`ROLLBACK TO` 只撤销保存点之后的修改。"
+  en: "`ROLLBACK TO` undoes only the changes made after the savepoint."
+query: |
+  BEGIN;
+  UPDATE products SET stock = stock + 5 WHERE id = 10;
+  SAVEPOINT s;
+  UPDATE products SET stock = 0 WHERE id = 10;
+  ROLLBACK TO SAVEPOINT s;
+  COMMIT;
+  SELECT stock FROM products WHERE id = 10;
+choices: ['0', '7', '12']
+answer: 2
+verify: { rows: 1 }
+explain:
+  zh: 12。加 5 发生在保存点之前，保留下来；改成 0 发生在保存点之后，被 `ROLLBACK TO` 撤销。最后 `COMMIT` 提交的是 7 + 5。
+  en: 12. Adding 5 happened before the savepoint and stays; setting 0 happened after it and is undone by `ROLLBACK TO`. The final `COMMIT` keeps 7 + 5.

@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 分类 1 是 Books，已经存在；6 和 7 号分类还没有。下面这条语句的 `RETURNING` 会返回几行？
+  en: Category 1, Books, already exists; categories 6 and 7 do not. How many rows does this statement's `RETURNING` give back?
+hint:
+  zh: 被 `DO NOTHING` 跳过的行会出现在 `RETURNING` 里吗？
+  en: Do rows skipped by `DO NOTHING` appear in `RETURNING`?
+query: |
+  INSERT INTO categories (id, name)
+  VALUES (6, 'Garden'), (1, 'Books'), (7, 'Toys')
+  ON CONFLICT DO NOTHING
+  RETURNING *;
+choices: ['0', '2', '3']
+answer: 1
+verify: { rows: 2 }
+explain:
+  zh: 2 行：Garden 和 Toys。Books 撞上了主键，`DO NOTHING` 把它跳过，既不报错，也不出现在 `RETURNING` 里。
+  en: "2 rows: Garden and Toys. Books collides with the primary key, and `DO NOTHING` skips it: no error, and no row in `RETURNING`."

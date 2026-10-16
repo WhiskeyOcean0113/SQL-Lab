@@ -1,0 +1,17 @@
+kind: parsons
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 用下面的片段拼出一条语句，一次新增两个分类：6 号 Garden 和 7 号 Toys。有两个片段是多余的。
+  en: Arrange the pieces into one statement that adds two categories at once, 6 Garden and 7 Toys. Two pieces are not needed.
+hint:
+  zh: "`VALUES` 只写一次，每一行一对括号，行之间用逗号。"
+  en: "`VALUES` appears once, each row has its own brackets, and rows are separated by commas."
+solution: |
+  INSERT INTO categories (id, name)
+  VALUES (6, 'Garden'),
+  (7, 'Toys');
+distractors:
+  - VALUES (7, 'Toys');
+  - (6, "Garden"),
+check: { mode: tables, tables: [categories] }

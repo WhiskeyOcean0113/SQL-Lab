@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句想给订单 16 加 3 个 Ceramic Mug（商品 8，单价 12.50），已有的就在原来的件数上加 3。它报错了。修好它。
+  en: This statement should add three Ceramic Mugs (product 8, 12.50) to order 16, adding 3 to the existing quantity if the line is already there. It fails. Fix it.
+hint:
+  zh: "`SET` 右边的 `quantity` 指的是已有的那一行，还是被挡下的那一行？写清楚。"
+  en: Does the `quantity` on the right of `SET` mean the existing row or the held-back one? Say which.
+starter: |
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (16, 8, 3, 12.50)
+  ON CONFLICT (order_id, product_id)
+  DO UPDATE SET quantity = quantity + EXCLUDED.quantity;
+solution: |
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  VALUES (16, 8, 3, 12.50)
+  ON CONFLICT (order_id, product_id)
+  DO UPDATE SET quantity = order_items.quantity + EXCLUDED.quantity;
+check: { mode: tables, tables: [order_items] }

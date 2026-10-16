@@ -1,0 +1,24 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 订单 3 里有三种商品。下面两条语句先建一笔订单 25，再把订单 3 的明细复制过去。`RETURNING` 会返回几行？
+  en: Order 3 contains three products. These two statements create order 25, then copy order 3's items into it. How many rows does `RETURNING` give back?
+hint:
+  zh: "`INSERT … SELECT` 插入的行数，就是那条 `SELECT` 查出的行数。"
+  en: "`INSERT … SELECT` inserts as many rows as the `SELECT` returns."
+query: |
+  INSERT INTO orders (id, customer_id, ordered_at, status)
+  VALUES (25, 3, '2024-07-01 09:00', 'pending');
+
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  SELECT 25, product_id, quantity, unit_price
+  FROM order_items
+  WHERE order_id = 3
+  RETURNING *;
+choices: ['1', '3', '42', '45']
+answer: 1
+verify: { rows: 3 }
+explain:
+  zh: 3 行。`SELECT` 查出订单 3 的三行明细，每一行都变成插入的一行，`RETURNING *` 把这三行新明细返回来。
+  en: 3 rows. The `SELECT` finds order 3's three items, each becomes an inserted row, and `RETURNING *` gives back those three new rows.

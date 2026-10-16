@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 订单 20 今天发货：状态改成 shipped，发货时间记为 2024-07-02 09:00，并从库存里减去它买的 1 本 SQL Pocket Guide（商品 3）。下面这个事务运行时没有报错，但修改都没有留下。修好它。
+  en: "Order 20 ships today: set its status to shipped and its shipping time to 2024-07-02 09:00, and take the one SQL Pocket Guide (product 3) it contains out of stock. This transaction runs without error, yet none of its changes remain. Fix it."
+hint:
+  zh: 事务的最后一句决定了修改的命运。
+  en: The last statement of a transaction decides the fate of its changes.
+starter: |
+  BEGIN;
+  UPDATE orders SET status = 'shipped', shipped_at = '2024-07-02 09:00' WHERE id = 20;
+  UPDATE products SET stock = stock - 1 WHERE id = 3;
+  ROLLBACK;
+solution: |
+  BEGIN;
+  UPDATE orders SET status = 'shipped', shipped_at = '2024-07-02 09:00' WHERE id = 20;
+  UPDATE products SET stock = stock - 1 WHERE id = 3;
+  COMMIT;
+check: { mode: tables, tables: [orders, products] }

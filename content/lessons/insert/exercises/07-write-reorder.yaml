@@ -1,0 +1,18 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: Ava Thompson（顾客 2）想把订单 9 原样再买一次。新建订单 25：顾客 2，下单时间 2024-07-01 12:00，状态 pending，不写发货时间；再把订单 9 的每种商品按原来的件数复制到订单 25，单价用商品表里现在的价格。
+  en: Ava Thompson (customer 2) wants to buy order 9 again. Create order 25 for customer 2, placed at 2024-07-01 12:00 with status pending and no shipping time; then copy each product of order 9 into order 25 with the same quantity, at the current price from the products table.
+hint:
+  zh: 先 `INSERT` 订单，再 `INSERT INTO order_items … SELECT`，在 `SELECT` 里连接 `products` 取 `price`。
+  en: "`INSERT` the order first, then `INSERT INTO order_items … SELECT`, joining `products` in the `SELECT` to get `price`."
+solution: |
+  INSERT INTO orders (id, customer_id, ordered_at, status)
+  VALUES (25, 2, '2024-07-01 12:00', 'pending');
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  SELECT 25, i.product_id, i.quantity, p.price
+  FROM order_items AS i
+  JOIN products AS p ON p.id = i.product_id
+  WHERE i.order_id = 9;
+check: { mode: tables, tables: [orders, order_items] }

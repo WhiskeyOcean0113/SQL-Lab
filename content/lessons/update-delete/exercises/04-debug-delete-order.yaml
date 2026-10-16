@@ -1,0 +1,16 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句想删除所有取消的订单（`status` 为 cancelled），连同它们的明细。它报错了。修好它，让订单和明细都被删掉。
+  en: This statement should delete every cancelled order (`status` cancelled) together with its items. It fails. Fix it so that both the orders and their items are deleted.
+hint:
+  zh: 错误说订单还被 `order_items` 引用。哪一张表的行要先删？
+  en: The error says the orders are still referenced from `order_items`. Which table's rows must go first?
+starter: |
+  DELETE FROM orders WHERE status = 'cancelled';
+solution: |
+  DELETE FROM order_items
+  WHERE order_id IN (SELECT id FROM orders WHERE status = 'cancelled');
+  DELETE FROM orders WHERE status = 'cancelled';
+check: { mode: tables, tables: [orders, order_items] }

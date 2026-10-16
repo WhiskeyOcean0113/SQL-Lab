@@ -1,0 +1,13 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 删除所有从来没有下过单的顾客。
+  en: Delete every customer who has never placed an order.
+hint:
+  zh: 用 `NOT EXISTS` 或 `NOT IN` 判断一位顾客在 `orders` 里有没有订单。先写成 `SELECT` 看看选中了谁。
+  en: Use `NOT EXISTS` or `NOT IN` to test whether a customer has any row in `orders`. Write it as a `SELECT` first to see who it picks.
+solution: |
+  DELETE FROM customers AS c
+  WHERE NOT EXISTS (SELECT 1 FROM orders AS o WHERE o.customer_id = c.id);
+check: { mode: tables, tables: [customers] }

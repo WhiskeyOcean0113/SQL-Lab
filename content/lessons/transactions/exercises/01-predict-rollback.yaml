@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 订单 3 有 3 行明细。下面这段 SQL 最后的查询返回的数字是多少？
+  en: Order 3 has 3 item rows. What number does the final query return?
+hint:
+  zh: "`ROLLBACK` 撤销的是什么？"
+  en: What does `ROLLBACK` undo?
+query: |
+  BEGIN;
+  DELETE FROM order_items WHERE order_id = 3;
+  ROLLBACK;
+  SELECT count(*) FROM order_items WHERE order_id = 3;
+choices: ['0', '3']
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 3。`DELETE` 发生在事务里，`ROLLBACK` 把这个事务的所有修改都撤销了，三行明细又回来了。
+  en: 3. The `DELETE` happened inside the transaction, and `ROLLBACK` undid all of that transaction's changes, so the three items are back.

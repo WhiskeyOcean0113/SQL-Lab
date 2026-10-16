@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 用下面的片段拼出一条语句：导入分类 5 号 Outdoor 和 6 号 Garden，已经存在的跳过，不报错。有两个片段是多余的。
+  en: Arrange the pieces into a statement importing categories 5 Outdoor and 6 Garden, skipping any that already exist without an error. Two pieces are not needed.
+hint:
+  zh: 跳过冲突的行用哪个动作？
+  en: Which action skips conflicting rows?
+solution: |
+  INSERT INTO categories (id, name)
+  VALUES (5, 'Outdoor'), (6, 'Garden')
+  ON CONFLICT (id)
+  DO NOTHING;
+distractors:
+  - DO UPDATE;
+  - ON DUPLICATE KEY
+check: { mode: tables, tables: [categories] }

@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: "`products` 有 16 行。下面这条语句的 `RETURNING` 会返回几行？"
+  en: "`products` has 16 rows. How many rows does this statement's `RETURNING` give back?"
+hint:
+  zh: 没有 `WHERE` 时，`UPDATE` 改的是哪些行？
+  en: Without `WHERE`, which rows does `UPDATE` change?
+query: |
+  UPDATE products
+  SET price = 10
+  RETURNING id, price;
+choices: ['0', '1', '16']
+answer: 2
+verify: { rows: 16 }
+explain:
+  zh: 16 行。没有 `WHERE`，每一行都被修改，所有商品都变成了 10 美元。数据库不会警告。
+  en: 16 rows. Without `WHERE`, every row is changed and every product now costs 10 dollars. The database gives no warning.

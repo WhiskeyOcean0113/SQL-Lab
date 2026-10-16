@@ -1,0 +1,12 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句想新增分类 Garden，编号 6。它报错了。修好它，并写上列名，避免以后再出错。
+  en: This statement should add the category Garden with id 6. It fails. Fix it, and write the column names so it cannot happen again.
+hint:
+  zh: 没有列名时，第一个值进第一列。`categories` 的第一列是什么？
+  en: Without column names, the first value goes into the first column. What is the first column of `categories`?
+starter: INSERT INTO categories VALUES ('Garden', 6);
+solution: INSERT INTO categories (id, name) VALUES (6, 'Garden');
+check: { mode: tables, tables: [categories] }

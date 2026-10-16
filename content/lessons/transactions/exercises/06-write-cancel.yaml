@@ -1,0 +1,19 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+prompt:
+  zh: 用一个事务取消订单 18（状态 paid）：把它的状态改成 cancelled，并把它每一种商品的件数加回商品库存。
+  en: In one transaction, cancel order 18 (status paid) by setting its status to cancelled and adding the quantity of each of its products back to that product's stock.
+hint:
+  zh: "`BEGIN`，一条 `UPDATE orders`，一条 `UPDATE products … FROM order_items`，`COMMIT`。"
+  en: "`BEGIN`, one `UPDATE orders`, one `UPDATE products … FROM order_items`, `COMMIT`."
+solution: |
+  BEGIN;
+  UPDATE orders SET status = 'cancelled' WHERE id = 18;
+  UPDATE products AS p
+  SET stock = p.stock + i.quantity
+  FROM order_items AS i
+  WHERE i.product_id = p.id
+    AND i.order_id = 18;
+  COMMIT;
+check: { mode: tables, tables: [orders, products] }

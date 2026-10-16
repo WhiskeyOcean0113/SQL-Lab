@@ -1,0 +1,18 @@
+kind: parsons
+difficulty: 1
+lesson_ref: syntax
+prompt:
+  zh: 用下面的片段拼出一条语句：把 2024-06-20 之前下单、至今仍是 pending 的订单，状态改成 cancelled。有两个片段是多余的。
+  en: Arrange the pieces into a statement that sets the status of every order placed before 2024-06-20 and still pending to cancelled. Two pieces are not needed.
+hint:
+  zh: "`UPDATE` 表名，`SET` 新值，`WHERE` 选行，两个条件用 `AND` 连起来。"
+  en: "`UPDATE` the table, `SET` the new value, pick rows with `WHERE`, and join the two conditions with `AND`."
+solution: |
+  UPDATE orders
+  SET status = 'cancelled'
+  WHERE status = 'pending'
+  AND ordered_at < '2024-06-20';
+distractors:
+  - FROM orders
+  - SET orders.status = 'cancelled'
+check: { mode: tables, tables: [orders] }

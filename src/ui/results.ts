@@ -31,6 +31,7 @@ const REFINE: Array<[code: string, pattern: RegExp, suffix: string]> = [
   ['42803', /cannot be nested/, 'nested'],
   ['42P01', /invalid reference to FROM-clause entry/, 'scope'],
   ['42601', /must have the same number of columns/, 'setcols'],
+  ['21000', /cannot affect row a second time/, 'conflict'],
 ]
 
 function errorKey(err: SqlError): string {

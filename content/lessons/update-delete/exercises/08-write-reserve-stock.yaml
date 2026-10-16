@@ -1,0 +1,16 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 订单 22 开始打包了。对订单 22 里的每一种商品，从商品表的库存里减去这笔订单买的件数。其他商品的库存不变。
+  en: Order 22 is being packed. For each product in order 22, subtract the quantity ordered from that product's stock. Leave every other product's stock unchanged.
+hint:
+  zh: 用 `UPDATE products … FROM order_items`，在 `WHERE` 里连接两张表，并限定 `order_id = 22`。`SET` 里可以用 `order_items` 的列。
+  en: Use `UPDATE products … FROM order_items`, joining the two tables in `WHERE` and restricting to `order_id = 22`. `SET` can use `order_items` columns.
+solution: |
+  UPDATE products AS p
+  SET stock = p.stock - i.quantity
+  FROM order_items AS i
+  WHERE i.product_id = p.id
+    AND i.order_id = 22;
+check: { mode: tables, tables: [products] }

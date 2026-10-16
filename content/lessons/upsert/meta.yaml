@@ -1,0 +1,6 @@
+title:   { zh: "{{term:upsert}}：INSERT … ON CONFLICT", en: "{{Term:upsert|Upserts}}: INSERT … ON CONFLICT" }
+summary:
+  zh: 插入一行时，如果键已经存在，就改为更新它，或者干脆跳过，用一条语句完成“有则改、无则加”。
+  en: Insert a row, or update it instead when its key already exists, or skip it, so that "add it or change it" takes one statement.
+dataset: shop
+prereqs: [update-delete]

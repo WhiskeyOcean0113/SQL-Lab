@@ -1,0 +1,24 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: |
+    供应商发来两行数据，用一条语句同步到 `products`：表里已有的商品只更新价格，其他列不动；没有的商品整行插入。
+
+    - 编号 6，USB-C Hub，分类 2，价格 32.00，库存 60，上架日期 2023-05-01
+    - 编号 17，Desk Organizer，分类 4，价格 15.00，库存 25，上架日期 2024-07-01
+  en: |
+    A supplier sends two rows. Sync them into `products` in one statement: for a product already in the table, update only the price and leave the other columns alone; insert a missing product as a whole row.
+
+    - id 6, USB-C Hub, category 2, price 32.00, stock 60, launched 2023-05-01
+    - id 17, Desk Organizer, category 4, price 15.00, stock 25, launched 2024-07-01
+hint:
+  zh: 冲突目标是 `id`，冲突时 `SET price = EXCLUDED.price`。
+  en: The conflict target is `id`; on a conflict, `SET price = EXCLUDED.price`.
+solution: |
+  INSERT INTO products (id, name, category_id, price, stock, launched_on)
+  VALUES (6, 'USB-C Hub', 2, 32.00, 60, '2023-05-01'),
+         (17, 'Desk Organizer', 4, 15.00, 25, '2024-07-01')
+  ON CONFLICT (id)
+  DO UPDATE SET price = EXCLUDED.price;
+check: { mode: tables, tables: [products] }

@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条语句插入一位新顾客，没有写 `city` 这一列。`RETURNING` 返回的 `city` 是什么？
+  en: This statement inserts a new customer without the `city` column. What `city` does `RETURNING` give back?
+hint:
+  zh: shop 的表都没有规定默认值。
+  en: None of shop's columns has a default value.
+query: |
+  INSERT INTO customers (id, name, country, joined_on)
+  VALUES (13, 'Olivia Brown', 'Australia', '2024-07-01')
+  RETURNING name, city;
+choices:
+  - 'NULL'
+  - "''"
+  - Sydney
+  - { zh: 报错, en: An error }
+answer: 0
+verify: { rows: 1 }
+explain:
+  zh: NULL。没有写的列取默认值，`city` 没有规定默认值，所以是 NULL。`city` 允许为 NULL，不会报错；如果漏写的是 `country`，才会违反非空约束。
+  en: NULL. A column left out gets its default, and `city` has none, so it is NULL. `city` allows NULL, so there is no error; leaving out `country` would break its NOT NULL constraint.

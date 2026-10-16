@@ -1,0 +1,24 @@
+kind: debug
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 下面这条查询想为每位下过单的顾客列出一行：`customer_id`、订单数 `orders`，以及其中还没发货（`shipped_at` 为 NULL）的订单数 `unshipped`，按 `customer_id` 排序。它报错了。修好它。
+  en: This query should return one row per customer who has ordered, with `customer_id`, their number of orders `orders`, and how many of those have not shipped yet (`shipped_at` is NULL) `unshipped`, sorted by `customer_id`. It fails. Fix it.
+hint:
+  zh: 在语法里，`FILTER` 的括号必须以 `WHERE` 开头：`FILTER (WHERE condition)`。
+  en: "In the syntax, the parentheses after `FILTER` must start with `WHERE`: `FILTER (WHERE condition)`."
+starter: |
+  SELECT customer_id,
+         count(*) AS orders,
+         count(*) FILTER (shipped_at IS NULL) AS unshipped
+  FROM orders
+  GROUP BY customer_id
+  ORDER BY customer_id;
+solution: |
+  SELECT customer_id,
+         count(*) AS orders,
+         count(*) FILTER (WHERE shipped_at IS NULL) AS unshipped
+  FROM orders
+  GROUP BY customer_id
+  ORDER BY customer_id;
+check: { order_matters: true, column_names: true }

@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: shop 有 16 件商品，其中 7 件库存少于 20。下面这条查询会返回几行？
+  en: shop has 16 products, 7 of which have fewer than 20 in stock. How many rows does this query return?
+hint:
+  zh: 分组元素是一个真假表达式。它能算出几种不同的值？
+  en: The grouping element is a true-or-false expression. How many different values can it produce?
+query: |
+  SELECT stock < 20 AS low, count(*) AS products
+  FROM products
+  GROUP BY stock < 20;
+choices: ['2', '7', '16']
+answer: 0
+verify: { rows: 2 }
+explain:
+  zh: 2 行。`stock < 20` 对每件商品不是 true 就是 false（`stock` 没有 NULL），所以商品分成两组：true 组 7 件，false 组 9 件。`SELECT` 里用的正是分组的那个表达式，所以可以出现在 select 列表里。
+  en: 2 rows. `stock < 20` is either true or false for every product (`stock` has no NULLs), so the products fall into two groups, 7 in the true group and 9 in the false one. `SELECT` uses exactly the expression grouped by, which is why it may appear in the select list.

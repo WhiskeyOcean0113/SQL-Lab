@@ -1,0 +1,17 @@
+kind: write
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 找出至少有 2 行明细、并且总金额超过 100 美元的订单（每行金额是数量乘以单价），列名依次为 `order_id`、`lines`（明细行数）和 `total`（总金额）。
+  en: Find the orders that have at least 2 lines and are worth more than 100 dollars in total (each line is worth its quantity times its unit price), with the columns `order_id`, `lines` (the number of lines) and `total` (the order's total).
+hint:
+  zh: "`HAVING` 后面的 `condition` 和 `WHERE` 里的一样，可以用 `AND` 连起两个条件；两个条件都含聚合。"
+  en: The `condition` after `HAVING` works like the one in `WHERE`, so `AND` can join two conditions; here both contain an aggregate.
+solution: |
+  SELECT order_id,
+         count(*) AS lines,
+         sum(quantity * unit_price) AS total
+  FROM order_items
+  GROUP BY order_id
+  HAVING count(*) >= 2 AND sum(quantity * unit_price) > 100;
+check: { column_names: true }

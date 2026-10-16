@@ -1,0 +1,25 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这段 SQL 运行之后会怎样？
+  en: What happens when this SQL runs?
+hint:
+  zh: "`CHECK` 的条件遇到 NULL，算出来是什么？`CHECK` 拒绝的是哪一种结果？"
+  en: What does the `CHECK` condition evaluate to for NULL, and which result does `CHECK` refuse?
+query: |
+  CREATE TABLE reviews (
+    id     integer PRIMARY KEY,
+    rating smallint CHECK (rating BETWEEN 1 AND 5)
+  );
+  INSERT INTO reviews VALUES (1, NULL)
+  RETURNING *;
+choices:
+  - { zh: 插入成功，返回一行，rating 为 NULL, en: "The insert succeeds, returning one row with rating NULL" }
+  - { zh: 违反检查约束，报错, en: It breaks the check constraint and fails }
+  - { zh: 插入成功，rating 自动变成 1, en: "The insert succeeds, with rating set to 1" }
+answer: 0
+verify: { rows: 1 }
+explain:
+  zh: 插入成功。`NULL BETWEEN 1 AND 5` 的结果是 NULL，不是假，`CHECK` 只拒绝假，所以放行。要求必须有分数，再加 `NOT NULL`。
+  en: The insert succeeds. `NULL BETWEEN 1 AND 5` is NULL, not false, and `CHECK` refuses only false, so the row passes. To require a rating, add `NOT NULL`.

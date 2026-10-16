@@ -97,10 +97,15 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       }
 
       if (ex.check.mode === 'probe' && !ex.check.probe) { problems.push(at('check mode "probe" needs a probe query')); continue }
+      if (ex.check.mode === 'attempts' && !ex.check.attempts?.length) { problems.push(at('check mode "attempts" needs a list of statements')); continue }
+      const inspect = {
+        probe: ex.check.mode === 'probe' ? ex.check.probe : undefined,
+        attempts: ex.check.mode === 'attempts' ? ex.check.attempts : undefined,
+      }
       const solved = await db.run(ex.solution, {
         limit: Infinity,
         snapshot: ex.check.mode === 'tables' ? ex.check.tables : undefined,
-        probe: ex.check.mode === 'probe' ? ex.check.probe : undefined,
+        ...inspect,
       })
       if (!solved.ok) { problems.push(at(`solution fails: ${solved.error?.message}`)); continue }
       if (ex.check.mode === 'result') {
@@ -109,10 +114,13 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
         else if (rs.rows.length === 0) warnings.push(at('solution returns zero rows; an empty answer is easy to match by accident'))
       } else if (ex.check.mode === 'tables' && !ex.check.tables.length) {
         problems.push(at('check mode "tables" needs a list of tables'))
-      } else if (ex.check.mode === 'probe') {
+      } else if (ex.check.mode === 'probe' || ex.check.mode === 'attempts') {
         if (!solved.probe) problems.push(at('the probe query returns no result set'))
         else if (solved.probe.rows.length === 0) warnings.push(at('the probe query returns zero rows after the solution'))
-        const untouched = await db.run('SELECT 1', { probe: ex.check.probe })
+        if (ex.check.mode === 'attempts' && solved.probe && !solved.probe.rows.some(r => r[1] !== 'ok')) {
+          warnings.push(at('every attempt succeeds after the solution; add one the constraints should reject'))
+        }
+        const untouched = await db.run('SELECT 1', inspect)
         if (untouched.ok && untouched.probe && solved.probe
           && gradeRuns(untouched, solved, ex.check).correct) problems.push(at('the probe gives the same result whether or not the solution ran'))
       }

@@ -144,10 +144,13 @@ starter: …             # optional; required for debug (the broken query)
 check:                 # all optional
   order_matters: false # true only when the prompt asks for an order
   column_names: false  # true only when the prompt names the output columns
-  mode: result         # result | tables (for INSERT / UPDATE / DELETE) | probe
+  mode: result         # result | tables (for INSERT / UPDATE / DELETE) | probe | attempts
   tables: []           # mode tables: which tables to compare afterwards
   probe: |             # mode probe: a query run after the SQL; its result is graded
     SELECT …           # (for CREATE TABLE / VIEW / INDEX: changes a snapshot cannot see)
+  attempts: [ … ]      # mode attempts: statements tried in turn after the SQL; graded on
+                       # which succeed and which fail (SQLSTATE), so constraints are
+                       # judged by behaviour, not by how they were written
 ```
 
 - `parsons`: the solution's lines become pieces; add `distractors: [ … ]`.
@@ -221,8 +224,10 @@ exercises depend on it, and validate will catch breakage.
   so transactions behave as in Postgres within a run, and the run is still
   undone afterwards. `PREPARE` and two-phase commit are refused.
 - An exercise in `probe` mode is graded on the result of its probe query, run
-  after the SQL inside the same transaction. The exercise page shows the probe,
-  so the learner knows what is checked.
+  after the SQL inside the same transaction; in `attempts` mode, on whether each
+  listed statement succeeds (each in its own savepoint, kept if it works). The
+  exercise page shows the probe or the attempts, so the learner knows what is
+  checked.
 - Dates and timestamps come back as Postgres text; the session is UTC.
 - The grader picks the last statement that returned columns. It reports
   structured issues (`column-count`, `column-order`, `duplicates`,

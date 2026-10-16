@@ -1,0 +1,29 @@
+kind: debug
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 下面这张标签表把一件商品的所有标签写在一个格子里，例如 `'books,sale'`。重新设计它：表名仍是 `product_tags`，列为 `product_id` 和 `tag`，每个标签单独一行；一件商品可以有多个标签，但同一个标签只能出现一次；商品必须存在，两列都不能为空。
+  en: "This tag table puts all of a product's tags in one cell, such as `'books,sale'`. Redesign it: still called `product_tags`, with the columns `product_id` and `tag`, one row per tag; a product may have several tags but each tag only once; the product must exist, and neither column may be empty."
+hint:
+  zh: 主键是“商品 + 标签”这一对。
+  en: The primary key is the pair "product + tag".
+starter: |
+  CREATE TABLE product_tags (
+    product_id integer PRIMARY KEY REFERENCES products (id),
+    tags       text
+  );
+solution: |
+  CREATE TABLE product_tags (
+    product_id integer NOT NULL REFERENCES products (id),
+    tag        text    NOT NULL,
+    PRIMARY KEY (product_id, tag)
+  );
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO product_tags (product_id, tag) VALUES (3, 'books')
+    - INSERT INTO product_tags (product_id, tag) VALUES (3, 'sale')
+    - INSERT INTO product_tags (product_id, tag) VALUES (12, 'sale')
+    - INSERT INTO product_tags (product_id, tag) VALUES (3, 'sale')
+    - INSERT INTO product_tags (product_id, tag) VALUES (99, 'sale')
+    - INSERT INTO product_tags (product_id, tag) VALUES (3, NULL)

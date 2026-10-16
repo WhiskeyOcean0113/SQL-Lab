@@ -106,10 +106,11 @@ export function gradeRuns(
     return { correct: true, issues: [], missing: [], extra: [] }
   }
 
-  if (check.mode === 'probe') {
+  if (check.mode === 'probe' || check.mode === 'attempts') {
     if (!expected.probe || !actual.probe) throw new Error('The probe query returned no result set')
     const g = compareResultSets(expected.probe, actual.probe, { orderMatters: check.orderMatters, columnNames: false })
-    return g.correct ? g : { ...g, issues: [{ code: 'probe-differs' }, ...g.issues] }
+    const lead: Issue = { code: check.mode === 'probe' ? 'probe-differs' : 'attempts-differ' }
+    return g.correct ? g : { ...g, issues: [lead, ...g.issues.filter(i => i.code !== 'row-count')] }
   }
 
   const e = finalResult(expected)

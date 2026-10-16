@@ -1,0 +1,6 @@
+title:   { zh: "{{term:view}}", en: "{{Term:view|Views}}" }
+summary:
+  zh: 用 CREATE VIEW 给一条常用的查询起名字，像表一样反复使用它，并知道什么时候能通过视图修改数据。
+  en: Name a frequently used query with CREATE VIEW, use it again and again like a table, and know when data can be changed through a view.
+dataset: shop
+prereqs: [normalization]

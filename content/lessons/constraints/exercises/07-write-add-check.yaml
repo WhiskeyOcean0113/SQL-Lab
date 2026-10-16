@@ -1,0 +1,16 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 仓库最多只能放 1000 件同一种商品。给已有的 `products` 表加一个检查约束，让 `stock` 不能超过 1000。
+  en: The warehouse holds at most 1000 units of any product. Add a check constraint to the existing `products` table so that `stock` can never exceed 1000.
+hint:
+  zh: "`ALTER TABLE products ADD CONSTRAINT 名字 CHECK (…)`。"
+  en: "`ALTER TABLE products ADD CONSTRAINT name CHECK (…)`."
+solution: ALTER TABLE products ADD CONSTRAINT products_stock_max CHECK (stock <= 1000);
+check:
+  mode: attempts
+  attempts:
+    - UPDATE products SET stock = 1000 WHERE id = 1
+    - UPDATE products SET stock = 1001 WHERE id = 1
+    - UPDATE products SET stock = stock + 10 WHERE id = 15

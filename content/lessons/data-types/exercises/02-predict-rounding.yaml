@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 下面这段 SQL 的 `RETURNING` 返回的 `amount` 是什么？
+  en: What `amount` does `RETURNING` give back?
+hint:
+  zh: "`numeric(5, 2)` 只保留两位小数。"
+  en: "`numeric(5, 2)` keeps two decimal places."
+query: |
+  CREATE TABLE prices (amount numeric(5, 2));
+  INSERT INTO prices VALUES (12.345)
+  RETURNING amount;
+choices:
+  - '12.34'
+  - '12.35'
+  - '12.345'
+  - { zh: 报错, en: An error }
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 12.35。小数位超出 `s` 时，`numeric` 会四舍五入，不报错。只有整数位超出时才会报 `numeric field overflow`。
+  en: 12.35. When there are more decimals than `s`, `numeric` rounds without an error. Only too many whole digits cause `numeric field overflow`.

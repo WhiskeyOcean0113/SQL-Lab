@@ -1,0 +1,22 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面的视图想列出每位顾客的下单次数，列名应该是 `customer_id` 和 `orders`。用的人按 `orders` 查询时却报错了。修好这个视图。
+  en: This view should list each customer's number of orders in columns named `customer_id` and `orders`. Querying it by `orders` fails. Fix the view.
+hint:
+  zh: 第二列现在叫什么？给它起名，或者在视图名后面写列名列表。
+  en: What is the second column called now? Name it, or add a column list after the view's name.
+starter: |
+  CREATE VIEW order_counts AS
+  SELECT customer_id, count(*)
+  FROM orders
+  GROUP BY customer_id;
+solution: |
+  CREATE VIEW order_counts (customer_id, orders) AS
+  SELECT customer_id, count(*)
+  FROM orders
+  GROUP BY customer_id;
+check:
+  mode: probe
+  probe: SELECT customer_id, orders FROM order_counts ORDER BY customer_id;

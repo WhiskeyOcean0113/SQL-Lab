@@ -144,6 +144,16 @@ describe('grading', () => {
     const missing = await grade('SELECT 1', sol, check)
     expect(missing.error?.code).toBe('42P01')
   })
+  it('grades constraints by which attempts are accepted', async () => {
+    const attempts = ["INSERT INTO tags VALUES ('sale')", "INSERT INTO tags VALUES ('sale')", 'INSERT INTO tags VALUES (NULL)']
+    const check: CheckSpec = { mode: 'attempts', orderMatters: true, columnNames: false, tables: [], attempts }
+    const sol = 'CREATE TABLE tags (name text PRIMARY KEY)'
+    expect((await grade('CREATE TABLE tags (name text NOT NULL UNIQUE)', sol, check)).correct).toBe(true)
+    const loose = await grade('CREATE TABLE tags (name text)', sol, check)
+    expect(loose.issues[0]!.code).toBe('attempts-differ')
+    expect(loose.actual!.rows.map(r => r[1])).toEqual(['ok', 'ok', 'ok'])
+    expect(loose.expected!.rows.map(r => r[1])).toEqual(['ok', '23505', '23502'])
+  })
   it('passes the SQL error through', async () => {
     const g = await grade('SELECT nme FROM customers', 'SELECT name FROM customers')
     expect(g.issues[0]!.code).toBe('sql-error')

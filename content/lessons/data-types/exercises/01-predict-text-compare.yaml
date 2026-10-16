@@ -1,0 +1,16 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 下面这条查询的 `as_text` 是什么？
+  en: What is `as_text` in this query?
+hint:
+  zh: 文字是一个字符一个字符地比较的。
+  en: Text is compared character by character.
+query: SELECT '10' < '9' AS as_text, 10 < 9 AS as_number;
+choices: ['true', 'false', 'NULL']
+answer: 0
+verify: { rows: 1 }
+explain:
+  zh: true。作为文字，先比第一个字符：“1”排在“9”前面，于是“10”小于“9”。作为数字，10 当然大于 9。这就是数量不能存成 `text` 的原因。
+  en: true. As text, the first characters are compared, and "1" comes before "9", so "10" is less than "9". As numbers, 10 is of course greater. That is why quantities must not be stored as `text`.

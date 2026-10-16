@@ -1,0 +1,18 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+prompt:
+  zh: 视图 `customer_contacts` 原来只有 `id` 和 `name`，现在要在末尾加上 `email`。下面的第二条语句报错了。修好它，让最后的视图有 `id`、`name`、`email` 三列。
+  en: The view `customer_contacts` had only `id` and `name`, and now needs `email` added at the end. The second statement below fails. Fix it so that the final view has the three columns `id`, `name` and `email`.
+hint:
+  zh: 修改已有的视图要加两个词。
+  en: Changing an existing view takes two extra words.
+starter: |
+  CREATE VIEW customer_contacts AS SELECT id, name FROM customers;
+  CREATE VIEW customer_contacts AS SELECT id, name, email FROM customers;
+solution: |
+  CREATE VIEW customer_contacts AS SELECT id, name FROM customers;
+  CREATE OR REPLACE VIEW customer_contacts AS SELECT id, name, email FROM customers;
+check:
+  mode: probe
+  probe: SELECT id, name, email FROM customer_contacts ORDER BY id;

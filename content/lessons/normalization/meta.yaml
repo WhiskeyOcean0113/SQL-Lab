@@ -1,0 +1,6 @@
+title:   { zh: "{{term:normalization}}（到 3NF）", en: "{{Term:normalization}} (up to 3NF)" }
+summary:
+  zh: 看出一张宽表里的重复信息会带来哪些问题，并按第一、第二、第三范式把它拆成每个事实只存一次的几张表。
+  en: Spot the trouble that repeated information in a wide table causes, and split it by the first, second and third normal forms into tables that store each fact once.
+dataset: shop
+prereqs: [constraints]

@@ -32,6 +32,8 @@ const REFINE: Array<[code: string, pattern: RegExp, suffix: string]> = [
   ['42P01', /invalid reference to FROM-clause entry/, 'scope'],
   ['42601', /must have the same number of columns/, 'setcols'],
   ['21000', /cannot affect row a second time/, 'conflict'],
+  ['55000', /cannot update view|cannot insert into view|cannot delete from view/, 'view'],
+  ['42P16', /from view|of view column/, 'view'],
 ]
 
 function errorKey(err: SqlError): string {

@@ -1,0 +1,26 @@
+kind: parsons
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 用下面的片段拼出一条 `CREATE TABLE`：表名 `wishlist`，列依次为自动编号的 `id`（`integer`）、`customer_id`（`integer`）、`product_id`（`integer`）和 `added_on`（`date`）。有两个片段是多余的。
+  en: Arrange the pieces into a `CREATE TABLE` for a table `wishlist` with, in order, an automatically numbered `id` (`integer`), `customer_id` (`integer`), `product_id` (`integer`) and `added_on` (`date`). Two pieces are not needed.
+hint:
+  zh: 列之间用逗号，最后一列后面没有逗号。
+  en: Commas go between columns, with none after the last.
+solution: |
+  CREATE TABLE wishlist (
+  id integer GENERATED ALWAYS AS IDENTITY,
+  customer_id integer,
+  product_id integer,
+  added_on date
+  );
+distractors:
+  - added_on date,
+  - id serial AS IDENTITY,
+check:
+  mode: probe
+  probe: |
+    SELECT column_name, data_type, is_identity
+    FROM information_schema.columns
+    WHERE table_name = 'wishlist'
+    ORDER BY ordinal_position;

@@ -1,0 +1,18 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+prompt:
+  zh: 建一个视图 `product_sales`，每件商品一行，列为 `product_id`、`name` 和 `sold`（所有订单里卖出的件数之和，取消的也算）。从没卖出过的商品也要出现，`sold` 为 0。
+  en: Create a view `product_sales` with one row per product and the columns `product_id`, `name` and `sold` (the units sold across all orders, cancelled ones included). Products never sold must appear too, with `sold` 0.
+hint:
+  zh: 商品表 `LEFT JOIN` 明细表，按商品分组，用 `coalesce(sum(…), 0)`。
+  en: "`LEFT JOIN` the items to the products, group by product, and use `coalesce(sum(…), 0)`."
+solution: |
+  CREATE VIEW product_sales AS
+  SELECT p.id AS product_id, p.name, coalesce(sum(i.quantity), 0) AS sold
+  FROM products AS p
+  LEFT JOIN order_items AS i ON i.product_id = p.id
+  GROUP BY p.id, p.name;
+check:
+  mode: probe
+  probe: SELECT product_id, name, sold FROM product_sales ORDER BY product_id;

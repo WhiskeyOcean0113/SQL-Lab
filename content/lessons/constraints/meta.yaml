@@ -1,0 +1,6 @@
+title:   { zh: "{{term:constraint}}", en: "{{Term:constraint|Constraints}}" }
+summary:
+  zh: 用 NOT NULL、UNIQUE、PRIMARY KEY、FOREIGN KEY 和 CHECK 把规则写进表里，让数据库拒绝每一条不合规的数据。
+  en: Write rules into a table with NOT NULL, UNIQUE, PRIMARY KEY, FOREIGN KEY and CHECK, so that the database refuses every piece of data that breaks them.
+dataset: shop
+prereqs: [data-types]

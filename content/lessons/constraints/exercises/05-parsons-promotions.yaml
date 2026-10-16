@@ -1,0 +1,26 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一条 `CREATE TABLE`：促销表 `promotions`，`id` 是主键，开始和结束日期都必须有，并且结束日期必须晚于开始日期。有两个片段是多余的。
+  en: Arrange the pieces into a `CREATE TABLE` for `promotions`, with `id` as primary key, required start and end dates, and an end date that must come after the start date. Two pieces are not needed.
+hint:
+  zh: 比较两列的检查写成表约束，放在所有列之后。
+  en: A check comparing two columns is a table constraint, after all the columns.
+solution: |
+  CREATE TABLE promotions (
+  id integer PRIMARY KEY,
+  starts_on date NOT NULL,
+  ends_on date NOT NULL,
+  CHECK (ends_on > starts_on)
+  );
+distractors:
+  - CHECK ends_on > starts_on
+  - ends_on date NOT NULL
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO promotions VALUES (1, '2024-07-01', '2024-07-10')
+    - INSERT INTO promotions VALUES (1, '2024-08-01', '2024-08-10')
+    - INSERT INTO promotions VALUES (2, '2024-07-10', '2024-07-01')
+    - INSERT INTO promotions VALUES (3, NULL, '2024-07-10')

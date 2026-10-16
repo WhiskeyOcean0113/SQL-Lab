@@ -1,0 +1,19 @@
+kind: write
+difficulty: 2
+lesson_ref: syntax
+prompt:
+  zh: 用一条 `CREATE TABLE … AS` 建一张表 `category_summary`：每个分类一行，列为 `category`（分类名）和 `products`（这个分类里的商品数）。没有分类的商品不算。
+  en: With one `CREATE TABLE … AS`, create a table `category_summary` with one row per category and the columns `category` (the category's name) and `products` (how many products it has). Products without a category do not count.
+hint:
+  zh: 先写出能得到这两列的查询，再在前面加上 `CREATE TABLE category_summary AS`。
+  en: Write the query that returns these two columns first, then put `CREATE TABLE category_summary AS` in front.
+solution: |
+  CREATE TABLE category_summary AS
+  SELECT c.name AS category, count(*) AS products
+  FROM categories AS c
+  JOIN products AS p ON p.category_id = c.id
+  GROUP BY c.name;
+check:
+  mode: probe
+  probe: |
+    SELECT category, products FROM category_summary ORDER BY category;

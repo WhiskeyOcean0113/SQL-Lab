@@ -1,0 +1,15 @@
+kind: write
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: "`order_items.unit_price` 记的是成交价，可能和商品现在的标价不同。找出成交价和现在标价不一样的明细，列名依次为 `order_id`、`product_id`、`unit_price` 和 `price`（商品现在的标价）。"
+  en: "`order_items.unit_price` records the price paid, which may differ from the product's current price. Find the order items whose price paid differs from the current price, with the columns `order_id`, `product_id`, `unit_price` and `price` (the product's current price)."
+hint:
+  zh: 连接 `order_items` 和 `products`，比较两列价格。
+  en: Join `order_items` to `products` and compare the two prices.
+solution: |
+  SELECT i.order_id, i.product_id, i.unit_price, p.price
+  FROM order_items AS i
+  JOIN products AS p ON p.id = i.product_id
+  WHERE i.unit_price <> p.price;
+check: { column_names: true }

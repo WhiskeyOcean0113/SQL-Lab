@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 下面这段 SQL 最后的查询返回的数字是多少？
+  en: What number does the final query return?
+hint:
+  zh: "`ON DELETE CASCADE` 在商品 16 被删除时会做什么？"
+  en: What does `ON DELETE CASCADE` do when product 16 is deleted?
+query: |
+  CREATE TABLE reviews (
+    id         integer PRIMARY KEY,
+    product_id integer REFERENCES products (id) ON DELETE CASCADE
+  );
+  INSERT INTO reviews VALUES (1, 16), (2, 16), (3, 3);
+  DELETE FROM products WHERE id = 16;
+  SELECT count(*) FROM reviews;
+choices: ['0', '1', '3']
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 1。删除商品 16 时，`ON DELETE CASCADE` 把引用它的两条评论一起删掉了，只剩下评论商品 3 的那一条。没有 `CASCADE` 的话，删除商品 16 会直接失败。
+  en: 1. Deleting product 16 makes `ON DELETE CASCADE` delete the two reviews referencing it, leaving only the review of product 3. Without `CASCADE`, deleting product 16 would simply fail.

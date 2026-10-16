@@ -1,0 +1,25 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+prompt:
+  zh: "`items_wide` 的主键是 `(order_id, product_id)`。运行下面的查询看看它的内容。这张表违反的是哪一个范式？"
+  en: "The primary key of `items_wide` is `(order_id, product_id)`. Run the query below to see its contents. Which normal form does this table break?"
+hint:
+  zh: "`product_name` 依赖整个主键，还是只依赖其中一列？"
+  en: Does `product_name` depend on the whole key, or on one of its columns?
+query: |
+  CREATE TABLE items_wide AS
+  SELECT i.order_id, i.product_id, i.quantity, p.name AS product_name
+  FROM order_items AS i
+  JOIN products AS p ON p.id = i.product_id;
+
+  SELECT * FROM items_wide WHERE product_id = 8 ORDER BY order_id;
+choices:
+  - { zh: 第一范式：一个格子里有多个值, en: "First: a cell holds several values" }
+  - { zh: 第二范式：有列只依赖主键的一部分, en: "Second: a column depends on part of the key" }
+  - { zh: 第三范式：有列通过另一个非主键列间接依赖主键, en: "Third: a column depends on the key through another non-key column" }
+answer: 1
+verify: { rows: 4 }
+explain:
+  zh: 第二范式。`quantity` 需要同时知道订单和商品，依赖整个主键；`product_name` 只要知道 `product_id` 就能确定，只依赖主键的一部分。所以 Ceramic Mug 这个名字在每一笔买过它的订单里都重复了一次。
+  en: Second. `quantity` needs both the order and the product, so it depends on the whole key; `product_name` is settled by `product_id` alone, part of the key. That is why the name Ceramic Mug repeats in every order that bought one.

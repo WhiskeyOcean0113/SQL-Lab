@@ -1,0 +1,29 @@
+kind: predict
+difficulty: 1
+lesson_ref: example
+prompt:
+  zh: 宽表 `order_lines` 里，Lin Wei 的 4 笔订单每一行都写着同一个邮箱。下面的 SQL 只改了订单 22 的那几行。最后的查询会返回几行？
+  en: In the wide table `order_lines`, every row of Lin Wei's 4 orders carries the same email. The SQL below changes only order 22's rows. How many rows does the final query return?
+hint:
+  zh: 其他订单的那几行改了吗？
+  en: Were the other orders' rows changed?
+query: |
+  CREATE TABLE order_lines AS
+  SELECT o.id AS order_id, c.name AS customer_name, c.email AS customer_email
+  FROM orders AS o
+  JOIN customers AS c ON c.id = o.customer_id
+  JOIN order_items AS i ON i.order_id = o.id;
+
+  UPDATE order_lines
+  SET customer_email = 'lin.wei@new.example.com'
+  WHERE order_id = 22;
+
+  SELECT DISTINCT customer_email
+  FROM order_lines
+  WHERE customer_name = 'Lin Wei';
+choices: ['1', '2', '4', '10']
+answer: 1
+verify: { rows: 2 }
+explain:
+  zh: 2 行：新邮箱和旧邮箱。只改了一部分行，同一位顾客就有了两个互相矛盾的邮箱，这就是更新异常。把邮箱只存在顾客表里，就不会出现这种情况。
+  en: "2 rows: the new email and the old one. Changing only some rows gave one customer two contradictory emails, which is an update anomaly. With the email stored only in a customer table, it cannot happen."

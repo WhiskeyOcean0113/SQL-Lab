@@ -25,9 +25,10 @@ export class PracticeDb {
   /**
    * Run learner SQL and roll it back. `snapshot` lists tables to read before the
    * rollback; `probe` is a query run after the learner's SQL, whose result is
-   * what a `probe` exercise is graded on.
+   * what a `probe` exercise is graded on; `attempts` are statements tried one
+   * by one, and their outcomes become the probe result instead.
    */
-  async run(sql: string, opts: { limit?: number; snapshot?: string[]; probe?: string } = {}): Promise<RunOutcome & { tables?: Record<string, ResultSet>; probe?: ResultSet }> {
+  async run(sql: string, opts: { limit?: number; snapshot?: string[]; probe?: string; attempts?: string[] } = {}): Promise<RunOutcome & { tables?: Record<string, ResultSet>; probe?: ResultSet }> {
     const limit = opts.limit ?? MAX_ROWS
     const t0 = performance.now()
     await this.db.exec('BEGIN')
@@ -45,6 +46,7 @@ export class PracticeDb {
         if (!r.ok) return { ...r, results: outcome.results, ms: performance.now() - t0 }
         probe = [...r.results].reverse().find(x => x.columns.length > 0)
       }
+      if (opts.attempts?.length) probe = await this.attempt(opts.attempts)
       return { ok: true, results: outcome.results, tables, probe, ms: performance.now() - t0 }
     } catch (e) {
       return { ok: false, results: [], error: toSqlError(e), ms: performance.now() - t0 }
@@ -86,6 +88,23 @@ export class PracticeDb {
     return { ok: true, results }
   }
 
+  /** Try each statement in its own savepoint: keep it if it works, record its SQLSTATE if not. */
+  private async attempt(statements: string[]): Promise<ResultSet> {
+    const rows: Cell[][] = []
+    for (const statement of statements) {
+      await this.db.exec('SAVEPOINT sqllab_attempt')
+      try {
+        await this.db.exec(statement)
+        await this.db.exec('RELEASE SAVEPOINT sqllab_attempt')
+        rows.push([statement, 'ok'])
+      } catch (e) {
+        await this.db.exec('ROLLBACK TO SAVEPOINT sqllab_attempt; RELEASE SAVEPOINT sqllab_attempt')
+        rows.push([statement, toSqlError(e).code ?? 'error'])
+      }
+    }
+    return { columns: [{ name: 'statement', type: 25 }, { name: 'outcome', type: 25 }], rows, affectedRows: 0, truncated: false }
+  }
+
   /** Every row of a table, sorted by all columns so snapshots compare as plain lists. */
   private async snapshot(table: string): Promise<ResultSet> {
     if (!/^[a-z_][a-z0-9_]*$/.test(table)) throw new Error(`Bad table name in exercise: ${table}`)
@@ -103,7 +122,8 @@ export class PracticeDb {
   async runPair(learnerSql: string, solutionSql: string, check: CheckSpec) {
     const snapshot = check.mode === 'tables' ? check.tables : undefined
     const probe = check.mode === 'probe' ? check.probe : undefined
-    const opts = { limit: Number.POSITIVE_INFINITY, snapshot, probe }
+    const attempts = check.mode === 'attempts' ? check.attempts : undefined
+    const opts = { limit: Number.POSITIVE_INFINITY, snapshot, probe, attempts }
     const expected = await this.run(solutionSql, opts)
     const actual = await this.run(learnerSql, opts)
     return { expected, actual }

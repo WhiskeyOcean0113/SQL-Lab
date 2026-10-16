@@ -1,0 +1,25 @@
+kind: parsons
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 顾客表原来用 `phone1`、`phone2`、`phone3` 三列存电话。用下面的片段拼出一张新表 `customer_phones` 来代替它们：每个电话一行，顾客必须存在，同一位顾客的同一个号码只记一次。有两个片段是多余的。
+  en: The customer table used three columns, `phone1`, `phone2` and `phone3`, for phone numbers. Arrange the pieces into a new table `customer_phones` to replace them, with one row per phone, an existing customer, and each number recorded once per customer. Two pieces are not needed.
+hint:
+  zh: 一行一个电话；主键是“顾客 + 号码”。
+  en: One phone per row; the primary key is "customer + number".
+solution: |
+  CREATE TABLE customer_phones (
+  customer_id integer NOT NULL REFERENCES customers (id),
+  phone text NOT NULL,
+  PRIMARY KEY (customer_id, phone)
+  );
+distractors:
+  - phone1 text, phone2 text, phone3 text,
+  - customer_id integer PRIMARY KEY,
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO customer_phones VALUES (1, '+86 21 5555 0101')
+    - INSERT INTO customer_phones VALUES (1, '+86 138 0000 0001')
+    - INSERT INTO customer_phones VALUES (1, '+86 21 5555 0101')
+    - INSERT INTO customer_phones VALUES (99, '+1 416 555 0199')

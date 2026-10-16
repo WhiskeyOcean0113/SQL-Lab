@@ -1,0 +1,28 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句建一张价格历史表，`price` 用来存美元价格，最多 8 位数字、两位小数。它能运行，但类型选错了，加总时会出现误差。修好它。
+  en: This statement creates a price history table whose `price` holds dollar prices with up to 8 digits, two after the point. It runs, but the type is wrong and totals will drift. Fix it.
+hint:
+  zh: 存钱用精确的小数类型。
+  en: Money needs an exact decimal type.
+starter: |
+  CREATE TABLE price_history (
+    product_id integer,
+    price      double precision,
+    changed_on date
+  );
+solution: |
+  CREATE TABLE price_history (
+    product_id integer,
+    price      numeric(8, 2),
+    changed_on date
+  );
+check:
+  mode: probe
+  probe: |
+    SELECT column_name, data_type, numeric_precision, numeric_scale
+    FROM information_schema.columns
+    WHERE table_name = 'price_history'
+    ORDER BY ordinal_position;

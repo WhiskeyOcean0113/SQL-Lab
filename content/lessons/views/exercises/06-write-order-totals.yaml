@@ -1,0 +1,19 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: 建一个视图 `order_totals`，每笔有明细的订单一行，列为 `order_id`、`customer_id` 和 `total`（这笔订单所有明细的 `quantity * unit_price` 之和）。
+  en: Create a view `order_totals` with one row per order that has items, and the columns `order_id`, `customer_id` and `total` (the sum of `quantity * unit_price` over the order's items).
+hint:
+  zh: 先写出这条查询，再在前面加上 `CREATE VIEW order_totals AS`。
+  en: Write the query first, then put `CREATE VIEW order_totals AS` in front.
+solution: |
+  CREATE VIEW order_totals AS
+  SELECT o.id AS order_id, o.customer_id,
+         sum(i.quantity * i.unit_price) AS total
+  FROM orders AS o
+  JOIN order_items AS i ON i.order_id = o.id
+  GROUP BY o.id, o.customer_id;
+check:
+  mode: probe
+  probe: SELECT order_id, customer_id, total FROM order_totals ORDER BY order_id;

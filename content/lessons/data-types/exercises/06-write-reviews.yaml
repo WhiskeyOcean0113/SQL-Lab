@@ -1,0 +1,39 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+prompt:
+  zh: |
+    建一张表 `reviews`，列依次为：
+
+    - `id`：`integer`，由数据库自动编号，不允许手写
+    - `product_id`：`integer`
+    - `rating`：`smallint`
+    - `comment`：`text`
+    - `verified`：`boolean`，默认 `false`
+  en: |
+    Create a table `reviews` with these columns, in order:
+
+    - `id`: `integer`, numbered automatically by the database, never written by hand
+    - `product_id`: `integer`
+    - `rating`: `smallint`
+    - `comment`: `text`
+    - `verified`: `boolean`, defaulting to `false`
+hint:
+  zh: 自动编号用 `GENERATED ALWAYS AS IDENTITY`，默认值用 `DEFAULT false`。
+  en: Automatic numbering is `GENERATED ALWAYS AS IDENTITY`; the default is `DEFAULT false`.
+solution: |
+  CREATE TABLE reviews (
+    id         integer GENERATED ALWAYS AS IDENTITY,
+    product_id integer,
+    rating     smallint,
+    comment    text,
+    verified   boolean DEFAULT false
+  );
+check:
+  mode: probe
+  probe: |
+    INSERT INTO reviews (product_id, rating, comment)
+    VALUES (3, 5, 'Short and to the point.'), (5, 4, 'Loud but lovely.');
+    SELECT id, product_id, rating, comment, verified, pg_typeof(rating)::text AS rating_type
+    FROM reviews
+    ORDER BY id;

@@ -1,0 +1,43 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+prompt:
+  zh: |
+    建一张表 `reviews`，列依次为 `id`、`product_id`、`customer_id`、`rating`、`comment`，并让数据库保证：
+
+    - `id` 是 `integer`，自动编号，作主键；
+    - `product_id` 和 `customer_id` 都是 `integer`，必须有值，并且分别指向已有的商品和顾客；
+    - `rating` 是 `smallint`，必须有值，并且在 1 到 5 之间；
+    - `comment` 是 `text`，可以为空；
+    - 同一位顾客对同一件商品只能评一次。
+  en: |
+    Create a table `reviews` with the columns `id`, `product_id`, `customer_id`, `rating` and `comment`, in that order, and make the database guarantee that:
+
+    - `id` is an `integer`, numbered automatically, and the primary key;
+    - `product_id` and `customer_id` are `integer`s, required, pointing at an existing product and customer;
+    - `rating` is a `smallint`, required, between 1 and 5;
+    - `comment` is `text` and may be empty;
+    - a customer reviews a given product at most once.
+hint:
+  zh: 每一列后面写它自己的约束；“一人一评”涉及两列，写成表约束 `UNIQUE (…)`。
+  en: Put each column's own constraints after it; "one review each" involves two columns, so it is the table constraint `UNIQUE (…)`.
+solution: |
+  CREATE TABLE reviews (
+    id          integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    product_id  integer NOT NULL REFERENCES products (id),
+    customer_id integer NOT NULL REFERENCES customers (id),
+    rating      smallint NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment     text,
+    UNIQUE (product_id, customer_id)
+  );
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO reviews (product_id, customer_id, rating) VALUES (3, 1, 5)
+    - INSERT INTO reviews (product_id, customer_id, rating, comment) VALUES (5, 1, 4, 'Loud but lovely.')
+    - INSERT INTO reviews (product_id, customer_id, rating) VALUES (3, 1, 4)
+    - INSERT INTO reviews (product_id, customer_id, rating) VALUES (3, 2, 6)
+    - INSERT INTO reviews (product_id, customer_id, rating) VALUES (3, 2, NULL)
+    - INSERT INTO reviews (product_id, customer_id, rating) VALUES (99, 2, 5)
+    - INSERT INTO reviews (product_id, customer_id, rating) VALUES (3, 99, 5)
+    - INSERT INTO reviews (customer_id, rating) VALUES (2, 5)

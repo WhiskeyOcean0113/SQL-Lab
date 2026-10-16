@@ -133,3 +133,11 @@ isolation-level:  { en: isolation level, zh: 隔离级别 }
 upsert:           { en: upsert, zh: 插入或更新 }
 check-constraint: { en: check constraint, zh: 检查约束 }
 not-null-constraint: { en: NOT NULL constraint, zh: 非空约束 }
+identity-column:  { en: identity column, zh: 标识列 }
+normal-form:      { en: normal form, zh: 范式 }
+redundancy:       { en: redundancy, zh: 冗余 }
+update-anomaly:   { en: update anomaly, zh: 更新异常 }
+partial-dependency: { en: partial dependency, zh: 部分依赖 }
+transitive-dependency: { en: transitive dependency, zh: 传递依赖 }
+denormalization:  { en: denormalization, zh: 反范式化 }
+materialized-view: { en: materialized view, zh: 物化视图 }

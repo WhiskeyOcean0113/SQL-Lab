@@ -1,0 +1,16 @@
+kind: debug
+difficulty: 1
+lesson_ref: variants
+prompt:
+  zh: 下面这条语句建一张 `labels` 表，`code` 列要能存最多 10 个字符的标签编号。像 GARDEN-01 这样的编号却存不进去。修好它。
+  en: This statement creates a `labels` table whose `code` column should hold label codes of up to 10 characters. A code such as GARDEN-01 does not fit. Fix it.
+hint:
+  zh: "`varchar(n)` 的 n 是字符数的上限。"
+  en: The n in `varchar(n)` is the maximum number of characters.
+starter: CREATE TABLE labels (code varchar(5));
+solution: CREATE TABLE labels (code varchar(10));
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO labels (code) VALUES ('GARDEN-01')
+    - INSERT INTO labels (code) VALUES ('GARDEN-0001')

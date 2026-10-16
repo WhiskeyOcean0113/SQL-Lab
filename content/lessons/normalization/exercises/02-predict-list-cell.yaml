@@ -1,0 +1,23 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 订单 1 买了商品 1 和 8，订单 2 买了商品 4，订单 3 买了商品 3、12 和 11。下面的查询想找出买过商品 1 的订单，它会返回几行？
+  en: Order 1 contains products 1 and 8, order 2 product 4, and order 3 products 3, 12 and 11. This query tries to find the orders containing product 1. How many rows does it return?
+hint:
+  zh: "`LIKE '%1%'` 匹配的是什么？只匹配数字 1 吗？"
+  en: What does `LIKE '%1%'` match? Only the number 1?
+query: |
+  CREATE TABLE order_products_flat (order_id integer, product_ids text);
+  INSERT INTO order_products_flat
+  VALUES (1, '1,8'), (2, '4'), (3, '3,12,11');
+
+  SELECT order_id
+  FROM order_products_flat
+  WHERE product_ids LIKE '%1%';
+choices: ['1', '2', '3']
+answer: 1
+verify: { rows: 2 }
+explain:
+  zh: 2 行：订单 1 和订单 3。`LIKE '%1%'` 找的是含有字符“1”的文字，“12”和“11”也算，所以订单 3 被误找出来了。一个格子存一串值违反第一范式，这类错误几乎无法避免。
+  en: "2 rows: orders 1 and 3. `LIKE '%1%'` finds text containing the character \"1\", which includes \"12\" and \"11\", so order 3 is found by mistake. A list in one cell breaks first normal form, and errors like this are almost unavoidable."

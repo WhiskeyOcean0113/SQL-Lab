@@ -1,0 +1,24 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 订单 1 原来的总额是 67.00（1 本 42.00 的书加 2 个 12.50 的杯子）。下面的 SQL 先建视图，再把杯子改成 5 个。最后的查询返回的 `total` 是多少？
+  en: Order 1's total was 67.00 (one 42.00 book and two 12.50 mugs). The SQL below creates a view, then changes the mugs to 5. What `total` does the final query return?
+hint:
+  zh: 视图存的是数据，还是查询？
+  en: Does a view store data, or a query?
+query: |
+  CREATE VIEW order_totals AS
+  SELECT o.id AS order_id, sum(i.quantity * i.unit_price) AS total
+  FROM orders AS o
+  JOIN order_items AS i ON i.order_id = o.id
+  GROUP BY o.id;
+
+  UPDATE order_items SET quantity = 5 WHERE order_id = 1 AND product_id = 8;
+  SELECT order_id, total FROM order_totals WHERE order_id = 1;
+choices: ['67.00', '104.50', '42.00']
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 104.50。视图存的是查询，每次查询视图都会重新计算：42.00 + 5 × 12.50 = 104.50。
+  en: "104.50. A view stores the query and recomputes it each time: 42.00 + 5 × 12.50 = 104.50."

@@ -1,0 +1,19 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+prompt:
+  zh: 下面的 SQL 先用 `SELECT *` 建了一个视图，再给 `categories` 加了一列 `slug`。最后的查询会返回几列？
+  en: The SQL below creates a view with `SELECT *`, then adds a column `slug` to `categories`. How many columns does the final query return?
+hint:
+  zh: "`SELECT *` 是什么时候展开成具体的列的？"
+  en: When is `SELECT *` expanded into actual columns?
+query: |
+  CREATE VIEW all_categories AS SELECT * FROM categories;
+  ALTER TABLE categories ADD COLUMN slug text;
+  SELECT * FROM all_categories LIMIT 1;
+choices: ['2', '3']
+answer: 0
+verify: { rows: 1 }
+explain:
+  zh: 2 列：`id` 和 `name`。建视图时，`*` 就被展开成了当时的列，之后加的 `slug` 不会出现在视图里。所以视图里最好明确写出列名。
+  en: "2 columns: `id` and `name`. The `*` was expanded into the columns that existed when the view was created, so the later `slug` does not appear. That is why views should name their columns."

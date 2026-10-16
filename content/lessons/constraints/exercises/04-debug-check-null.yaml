@@ -1,0 +1,25 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句建一张评分表，要求每一行都必须有 1 到 5 之间的分数。可是没有分数的行也能插进去。修好它。
+  en: This statement creates a ratings table in which every row must have a score between 1 and 5. Yet rows without a score get in. Fix it.
+hint:
+  zh: "`CHECK` 放行 NULL。"
+  en: "`CHECK` lets NULL through."
+starter: |
+  CREATE TABLE ratings (
+    product_id integer NOT NULL,
+    score      smallint CHECK (score BETWEEN 1 AND 5)
+  );
+solution: |
+  CREATE TABLE ratings (
+    product_id integer NOT NULL,
+    score      smallint NOT NULL CHECK (score BETWEEN 1 AND 5)
+  );
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO ratings VALUES (3, 5)
+    - INSERT INTO ratings VALUES (3, NULL)
+    - INSERT INTO ratings VALUES (3, 0)

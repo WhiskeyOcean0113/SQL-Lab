@@ -76,12 +76,8 @@ modules:
     summary:
       zh: 设计表结构：选类型、加约束、拆分到合适的范式，以及用视图封装查询。
       en: Design tables by choosing types, adding constraints, normalizing, and wrapping queries in views.
-    lessons: []
-    planned:
-      - { zh: "{{term:data-type}}", en: "{{Term:data-type|Data types}}" }
-      - { zh: "{{term:constraint}}", en: "{{Term:constraint|Constraints}}" }
-      - { zh: "{{term:normalization}}（到 3NF）", en: "{{Term:normalization}} (up to 3NF)" }
-      - { zh: "{{term:view}}", en: "{{Term:view|Views}}" }
+    lessons: [data-types, constraints, normalization, views]
+    planned: []
 
   - id: m9
     title: { zh: 性能入门, en: Performance basics }

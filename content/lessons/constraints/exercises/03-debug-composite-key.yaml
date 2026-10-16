@@ -1,0 +1,31 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+prompt:
+  zh: 下面这条语句想建一张收藏表：同一位顾客不能重复收藏同一件商品，顾客和商品都必须存在，收藏日期必须有。它报错了。修好它。
+  en: This statement should create a wishlist table where a customer cannot save the same product twice, both the customer and the product must exist, and the date saved is required. It fails. Fix it.
+hint:
+  zh: 由两列组成的主键要写成一个表约束。
+  en: A primary key of two columns is written as one table constraint.
+starter: |
+  CREATE TABLE wishlist (
+    customer_id integer PRIMARY KEY REFERENCES customers (id),
+    product_id  integer PRIMARY KEY REFERENCES products (id),
+    added_on    date NOT NULL
+  );
+solution: |
+  CREATE TABLE wishlist (
+    customer_id integer REFERENCES customers (id),
+    product_id  integer REFERENCES products (id),
+    added_on    date NOT NULL,
+    PRIMARY KEY (customer_id, product_id)
+  );
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO wishlist VALUES (1, 3, '2024-07-01')
+    - INSERT INTO wishlist VALUES (1, 3, '2024-07-02')
+    - INSERT INTO wishlist VALUES (1, 5, '2024-07-02')
+    - INSERT INTO wishlist VALUES (2, 3, '2024-07-02')
+    - INSERT INTO wishlist VALUES (99, 3, '2024-07-02')
+    - INSERT INTO wishlist VALUES (1, 4, NULL)

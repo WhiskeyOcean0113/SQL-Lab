@@ -1,0 +1,6 @@
+title:   { zh: "{{term:data-type}}", en: "{{Term:data-type|Data types}}" }
+summary:
+  zh: 用 CREATE TABLE 建一张新表，为每一列选对类型：整数、精确小数、文字、日期时间和布尔值，并让数据库自动生成编号和默认值。
+  en: Create a new table with CREATE TABLE and choose the right type for each column, from integers, exact decimals and text to dates, times and Booleans, with ids and defaults filled in by the database.
+dataset: shop
+prereqs: [transactions]

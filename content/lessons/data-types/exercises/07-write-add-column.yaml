@@ -1,0 +1,16 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 给 `products` 加一列 `on_sale`，类型 `boolean`。已有的商品和以后没写这一列的新商品，都应该是 `false`。
+  en: Add a column `on_sale` of type `boolean` to `products`. Existing products, and new ones inserted without it, should all be `false`.
+hint:
+  zh: "`ALTER TABLE … ADD COLUMN`，再加上默认值。"
+  en: "`ALTER TABLE … ADD COLUMN`, with a default."
+solution: ALTER TABLE products ADD COLUMN on_sale boolean DEFAULT false;
+check:
+  mode: probe
+  probe: |
+    INSERT INTO products (id, name, category_id, price, stock, launched_on)
+    VALUES (17, 'Plant Pot', 3, 9.99, 40, '2024-07-01');
+    SELECT id, on_sale FROM products ORDER BY id;

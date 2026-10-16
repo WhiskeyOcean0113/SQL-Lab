@@ -1,0 +1,24 @@
+kind: parsons
+difficulty: 2
+lesson_ref: variants
+prompt:
+  zh: 用下面的片段拼出一个视图 `canadian_customers`：列为 `id`、`name`、`country`、`joined_on`，只包含加拿大（Canada）的顾客，并且不允许通过它写入其他国家的顾客。有两个片段是多余的。
+  en: Arrange the pieces into a view `canadian_customers` with the columns `id`, `name`, `country` and `joined_on`, containing only customers from Canada, and refusing writes of customers from other countries through it. Two pieces are not needed.
+hint:
+  zh: 最后一行决定能不能写出视图的范围。
+  en: The last line decides whether rows outside the view can be written.
+solution: |
+  CREATE VIEW canadian_customers AS
+  SELECT id, name, country, joined_on
+  FROM customers
+  WHERE country = 'Canada'
+  WITH CHECK OPTION;
+distractors:
+  - WITH CHECK (country = 'Canada');
+  - GROUP BY country
+check:
+  mode: attempts
+  attempts:
+    - INSERT INTO canadian_customers (id, name, country, joined_on) VALUES (13, 'Olivia Brown', 'Canada', '2024-07-01')
+    - INSERT INTO canadian_customers (id, name, country, joined_on) VALUES (14, 'Jack Wilson', 'Australia', '2024-07-01')
+    - UPDATE canadian_customers SET country = 'France' WHERE id = 2

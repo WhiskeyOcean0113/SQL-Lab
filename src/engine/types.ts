@@ -43,8 +43,10 @@ export interface CheckSpec {
    * `result`: compare the last result set. `tables`: compare table contents
    * after the SQL runs. `probe`: run `probe` after the SQL and compare its
    * result, for changes a table snapshot cannot see (new tables, views, indexes).
+   * `attempts`: try each statement in `attempts` after the SQL and compare
+   * which are accepted and which rejected, to grade constraints by behaviour.
    */
-  mode: 'result' | 'tables' | 'probe'
+  mode: 'result' | 'tables' | 'probe' | 'attempts'
   /** Compare rows in order (the task asked for ORDER BY). */
   orderMatters: boolean
   /** Require the same column names, not just the same column count. */
@@ -53,6 +55,8 @@ export interface CheckSpec {
   tables: string[]
   /** For mode `probe`: the query that inspects the database afterwards. */
   probe?: string
+  /** For mode `attempts`: statements tried one by one; each is kept if it succeeds. */
+  attempts?: string[]
 }
 
 export type IssueCode =
@@ -68,6 +72,7 @@ export type IssueCode =
   | 'row-explosion'
   | 'tables-differ'
   | 'probe-differs'
+  | 'attempts-differ'
 
 export interface Issue {
   code: IssueCode

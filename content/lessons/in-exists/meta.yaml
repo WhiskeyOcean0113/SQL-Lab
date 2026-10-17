@@ -4,3 +4,4 @@ summary:
   en: Test whether rows appear in another table with IN and EXISTS, and avoid the NOT IN trap that returns nothing once a NULL is involved.
 dataset: shop
 prereqs: [subqueries]
+introduces: [EXISTS, ANY]

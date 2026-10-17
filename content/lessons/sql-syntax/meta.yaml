@@ -4,3 +4,5 @@ summary:
   en: Learn what a SQL statement is made of, how names and values are written, and how to read the syntax blocks in every lesson.
 dataset: shop
 prereqs: [tables-rows-columns]
+introduces: [WHERE, AS, 'TRUE', 'NULL']
+previews: ['ORDER']

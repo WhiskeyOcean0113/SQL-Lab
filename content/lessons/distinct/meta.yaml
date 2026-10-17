@@ -4,3 +4,4 @@ summary:
   en: Remove duplicate rows from a result, and see that "duplicate" means the whole row, not one column.
 dataset: shop
 prereqs: [ order-limit ]
+introduces: ['ON']

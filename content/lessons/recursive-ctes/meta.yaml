@@ -4,3 +4,4 @@ summary:
   en: Use WITH RECURSIVE to walk down (or up) one level at a time through referral chains and other hierarchies of unknown depth, and to generate sequences.
 dataset: shop
 prereqs: [with-ctes]
+introduces: [RECURSIVE]

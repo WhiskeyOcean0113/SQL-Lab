@@ -12,7 +12,7 @@ solution: CREATE INDEX orders_customer_idx ON orders (customer_id, ordered_at);
 check:
   mode: probe
   probe: |
-    SELECT regexp_replace(pg_get_indexdef(indexrelid), 'INDEX \S+ ON', 'INDEX ON') AS definition
-    FROM pg_index
-    WHERE indrelid = 'orders'::regclass AND NOT indisprimary
-    ORDER BY 1;
+    SELECT replace(indexdef, indexname || ' ', '') AS definition
+    FROM pg_indexes
+    WHERE tablename = 'orders' AND indexname <> 'orders_pkey'
+    ORDER BY definition;

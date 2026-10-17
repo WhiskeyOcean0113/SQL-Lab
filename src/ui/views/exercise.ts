@@ -314,7 +314,11 @@ function renderPredict(env: Env, ex: PredictExercise) {
         <legend class="sr-only">${raw(t(lang, 'ex.predict.choose'))}</legend>
         ${ex.choices.map((c, i) => html`<label class="choice"><input type="radio" name="choice" value="${i}"><span>${raw(c[lang])}</span></label>`)}
       </fieldset>
-      <div class="editor-bar"><button type="button" class="btn primary" data-submit>${raw(t(lang, 'ex.submit'))}</button><span class="sp"></span></div>
+      <div class="editor-bar">
+        <button type="button" class="btn" data-run>${raw(t(lang, 'ex.run'))}</button>
+        <button type="button" class="btn primary" data-submit>${raw(t(lang, 'ex.submit'))}</button>
+        <span class="sp"></span>
+      </div>
     </div>
     <div data-verdict aria-live="polite"></div>
     <div class="panel-out" aria-live="polite"></div>`)
@@ -322,6 +326,15 @@ function renderPredict(env: Env, ex: PredictExercise) {
   const verdictEl = $('[data-verdict]', work)
   const labels = $$<HTMLLabelElement>('.choice', work)
   work.addEventListener('change', () => labels.forEach(l => l.classList.toggle('picked', l.querySelector('input')!.checked)))
+
+  const runBtn = $<HTMLButtonElement>('[data-run]', work)
+  runBtn.addEventListener('click', async () => {
+    runBtn.disabled = true
+    try {
+      const r = await ctx.engine.run(lesson.dataset, ex.query)
+      mount($('.panel-out', work), html`<div class="out">${runOutput(r, ex.query, lang)}</div>`)
+    } finally { runBtn.disabled = false }
+  })
 
   $<HTMLButtonElement>('[data-submit]', work).addEventListener('click', async () => {
     const picked = work.querySelector<HTMLInputElement>('input[name="choice"]:checked')
@@ -341,13 +354,8 @@ function renderPredict(env: Env, ex: PredictExercise) {
       <div class="verdict-top"><span class="badge ${correct ? 'ok' : 'bad'}">${raw(t(lang, correct ? 'verdict.correct' : 'verdict.wrong'))}</span></div>
       ${correct ? html`<div class="explain">${raw(ex.explain[lang])}</div>` : html`<div class="why"><p>${raw(t(lang, 'verdict.predictWrong'))}</p></div>`}
       ${correct ? successFoot(env, lessonCompleted) : html`<div class="verdict-foot">
-        <button type="button" class="btn" data-runit>${raw(t(lang, 'ex.predict.runIt'))}</button>
         <a class="link" href="${href.lesson(lesson.id, ex.lessonRef)}">${raw(t(lang, 'ex.back', { section: sectionHeading(lesson, ex.lessonRef, lang) }))}</a>
       </div>`}
     </div>`)
-    $$<HTMLButtonElement>('[data-runit]', verdictEl).forEach(b => b.addEventListener('click', async () => {
-      const r = await ctx.engine.run(lesson.dataset, ex.query)
-      mount($('.panel-out', work), html`<div class="out">${runOutput(r, ex.query, lang)}</div>`)
-    }))
   })
 }

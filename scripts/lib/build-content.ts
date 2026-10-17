@@ -14,6 +14,8 @@ export interface BuildResult {
   problems: string[]
   /** Raw Markdown per lesson and language, for validate's cross-language checks. */
   sources: Record<string, Record<Lang, string>>
+  /** Per lesson, the SQL it teaches and the SQL it only previews (meta.yaml), for validate. */
+  vocabulary: Record<string, { introduces: string[]; previews: string[] }>
 }
 
 type Raw = Record<string, unknown>
@@ -77,6 +79,7 @@ export function buildContent(root: string): BuildResult {
 
   const lessons: Record<string, Lesson> = {}
   const sources: BuildResult['sources'] = {}
+  const vocabulary: BuildResult['vocabulary'] = {}
 
   for (const mod of modules) {
     for (const id of mod.lessons) {
@@ -84,6 +87,10 @@ export function buildContent(root: string): BuildResult {
       if (!existsSync(dir)) { problems.push(`lesson ${id}: listed in curriculum but content/lessons/${id}/ is missing`); continue }
       const where = (s: string) => `lesson ${id}: ${s}`
       const meta = readYaml(join(dir, 'meta.yaml'))
+      vocabulary[id] = {
+        introduces: ((meta.introduces as unknown[] | undefined) ?? []).map(String),
+        previews: ((meta.previews as unknown[] | undefined) ?? []).map(String),
+      }
       const dataset = String(meta.dataset ?? '')
       if (!datasets[dataset]) problems.push(where(`unknown dataset "${dataset}"`))
 
@@ -117,7 +124,7 @@ export function buildContent(root: string): BuildResult {
     }
   }
 
-  return { course: { modules, lessons, path, glossary, datasets }, problems, sources }
+  return { course: { modules, lessons, path, glossary, datasets }, problems, sources, vocabulary }
 }
 
 function buildExercise(lesson: string, stem: string, raw: Raw, glossary: Map<string, Term>, problems: string[]): Exercise {

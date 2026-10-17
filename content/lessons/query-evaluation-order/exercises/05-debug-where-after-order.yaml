@@ -2,8 +2,8 @@ kind: debug
 difficulty: 1
 lesson_ref: syntax
 prompt:
-  zh: 下面这条查询想列出不在中国的顾客，列依次为名字和国家，按名字排序。它报错了。修好它。
-  en: This query should list the customers outside China, with the columns name and country, sorted by name. It fails. Fix it.
+  zh: 下面这条查询想列出中国的顾客，列依次为名字和国家，按名字排序。它报错了。修好它。
+  en: This query should list the customers in China, with the columns name and country, sorted by name. It fails. Fix it.
 hint:
   zh: 写出来的子句要按骨架从上到下的顺序排：`WHERE` 在 `ORDER BY` 之前。
   en: "The clauses you write follow the skeleton from top to bottom: `WHERE` comes before `ORDER BY`."
@@ -11,10 +11,10 @@ starter: |
   SELECT name, country
   FROM customers
   ORDER BY name
-  WHERE country <> 'China';
+  WHERE country = 'China';
 solution: |
   SELECT name, country
   FROM customers
-  WHERE country <> 'China'
+  WHERE country = 'China'
   ORDER BY name;
 check: { order_matters: true }

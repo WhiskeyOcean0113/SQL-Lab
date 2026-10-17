@@ -4,3 +4,4 @@ summary:
   en: Convert between text, numbers and dates, and know when the database converts for you and when you must say so.
 dataset: shop
 prereqs: [case-expressions]
+introduces: [CAST, to_number(), to_date(), numeric(), pg_typeof()]

@@ -4,3 +4,4 @@ summary:
   en: Generate every combination with CROSS JOIN, estimate how many rows a join should return, and catch the row explosion a missing join condition causes.
 dataset: shop
 prereqs: [self-joins]
+introduces: [CROSS, generate_series()]

@@ -32,20 +32,13 @@ Step by step:
 
 1. **Look at the whole table.** Run `SELECT * FROM products;` and count the rows.
 2. **Recognise what a row stands for.** Each row is one product, so the row count is the product count.
-3. **Look up the column types.** Every PostgreSQL database carries tables that describe its own structure. One of them, `information_schema.columns`, lists every column of every table.
+3. **Match each column to its type.** A column's type is fixed when the table is created; the table below lists the six columns of `products`.
 
 ```sql run
 SELECT * FROM products;
 ```
 
-That is 16 rows, so 16 products. Now the column types:
-
-```sql run
-SELECT column_name, data_type
-FROM information_schema.columns
-WHERE table_name = 'products'
-ORDER BY ordinal_position;
-```
+That is 16 rows, so 16 products. What each column holds, and its type:
 
 | Column | Type | Meaning |
 |---|---|---|
@@ -56,18 +49,11 @@ ORDER BY ordinal_position;
 | `stock` | integer | units in stock |
 | `launched_on` | date | date the product went on sale |
 
-The `WHERE` and `ORDER BY` in that second query each get their own lesson later. For now, it is simply a way to see a table's structure.
+Compare with the result: the `price` column holds only numbers with two decimals, and `launched_on` only dates. Chapter 8 shows how to create tables and choose types yourself, and how to query a table's structure.
 
 ## Variations {#variants}
 
-**All five shop tables.** The same trick lists every table in the database:
-
-```sql run
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-ORDER BY table_name;
-```
+**All five shop tables.** Change the table name after `FROM` to look at each of them in turn:
 
 | Table | One row is | Rows |
 |---|---|---|
@@ -115,16 +101,9 @@ The `city` of Liam O'Brien and of Lucas Silva is NULL: the city is unknown, not 
 | `date` | A date without a time | `joined_on`, `launched_on` |
 | `timestamp` | A date and a time | `ordered_at`, `shipped_at` |
 
-`information_schema` also tells you which columns may be NULL:
+`timestamp` records a date and a time but no {{term:time-zone}}; Chapter 2 comes back to this with dates.
 
-```sql run
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_name = 'customers'
-ORDER BY ordinal_position;
-```
-
-A column whose `is_nullable` is `NO` must always have a value: every customer has a name and a country. One marked `YES` may be empty, like `email` and `city`. `timestamp` shows up here as `timestamp without time zone`, meaning it carries no {{term:time-zone}}; Chapter 2 comes back to this with dates.
+**Which columns may be NULL is also decided when the table is created.** In `customers`, `id`, `name`, `country` and `joined_on` must always have a value: every customer has a name and a country. `email`, `city` and `referred_by` may be empty. Run the `SELECT * FROM customers;` above and NULL appears only in those last three columns.
 
 **Naming conventions.** shop uses plural table names (`orders`) and lower-case column names with underscores (`customer_id`), a style called snake_case. Nothing enforces it, but it is common and never needs quoting.
 

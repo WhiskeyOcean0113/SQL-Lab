@@ -24,7 +24,7 @@ The mistakes each lesson covers are drawn from research on novice SQL errors (Ta
 
 | Chapter | Topic | Lessons |
 |---|---|---|
-| 0 | The relational model | Tables, rows and columns · keys · how a SQL statement is written · the logical processing order |
+| 0 | The relational model | Tables, rows and columns · how a SQL statement is written · the logical processing order · keys |
 | 1 | Querying one table | SELECT · WHERE · AND, OR, NOT · IN, BETWEEN, LIKE · NULL · ORDER BY and LIMIT · DISTINCT |
 | 2 | Expressions and functions | Arithmetic · strings · dates and times · CASE · type casts |
 | 3 | Aggregation | Aggregate functions · GROUP BY · HAVING vs WHERE · aggregates and NULL |

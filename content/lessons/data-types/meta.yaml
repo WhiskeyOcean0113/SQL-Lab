@@ -4,3 +4,4 @@ summary:
   en: Create a new table with CREATE TABLE and choose the right type for each column, from integers, exact decimals and text to dates, times and Booleans, with ids and defaults filled in by the database.
 dataset: shop
 prereqs: [transactions]
+introduces: [CREATE, TABLE, information_schema, GENERATED, ALWAYS, IDENTITY, now(), ALTER, ADD, COLUMN, DROP, IF, varchar()]

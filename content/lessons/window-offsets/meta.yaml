@@ -4,3 +4,4 @@ summary:
   en: Reach the previous and next row with lag and lead, and compute running totals and moving averages with window frames.
 dataset: shop
 prereqs: [window-ranking]
+introduces: [lag(), lead(), DEFAULT, RANGE, PRECEDING, CURRENT, ROW, first_value(), last_value(), UNBOUNDED, FOLLOWING]

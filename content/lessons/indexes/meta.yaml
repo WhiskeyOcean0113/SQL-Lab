@@ -4,3 +4,4 @@ summary:
   en: Understand why an index makes lookups fast and what it costs, and build the right index for common conditions, sort orders and uniqueness rules.
 dataset: shop
 prereqs: [views]
+introduces: [ANALYZE, EXPLAIN, 'OFF', INDEX, pg_indexes]

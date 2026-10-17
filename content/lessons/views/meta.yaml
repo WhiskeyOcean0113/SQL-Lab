@@ -4,3 +4,4 @@ summary:
   en: Name a frequently used query with CREATE VIEW, use it again and again like a table, and know when data can be changed through a view.
 dataset: shop
 prereqs: [normalization]
+introduces: [VIEW, REPLACE, OPTION, MATERIALIZED]

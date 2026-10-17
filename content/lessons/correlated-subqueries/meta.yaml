@@ -4,3 +4,4 @@ summary:
   en: Let a subquery refer to the outer query's current row, to answer per-row questions such as "dearer than its category's average" or "each customer's latest order".
 dataset: shop
 prereqs: [in-exists]
+introduces: [LATERAL]

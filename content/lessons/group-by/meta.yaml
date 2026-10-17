@@ -4,3 +4,4 @@ summary:
   en: Split rows into groups by some columns, get one summary row per group, and know what SELECT may contain afterwards.
 dataset: shop
 prereqs: [aggregate-functions]
+introduces: [GROUP, string_agg(), ROLLUP]

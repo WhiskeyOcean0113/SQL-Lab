@@ -79,13 +79,13 @@ SELECT [ DISTINCT ] select_list
 ```sql run
 SELECT DISTINCT country
 FROM customers
-WHERE country <> 'China'
+WHERE joined_on < '2024-01-01'
 ORDER BY country
 LIMIT 3
 OFFSET 1;
 ```
 
-它用了骨架的第 1、2、3、6、7、8 行，跳过了 `GROUP BY` 和 `HAVING`。按逻辑顺序：先取所有顾客，去掉中国的顾客，取出国家并去重，按字母排序，跳过第一个 Brazil，再取三个：Canada、France、India。
+它用了骨架的第 1、2、3、6、7、8 行，跳过了 `GROUP BY` 和 `HAVING`。按逻辑顺序：先取所有顾客，只留下 2024 年以前注册的，取出国家并去重，按字母排序，跳过第一个 Canada，再取三个：China、France、India。
 
 ## 示例 {#example}
 

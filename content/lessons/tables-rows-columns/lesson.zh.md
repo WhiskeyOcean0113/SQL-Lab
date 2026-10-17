@@ -32,20 +32,13 @@ SELECT * FROM categories;
 
 1. **看全表。** 运行 `SELECT * FROM products;`，数一数结果有多少行。
 2. **认出每一行代表什么。** 每一行是一件商品，所以行数就是商品数。
-3. **查看列的类型。** 每个 PostgreSQL 数据库都自带一组描述自身结构的表，`information_schema.columns` 就是其中之一，里面列出了每张表的每一列。
+3. **对照每一列的类型。** 每一列的类型是建表时规定好的，下面的表格列出了 `products` 的六列。
 
 ```sql run
 SELECT * FROM products;
 ```
 
-一共 16 行，也就是 16 件商品。接着看列的类型：
-
-```sql run
-SELECT column_name, data_type
-FROM information_schema.columns
-WHERE table_name = 'products'
-ORDER BY ordinal_position;
-```
+一共 16 行，也就是 16 件商品。每一列存什么、是什么类型：
 
 | 列 | 类型 | 含义 |
 |---|---|---|
@@ -56,18 +49,11 @@ ORDER BY ordinal_position;
 | `stock` | integer | 库存数量 |
 | `launched_on` | date | 上架日期 |
 
-第二条查询里的 `WHERE` 和 `ORDER BY` 后面都会细讲，现在只需要知道它能告诉你一张表的结构。
+对照结果看：`price` 一列全是带两位小数的数，`launched_on` 一列全是日期。第 8 章会学怎样自己建表、规定类型，以及怎样用查询查出一张表的结构。
 
 ## 变体 {#variants}
 
-**shop 的全部五张表。** 用同样的办法，可以列出数据库里所有的表：
-
-```sql run
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-ORDER BY table_name;
-```
+**shop 的全部五张表。** 把 `FROM` 后面的表名换一换，就能逐一看遍它们：
 
 | 表 | 每一行代表 | 行数 |
 |---|---|---|
@@ -115,16 +101,9 @@ Liam O'Brien 和 Lucas Silva 的 `city` 是 NULL，这表示城市未知，而�
 | `date` | 日期，没有时间 | `joined_on`、`launched_on` |
 | `timestamp` | 日期加时间 | `ordered_at`、`shipped_at` |
 
-`information_schema` 还能告诉你哪些列允许是 NULL：
+`timestamp` 只记日期和时间，不带{{term:time-zone}}信息，第 2 章讲日期时会再遇到。
 
-```sql run
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_name = 'customers'
-ORDER BY ordinal_position;
-```
-
-`is_nullable` 为 `NO` 的列必须有值，比如每位顾客都有名字和国家；为 `YES` 的列可以空着，比如 `email` 和 `city`。`timestamp` 在这里显示成 `timestamp without time zone`，意思是它不带{{term:time-zone}}信息，第 2 章讲日期时会再遇到。
+**哪些列可以是 NULL，也是建表时规定的。** 在 `customers` 里，`id`、`name`、`country`、`joined_on` 必须有值，每位顾客都有名字和国家；`email`、`city`、`referred_by` 可以空着。运行上面的 `SELECT * FROM customers;`，NULL 只会出现在后三列里。
 
 **列名的约定。** shop 的表名用复数（`orders`），列名用小写加下划线（`customer_id`），这种写法叫 snake_case。它不是强制规定，但很常见，而且不用加引号。
 

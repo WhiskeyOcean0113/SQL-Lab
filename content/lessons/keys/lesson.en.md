@@ -19,14 +19,45 @@ A **foreign key** is a column whose values must already exist in another table's
 SELECT id, customer_id, status FROM orders;
 ```
 
-Every `customer_id` has a matching customer in `customers`, and the database enforces that. This is called {{term:referential-integrity}}: you cannot record an order for "customer 99", because shop has no such customer. Try it:
+Every `customer_id` has a matching customer in `customers`, and the database enforces that. This is called {{term:referential-integrity}}: you cannot record an order for "customer 99", because shop has no such customer.
+
+Primary and foreign keys are not just conventions; the database itself guards them. To watch it do so, you need to add a row to a table, which is the next section.
+
+## Syntax {#syntax}
+
+A row is added with an `INSERT` {{term:statement}}. Chapter 7 covers its other forms; this lesson uses only the basic one:
+
+```syntax
+INSERT INTO table_name ( column_name [, …] )
+VALUES ( expression [, …] )
+```
+
+| Placeholder | What goes there | Can it be left out? |
+|---|---|---|
+| `table_name` | The table that gets the row | No |
+| `column_name [, …]` | The columns to fill, separated by commas | No; this lesson always lists them |
+| `expression [, …]` | A value for each column, such as `25` or `'pending'`, matching the columns in number and order | No |
+
+Read one statement against the shape. Customer 11 places a new order:
+
+```sql run
+INSERT INTO orders (id, customer_id, ordered_at, status)
+VALUES (25, 11, '2024-07-01 10:00', 'pending');
+SELECT * FROM orders WHERE id = 25;
+```
+
+`table_name` is `orders`, and the four column names pair up with four values: id 25, customer 11, the time of the order, and the status pending. The time is a date plus a time of day, written in single quotes like a date. A semicolon separates the two statements, which run in turn; the `SELECT` shows you the new row.
+
+The practice database undoes every change after each run, so experiment freely: shop's data never changes.
+
+Now read a second one, with customer 11 changed to 99:
 
 ```sql run error
 INSERT INTO orders (id, customer_id, ordered_at, status)
 VALUES (25, 99, '2024-07-01 10:00', 'pending');
 ```
 
-The database refuses, and the DETAIL line says exactly why: `Key (customer_id)=(99) is not present in table "customers"`. (The practice database undoes every change after each run, so experiment freely.)
+The database refuses, and the DETAIL line says exactly why: `Key (customer_id)=(99) is not present in table "customers"`. That is the foreign key on guard.
 
 ## Example {#example}
 
@@ -70,17 +101,7 @@ SELECT id, name, referred_by FROM customers;
 
 Kenji Sato's `referred_by` is 1, meaning Kenji Sato was referred by customer 1, Lin Wei.
 
-**Listing a table's keys.** Every key is recorded in `information_schema.table_constraints`:
-
-```sql run
-SELECT table_name, constraint_name, constraint_type
-FROM information_schema.table_constraints
-WHERE table_schema = 'public'
-  AND constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
-ORDER BY table_name, constraint_type, constraint_name;
-```
-
-PostgreSQL names these keys by a fixed rule: a primary key is `table_pkey`, a foreign key `table_column_fkey` and a unique constraint `table_column_key`. The rule is worth knowing, because a violated constraint is reported by this name. Seeing `order_items_order_id_fkey`, you know at once that the foreign key on `order_items.order_id` failed.
+**Key names.** Every key has a name, given by a fixed rule: a primary key is `table_pkey`, a foreign key `table_column_fkey` and a unique constraint `table_column_key`. The rule is worth knowing, because a violated constraint is reported by this name. The refused statement in Syntax fails with `violates foreign key constraint "orders_customer_id_fkey"` on its first line, and you know at once that the foreign key on `orders.customer_id` failed.
 
 ## Going deeper {#deeper}
 
@@ -88,13 +109,7 @@ PostgreSQL names these keys by a fixed rule: a primary key is `table_pkey`, a fo
 
 **A unique constraint allows several NULLs.** Noah Martin and Mei Tanaka both have a NULL `email`, and the unique constraint does not mind. By PostgreSQL's default rule two NULLs are not equal, because whether two unknown values are the same is itself unknown.
 
-**Referenced rows cannot simply be deleted.** Deleting customer 1 fails because other rows still point at that customer:
-
-```sql run error
-DELETE FROM customers WHERE id = 1;
-```
-
-The error names the constraint `customers_referred_by_fkey`: the `referred_by` of both Kenji Sato and Chen Yu is 1. Even without that, Lin Wei's orders would block the delete. This is the default behaviour of a foreign key. A foreign key can instead be declared `ON DELETE CASCADE`, which deletes the referencing rows too, but that is a design choice to make with great care.
+**Referenced rows cannot simply be deleted.** A foreign key guards the other direction too: while any row points at customer 1, the database refuses to delete that customer. Kenji Sato and Chen Yu both have `referred_by` 1, and Lin Wei still has orders. Statements that delete rows come in Chapter 7, where you will see this rule in action. A foreign key can instead be declared to delete the referencing rows along with it (Chapter 8), but that is a design choice to make with great care.
 
 **A composite key checks the whole combination.** `order_items` already has the row "order 3 + product 3", so inserting it again is refused:
 
@@ -146,8 +161,8 @@ Deleting works the other way round: the items first, then the order.
 
 ## Summary {#summary}
 
-- A primary key identifies each row: no duplicates, no NULLs, at most one per table.
-- A foreign key's values must exist in another table's primary key; the database enforces this referential integrity.
+- A primary key identifies each row: no duplicates, no NULLs, at most one per table, possibly spanning several columns.
+- A foreign key's values must exist in another table's primary key; the database enforces this referential integrity. A foreign key can be NULL, meaning "refers to nothing".
 - In a one-to-many relationship the foreign key sits on the "many" side; a many-to-many relationship needs a junction table such as `order_items`.
-- A primary key can span several columns; a foreign key can be NULL, meaning "refers to nothing".
+- `INSERT INTO table_name (columns, …) VALUES (values, …)` adds a row; a statement that breaks a primary or foreign key is refused, and the error names the key.
 - Meaningless numbers that never change make the safest primary keys.

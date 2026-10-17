@@ -4,3 +4,4 @@ summary:
   en: Change and delete existing rows, pick exactly the right ones with WHERE, use other tables to decide what to change, and check which rows will be affected before you act.
 dataset: shop
 prereqs: [insert]
+introduces: [UPDATE, SET, DELETE]

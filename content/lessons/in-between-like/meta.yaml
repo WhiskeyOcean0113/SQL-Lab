@@ -4,3 +4,4 @@ summary:
   en: Say "one of these values", "within this range" and "text shaped like this" more concisely.
 dataset: shop
 prereqs: [ and-or-not ]
+introduces: [IN, BETWEEN, LIKE, SYMMETRIC, ILIKE, ESCAPE]

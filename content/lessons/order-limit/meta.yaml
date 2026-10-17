@@ -4,3 +4,4 @@ summary:
   en: Put results in the order you want, handle ties and NULLs, and take just one page of them.
 dataset: shop
 prereqs: [null-logic]
+introduces: [NULLS, FIRST, LAST, ALL, FETCH, ROWS, ONLY, WITH, TIES]

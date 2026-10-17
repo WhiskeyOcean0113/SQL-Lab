@@ -4,3 +4,4 @@ summary:
   en: Learn the basic shape of a relational database, and how to look inside a table with one query.
 dataset: shop
 prereqs: []
+introduces: [SELECT, FROM]

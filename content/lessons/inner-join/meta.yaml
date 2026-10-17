@@ -4,3 +4,4 @@ summary:
   en: Match every order to the customer who placed it, keeping only the rows that match on both sides.
 dataset: shop
 prereqs: [select-basics, where-comparisons]
+introduces: [JOIN, INNER, USING, NATURAL]

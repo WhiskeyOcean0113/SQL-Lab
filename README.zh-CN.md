@@ -24,7 +24,7 @@
 
 | 章节 | 主题 | 讲解 |
 |---|---|---|
-| 0 | 关系模型 | 表、行与列 · 主键与外键 · SQL 语句的写法 · 查询的逻辑执行顺序 |
+| 0 | 关系模型 | 表、行与列 · SQL 语句的写法 · 查询的逻辑执行顺序 · 主键与外键 |
 | 1 | 单表查询 | SELECT · WHERE · AND、OR、NOT · IN、BETWEEN、LIKE · NULL · ORDER BY 与 LIMIT · DISTINCT |
 | 2 | 表达式与函数 | 算术 · 字符串 · 日期与时间 · CASE · 类型转换 |
 | 3 | 聚合 | 聚合函数 · GROUP BY · HAVING 与 WHERE · 聚合与 NULL |

@@ -4,3 +4,4 @@ summary:
   en: Bind several changes into one unit with BEGIN, COMMIT and ROLLBACK, so they all take effect or none do, and learn what each letter of ACID guarantees.
 dataset: shop
 prereqs: [upsert]
+introduces: [BEGIN, COMMIT, ROLLBACK, SAVEPOINT, TO, RELEASE, current_setting()]

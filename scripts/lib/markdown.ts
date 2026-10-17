@@ -157,6 +157,13 @@ export function syntaxBlocks(src: string): string[] {
     .map(t => t.content.trim())
 }
 
+/** Every code block a lesson shows as SQL: ```sql (runnable or static) and ```syntax, in order. */
+export function sqlBlocks(src: string): string[] {
+  return md.parse(src, {})
+    .filter(t => t.type === 'fence' && /^(sql|syntax)\b/.test(t.info.trim()))
+    .map(t => t.content.trim())
+}
+
 /** Rendered inline HTML → plain text, e.g. a title for document.title or a breadcrumb. */
 export function toPlainText(html: string): string {
   return html.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')

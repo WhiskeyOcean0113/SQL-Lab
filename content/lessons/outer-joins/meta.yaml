@@ -4,3 +4,4 @@ summary:
   en: Keep the rows that find no match, use that to find what is missing, and know whether a condition belongs in ON or WHERE.
 dataset: shop
 prereqs: [inner-join]
+introduces: [LEFT, RIGHT, FULL, OUTER]

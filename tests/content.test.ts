@@ -72,6 +72,34 @@ describe('validate: predict answers', () => {
   }, 30_000)
 })
 
+describe('validate: nothing used before it is taught', () => {
+  it('flags a keyword used before the lesson that introduces it', async () => {
+    const { cpSync, mkdtempSync, writeFileSync, readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const { tmpdir } = await import('node:os')
+    const dir = mkdtempSync(join(tmpdir(), 'sql-lab-'))
+    cpSync(root, dir, { recursive: true })
+    const meta = (lesson: string) => join(dir, `lessons/${lesson}/meta.yaml`)
+    writeFileSync(meta('basics'), readFileSync(meta('basics'), 'utf8').replace('FROM, WHERE,', 'FROM,'))
+    writeFileSync(meta('filtering'), readFileSync(meta('filtering'), 'utf8').replace('[IS,', '[WHERE, IS,'))
+    const { problems } = await validate(dir)
+    expect(problems).toEqual(['lesson basics: uses WHERE in exercise basics/03-order, exercise basics/04-predict, but it is introduced later, by filtering'])
+  }, 30_000)
+})
+
+describe('sqlWords', () => {
+  it('classifies keywords, functions and names, and skips strings and comments', async () => {
+    const { sqlWords } = await import('../scripts/lib/vocabulary.ts')
+    const lex = {
+      keywords: new Map([['select', 'R'], ['from', 'R'], ['as', 'R'], ['order', 'R'], ['by', 'U'], ['coalesce', 'C'], ['name', 'U'], ['first', 'U'], ['nulls', 'U'], ['limit', 'R']]),
+      functions: new Set(['count', 'upper']),
+      names: new Set(['name', 'pets']),
+    }
+    const sql = "select count(*), coalesce(name, 'LIMIT x') AS first, upper(NAME) -- LIMIT\nFROM pets ORDER BY 1 NULLS FIRST"
+    expect([...sqlWords(sql, lex)].sort()).toEqual(['AS', 'BY', 'COALESCE', 'FIRST', 'FROM', 'NULLS', 'ORDER', 'SELECT', 'count()', 'first', 'name', 'pets', 'upper()'].sort())
+  })
+})
+
 describe('syntax blocks', () => {
   it('marks keywords, placeholders and notation, and leaves literal symbols alone', async () => {
     const { highlightSyntax } = await import('../src/content/highlight.ts')

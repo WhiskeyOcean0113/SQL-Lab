@@ -4,3 +4,4 @@ summary:
   en: Add, subtract, multiply, divide and round in a query, and know what integers, exact decimals and floating-point numbers each give you.
 dataset: shop
 prereqs: [distinct]
+introduces: ['%', '^', round(), trunc(), ceil(), floor(), abs(), power(), mod(), sqrt(), '::']

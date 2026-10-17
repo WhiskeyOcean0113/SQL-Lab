@@ -141,7 +141,7 @@ SELECT 0.1 + 0.2 = 0.3 AS numeric_equal,
        0.1::float8 + 0.2::float8 AS float_sum;
 ```
 
-所以金额一定要用 `numeric`，不要用 `real` 或 `double precision`。（`::float8` 是类型转换，本章最后一篇细讲。）
+所以金额一定要用 `numeric`，不要用 `real` 或 `double precision`。（`0.1::float8` 里的 `::` 把左边的值转换成右边的类型，`float8` 就是 `double precision`。类型转换在本章最后一篇细讲。）
 
 **两种四舍五入。** `numeric` 的 `round` 在正好一半时远离零取整：`round(2.5)` 是 3，`round(-2.5)` 是 -3。浮点数的 `round` 则取最近的偶数：`round(2.5::float8)` 是 2。又一个金额不要用浮点数的理由。
 

@@ -4,3 +4,4 @@ summary:
   en: Stack, intersect or subtract the results of two queries, and know how they treat duplicates and NULL.
 dataset: shop
 prereqs: [correlated-subqueries]
+introduces: [UNION, INTERSECT, EXCEPT]

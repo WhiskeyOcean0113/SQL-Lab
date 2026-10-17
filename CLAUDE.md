@@ -88,7 +88,22 @@ title:   { zh: "{{term:primary-key}}与{{term:foreign-key}}", en: "{{Term:primar
 summary: { zh: 一句话说明学完能做什么。, en: One sentence on what you can do afterwards. }
 dataset: shop
 prereqs: [select-basics, where-filter]    # must come earlier in curriculum
+introduces: [IS, 'NULL', coalesce()]      # the SQL this lesson teaches (see below)
+previews: [GROUP]                         # optional: shown early in the body, see below
 ```
+
+`introduces` lists every piece of SQL the lesson teaches: keywords in upper
+case (`ORDER`, `BY`), functions as `name()`, the operators `::` `||` `<>` `!=`
+`>=` `<=` `%` `^`, and system catalogs (`information_schema`, `pg_indexes`).
+Each is introduced by exactly one lesson. validate reads every code block and
+exercise (query, solution, starter, pieces, probe, attempts) and fails when one
+uses something that a later lesson introduces, or that no lesson introduces.
+So a learner never meets SQL they have not been taught. A lesson body may show
+a later word only if `previews` lists it and the prose says what it is (the
+full `SELECT` skeleton in `query-evaluation-order`); exercises never preview.
+When validate rejects a word, rewrite the code with what the learner already
+knows, or teach the word where it is first used and introduce it there; do not
+move the word to an earlier lesson that does not explain it.
 
 ### Lesson body: the teaching template
 
@@ -159,7 +174,9 @@ check:                 # all optional
 - `predict`: no `solution`; instead `query`, `choices` (list of strings or
   `{ zh, en }`), `answer` (0-based index) and `explain`. When the question is
   about how many rows come back, add `verify: { rows: N }` so validate checks
-  the answer key against the data.
+  the answer key against the data. The page always has a Run button for the
+  query, so a prompt may say "run the query below"; one that wants a real
+  prediction says "think first, then run it".
 - Prompts must state everything the grader checks: the columns, their order,
   whether rows must be sorted. If the prompt does not say it, do not check it.
 - At least four exercises per lesson, covering at least three kinds.
@@ -205,6 +222,9 @@ Every lesson is researched before it is written. Check, at minimum:
   columns); Miedema et al. 2021 (misconceptions from prior knowledge,
   over-generalisation, natural language, and incomplete mental models).
 - Every query in a lesson must use the lesson's dataset and actually run.
+- Every query uses only SQL taught so far (`introduces`, checked by validate).
+  "This is explained later" is not an explanation: if a query needs it, teach it
+  here or write the query differently.
 
 Style: short paragraphs, one idea each. Explain why before how. Prefer one
 precise sentence to three loose ones. No filler, no exclamation marks.

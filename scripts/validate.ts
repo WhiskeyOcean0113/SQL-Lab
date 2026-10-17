@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url'
 import { gradeRuns, finalResult } from '../src/engine/grade.ts'
 import { PracticeDb } from '../src/engine/practice-db.ts'
 import { buildContent } from './lib/build-content.ts'
-import { runnableBlocks, syntaxBlocks } from './lib/markdown.ts'
+import { runnableBlocks, sqlBlocks, syntaxBlocks } from './lib/markdown.ts'
+import { exerciseSql, OPERATORS, sqlWords, wordKind, type Lexicon } from './lib/vocabulary.ts'
 
 /** Section ids in teaching order. Required ones must appear; all must keep this order. */
 export const TEMPLATE = ['why', 'core', 'syntax', 'example', 'variants', 'deeper', 'mistakes', 'summary'] as const
@@ -18,7 +19,7 @@ const MIN_EXERCISES = 4
 const MIN_KINDS = 3
 
 export async function validate(root: string): Promise<{ problems: string[]; warnings: string[] }> {
-  const { course, problems, sources } = buildContent(root)
+  const { course, problems, sources, vocabulary } = buildContent(root)
   const warnings: string[] = []
   const seen = new Set<string>()
 
@@ -132,6 +133,9 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
     }
   }
 
+  // Nothing is used before it is taught.
+  await checkVocabulary()
+
   // Glossary hygiene.
   const used = new Set<string>()
   for (const src of Object.values(sources)) {
@@ -141,6 +145,73 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
 
   for (const db of dbs.values()) await db.close()
   return { problems, warnings }
+
+  /**
+   * Every keyword, function, notable operator and system catalog that a lesson's
+   * code or exercises use must be introduced (meta.yaml `introduces`) by that
+   * lesson or an earlier one. A lesson body may show a later word if it lists
+   * it under `previews` and its prose says what the word is (an overview of the
+   * whole SELECT, a keyword shown as a keyword); exercises never preview.
+   */
+  async function checkVocabulary() {
+    const taughtIn = new Map<string, number>()
+    course.path.forEach((id, i) => {
+      for (const word of vocabulary[id]?.introduces ?? []) {
+        const before = taughtIn.get(word)
+        if (before !== undefined) problems.push(`lesson ${id}: introduces ${word}, already introduced by ${course.path[before]}`)
+        else taughtIn.set(word, i)
+      }
+    })
+    const lexicons = new Map<string, Lexicon>()
+    for (const [i, id] of course.path.entries()) {
+      const lesson = course.lessons[id]
+      if (!lesson || !course.datasets[lesson.dataset]) continue
+      if (!lexicons.has(lesson.dataset)) lexicons.set(lesson.dataset, await lexiconOf(await dbFor(lesson.dataset)))
+      const lex = lexicons.get(lesson.dataset)!
+      const { introduces = [], previews = [] } = vocabulary[id] ?? {}
+      for (const word of [...introduces, ...previews]) {
+        const ok = { keyword: lex.keywords.has(word.toLowerCase()), function: lex.functions.has(word.slice(0, -2)), operator: true, name: word === word.toLowerCase() }[wordKind(word)]
+        if (!ok) problems.push(`lesson ${id}: "${word}" in meta.yaml is not a Postgres keyword (UPPER), function (name()), operator (${OPERATORS.join(' ')}) or lower-case name`)
+      }
+
+      const places: { label: string; sql: string; canPreview: boolean }[] = [
+        ...[...new Set([...sqlBlocks(sources[id]?.en ?? ''), ...sqlBlocks(sources[id]?.zh ?? '')])]
+          .map(sql => ({ label: 'the lesson', sql, canPreview: true })),
+        ...lesson.exercises.flatMap(ex => exerciseSql(ex).map(sql => ({ label: `exercise ${ex.id}`, sql, canPreview: false }))),
+      ]
+      const early = new Map<string, Set<string>>()
+      const unknown = new Map<string, Set<string>>()
+      const used = new Set<string>()
+      for (const { label, sql, canPreview } of places) {
+        for (const word of sqlWords(sql, lex)) {
+          used.add(word)
+          const at = taughtIn.get(word)
+          const kind = wordKind(word)
+          if (at === undefined) {
+            if (kind !== 'name' || /^(pg_|information_schema$)/.test(word)) {
+              if (kind !== 'keyword' || lex.keywords.has(word.toLowerCase())) (unknown.get(word) ?? unknown.set(word, new Set()).get(word)!).add(label)
+            }
+          } else if (at > i && !(canPreview && previews.includes(word))) {
+            (early.get(word) ?? early.set(word, new Set()).get(word)!).add(label)
+          }
+        }
+      }
+      for (const [word, labels] of early) problems.push(`lesson ${id}: uses ${word} in ${[...labels].join(', ')}, but it is introduced later, by ${course.path[taughtIn.get(word)!]}`)
+      for (const [word, labels] of unknown) problems.push(`lesson ${id}: uses ${word} in ${[...labels].join(', ')}, which no lesson introduces (add it to the introducing lesson's meta.yaml)`)
+      for (const word of introduces) if (!used.has(word)) warnings.push(`lesson ${id}: introduces ${word} but its code never uses it`)
+    }
+  }
+}
+
+/** Postgres's own keyword and function lists, plus the dataset's table and column names. */
+async function lexiconOf(db: PracticeDb): Promise<Lexicon> {
+  const rows = async (sql: string) => finalResult(await db.run(sql, { limit: Infinity }))?.rows ?? []
+  return {
+    keywords: new Map((await rows('SELECT word, catcode FROM pg_get_keywords()')).map(r => [String(r[0]), String(r[1])])),
+    functions: new Set((await rows('SELECT DISTINCT proname FROM pg_proc')).map(r => String(r[0]))),
+    names: new Set((await rows(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
+      UNION SELECT column_name FROM information_schema.columns WHERE table_schema = 'public'`)).map(r => String(r[0]))),
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -19,14 +19,45 @@ shop 里可能会有两位都叫 Chen Yu 的顾客，也可能有人改了名字
 SELECT id, customer_id, status FROM orders;
 ```
 
-每个 `customer_id` 都能在 `customers` 里找到对应的顾客。数据库会强制保证这一点，这叫{{term:referential-integrity}}：你不可能写进一笔属于“顾客 99”的订单，因为 shop 里没有这位顾客。试试看：
+每个 `customer_id` 都能在 `customers` 里找到对应的顾客。数据库会强制保证这一点，这叫{{term:referential-integrity}}：你不可能写进一笔属于“顾客 99”的订单，因为 shop 里没有这位顾客。
+
+主键和外键都不只是约定，而是数据库亲自把守的规则。要亲眼看到它把守，得试着往表里加一行，下一节就学这个。
+
+## 语法 {#syntax}
+
+往表里加一行，用 `INSERT` {{term:statement}}。第 7 章会细讲它的各种写法，这一课只用最基本的一种：
+
+```syntax
+INSERT INTO table_name ( column_name [, …] )
+VALUES ( expression [, …] )
+```
+
+| 占位符 | 填什么 | 能不能省略 |
+|---|---|---|
+| `table_name` | 要加行的表 | 不能 |
+| `column_name [, …]` | 要填值的列，用逗号隔开 | 不能，这一课总是写全 |
+| `expression [, …]` | 每一列的值，比如 `25`、`'pending'`；个数和顺序与前面的列一一对应 | 不能 |
+
+对照格式读一条语句。顾客 11 下了一笔新订单：
+
+```sql run
+INSERT INTO orders (id, customer_id, ordered_at, status)
+VALUES (25, 11, '2024-07-01 10:00', 'pending');
+SELECT * FROM orders WHERE id = 25;
+```
+
+`table_name` 是 `orders`；四个列名对应四个值：编号 25、顾客 11、下单时间、状态 pending。下单时间是日期加时间，和日期一样写在单引号里。两条语句用分号隔开，依次执行，后面的 `SELECT` 让你看到新加的这一行。
+
+练习环境每次运行完都会自动撤销修改，所以可以放心地试，shop 的数据不会变。
+
+再读一条：只把顾客 11 换成 99。
 
 ```sql run error
 INSERT INTO orders (id, customer_id, ordered_at, status)
 VALUES (25, 99, '2024-07-01 10:00', 'pending');
 ```
 
-数据库拒绝了这条语句，错误信息里的 DETAIL 写得很清楚：`Key (customer_id)=(99) is not present in table "customers"`。（这里的练习环境每次运行完都会自动撤销修改，所以你可以放心地试。）
+数据库拒绝了这条语句，错误信息里的 DETAIL 写得很清楚：`Key (customer_id)=(99) is not present in table "customers"`。这就是外键在把守。
 
 ## 示例 {#example}
 
@@ -70,17 +101,7 @@ SELECT id, name, referred_by FROM customers;
 
 Kenji Sato 的 `referred_by` 是 1，表示 Kenji Sato 是被顾客 1（Lin Wei）推荐的。
 
-**查看一张表有哪些键。** 键都记录在 `information_schema.table_constraints` 里：
-
-```sql run
-SELECT table_name, constraint_name, constraint_type
-FROM information_schema.table_constraints
-WHERE table_schema = 'public'
-  AND constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
-ORDER BY table_name, constraint_type, constraint_name;
-```
-
-PostgreSQL 按固定的规则给这些键起名字：主键叫 `表名_pkey`，外键叫 `表名_列名_fkey`，唯一约束叫 `表名_列名_key`。记住这个规则很有用，因为违反约束时，错误信息里给出的就是这个名字。看到 `order_items_order_id_fkey`，你马上知道是 `order_items.order_id` 这个外键没通过。
+**键的名字。** 每个键都有名字，PostgreSQL 按固定的规则起：主键叫 `表名_pkey`，外键叫 `表名_列名_fkey`，唯一约束叫 `表名_列名_key`。记住这个规则很有用，因为违反约束时，错误信息里给出的就是这个名字。语法一节那条被拒绝的语句，报错的第一行是 `violates foreign key constraint "orders_customer_id_fkey"`，你马上知道是 `orders.customer_id` 这个外键没通过。
 
 ## 深入 {#deeper}
 
@@ -88,13 +109,7 @@ PostgreSQL 按固定的规则给这些键起名字：主键叫 `表名_pkey`，�
 
 **唯一约束允许多个 NULL。** Noah Martin 和 Mei Tanaka 的 `email` 都是 NULL，却没有违反唯一约束。在 PostgreSQL 默认的规则里，两个 NULL 不算相等，因为两个未知的值是否相同本身就是未知的。
 
-**被引用的行不能随便删。** 删除顾客 1 会失败，因为别的行还在引用 ta：
-
-```sql run error
-DELETE FROM customers WHERE id = 1;
-```
-
-报错提到的约束是 `customers_referred_by_fkey`：Kenji Sato 和 Chen Yu 的 `referred_by` 都指向顾客 1。就算没有这一层，Lin Wei 的订单也会阻止删除。这是外键的默认行为；定义外键时也可以选择 `ON DELETE CASCADE`（连带删除引用它的行），但这类设计要非常谨慎。
+**被引用的行不能随便删。** 外键也反过来把守：只要还有行指向顾客 1，数据库就拒绝删除这位顾客。Kenji Sato 和 Chen Yu 的 `referred_by` 都是 1，Lin Wei 也还有订单。删除数据的语句在第 7 章，到时你会亲眼看到这条规则。定义外键时也可以规定“连带删除引用它的行”（第 8 章），但这类设计要非常谨慎。
 
 **复合主键检查的是整个组合。** `order_items` 里已经有“订单 3 + 商品 3”这一行，再插一次会被拒绝：
 
@@ -146,8 +161,8 @@ SELECT * FROM order_items WHERE order_id = 25;
 
 ## 小结 {#summary}
 
-- 主键唯一地认出每一行：值不重复、不为空，每张表最多一个。
-- 外键的值必须是另一张表主键里已经存在的值，数据库会强制保证参照完整性。
+- 主键唯一地认出每一行：值不重复、不为空，每张表最多一个，可以由几列组成。
+- 外键的值必须是另一张表主键里已经存在的值，数据库会强制保证参照完整性；外键可以为 NULL，表示“没有引用”。
 - 一对多关系中，外键放在“多”的那一边；多对多关系需要一张关联表，比如 `order_items`。
-- 主键可以由几列组成；外键可以为 NULL，表示“没有引用”。
+- `INSERT INTO table_name (列, …) VALUES (值, …)` 加一行；违反主键或外键的语句会被拒绝，错误信息里写着键的名字。
 - 主键用没有含义、不会改变的编号最稳妥。

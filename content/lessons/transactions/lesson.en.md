@@ -157,18 +157,6 @@ SELECT name, price, stock FROM products WHERE id = 7;
 
 The price is still 399.00 and the stock went from 0 to 10. A {{term:savepoint}} is like a save point in a game: `ROLLBACK TO` returns to it, earlier changes are untouched, and the transaction carries on.
 
-**Schema changes roll back too.** In PostgreSQL, statements that change table structure, such as `CREATE TABLE`, are part of the transaction as well:
-
-```sql run error
-BEGIN;
-CREATE TABLE notes (id integer, body text);
-INSERT INTO notes VALUES (1, 'hello');
-ROLLBACK;
-SELECT * FROM notes;
-```
-
-`relation "notes" does not exist`: the new table and its data were undone together. MySQL and Oracle cannot do this; they commit earlier changes automatically when they meet a table-creating statement.
-
 ## Going deeper {#deeper}
 
 **ACID.** A database makes four promises about transactions, known by their initials as ACID:
@@ -180,7 +168,7 @@ SELECT * FROM notes;
 | I | {{term:isolation|Isolation}} | Concurrent transactions do not interfere, as if they ran one after another | Nobody else sees your uncommitted changes |
 | D | {{term:durability|Durability}} | Once committed, changes are not lost, even if the power fails at once | When `COMMIT` returns, order 25 is safe |
 
-**Isolation comes in degrees.** Complete isolation is expensive, so databases offer several {{term:isolation-level|isolation levels}} that trade correctness against speed. PostgreSQL's default is `read committed`:
+**Isolation comes in degrees.** Complete isolation is expensive, so databases offer several {{term:isolation-level|isolation levels}} that trade correctness against speed. PostgreSQL's default is `read committed`. The `current_setting` function reads one of the database's current settings, named in the parentheses:
 
 ```sql run
 SELECT current_setting('transaction_isolation');

@@ -4,3 +4,4 @@ summary:
   en: Collapse many rows into one value with count, sum, avg, min and max, and know which columns you can still select afterwards.
 dataset: shop
 prereqs: [arithmetic, null-logic]
+introduces: [count(), sum(), avg(), min(), max(), bool_or(), bool_and()]

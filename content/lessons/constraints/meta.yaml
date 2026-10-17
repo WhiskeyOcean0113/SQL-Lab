@@ -4,3 +4,4 @@ summary:
   en: Write rules into a table with NOT NULL, UNIQUE, PRIMARY KEY, FOREIGN KEY and CHECK, so that the database refuses every piece of data that breaks them.
 dataset: shop
 prereqs: [data-types]
+introduces: [PRIMARY, FOREIGN, CHECK, CONSTRAINT, UNIQUE, REFERENCES, 'NO', ACTION, CASCADE]

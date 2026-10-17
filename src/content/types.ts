@@ -66,7 +66,7 @@ export interface QueryExercise extends ExerciseBase {
 
 export interface PredictExercise extends ExerciseBase {
   kind: 'predict'
-  /** The query the learner reads. They can run it after answering. */
+  /** The query the learner reads. They can run it at any time. */
   query: string
   choices: Bi[]
   answer: number

@@ -4,3 +4,4 @@ summary:
   en: Combine conditions, and know which one the database evaluates first when there are no parentheses.
 dataset: shop
 prereqs: [where-comparisons]
+introduces: [AND, OR, NOT, '||']

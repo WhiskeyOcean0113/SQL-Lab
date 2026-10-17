@@ -2,3 +2,4 @@ title: { zh: 基础查询, en: Basic queries }
 summary: { zh: 读一张表。, en: Read one table. }
 dataset: tiny
 prereqs: []
+introduces: [SELECT, FROM, WHERE, ORDER, BY]

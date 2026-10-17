@@ -1,0 +1,20 @@
+kind: predict
+difficulty: 1
+lesson_ref: deeper
+prompt:
+  zh: 运行下面的查询。Lin Wei 的 `referred_by` 是 NULL，它表示什么？
+  en: Run the query below. Lin Wei's `referred_by` is NULL. What does that mean?
+hint:
+  zh: 外键只检查“有值的时候，这个值必须存在”。没有值是什么意思？
+  en: A foreign key only checks that a value, when there is one, exists. What does having no value mean?
+query: SELECT id, name, referred_by FROM customers WHERE id = 1;
+choices:
+  - { zh: Lin Wei 不是被任何人推荐来的, en: Nobody referred Lin Wei }
+  - { zh: Lin Wei 是自己推荐了自己, en: Lin Wei referred themself }
+  - { zh: Lin Wei 是被编号为 0 的顾客推荐的, en: Customer 0 referred Lin Wei }
+  - { zh: 这一行数据出错了，外键不应该为空, en: The row is broken; a foreign key must not be empty }
+answer: 0
+verify: { rows: 1 }
+explain:
+  zh: NULL 表示“没有引用”，没有人推荐 Lin Wei。外键允许为空，它只在有值的时候检查这个值是否存在。自己推荐自己会写成 1，而 shop 里没有编号为 0 的顾客。
+  en: 'NULL means "refers to nothing": nobody referred Lin Wei. A foreign key may be empty; it only checks a value when there is one. Referring themself would be written as 1, and shop has no customer 0.'

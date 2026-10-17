@@ -85,7 +85,6 @@ export const strings = {
     'ex.parsons.down': '下移',
     'ex.parsons.remove': '移除',
     'ex.predict.choose': '选择你的答案',
-    'ex.predict.runIt': '运行这条查询看看',
     'ex.needAnswer': '先写下你的答案再提交。',
 
     'verdict.correct': '做对了',
@@ -273,7 +272,6 @@ export const strings = {
     'ex.parsons.down': 'Move down',
     'ex.parsons.remove': 'Remove',
     'ex.predict.choose': 'Choose your answer',
-    'ex.predict.runIt': 'Run the query and see',
     'ex.needAnswer': 'Write an answer before submitting.',
 
     'verdict.correct': 'Correct',

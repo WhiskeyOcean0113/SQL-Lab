@@ -1,6 +1,6 @@
 kind: parsons
 difficulty: 2
-lesson_ref: core
+lesson_ref: syntax
 prompt:
   zh: |
     Lucas Silva（顾客 11）下了第一笔订单。用下面的片段拼出一条语句，记录这笔订单：编号 25，下单时间 2024-07-01 10:00，状态 pending。有两个片段会被数据库拒绝。

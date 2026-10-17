@@ -4,3 +4,5 @@ summary:
   en: SQL is written in one order and evaluated in another. Learn the second, and many errors stop being mysterious.
 dataset: shop
 prereqs: [sql-syntax]
+introduces: [DISTINCT, ORDER, BY, ASC, DESC, LIMIT, OFFSET]
+previews: [GROUP, HAVING]

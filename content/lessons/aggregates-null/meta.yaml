@@ -4,3 +4,4 @@ summary:
   en: Know how aggregates treat NULL and what they return when there is nothing to summarise, and count conditionally with FILTER.
 dataset: shop
 prereqs: [having-vs-where]
+introduces: [FILTER]

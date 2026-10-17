@@ -4,3 +4,4 @@ summary:
   en: Insert a row, or update it instead when its key already exists, or skip it, so that "add it or change it" takes one statement.
 dataset: shop
 prereqs: [update-delete]
+introduces: [CONFLICT, DO, NOTHING, KEY]

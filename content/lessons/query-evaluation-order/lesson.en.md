@@ -79,13 +79,13 @@ Here is a query using six of the clauses, read against the skeleton:
 ```sql run
 SELECT DISTINCT country
 FROM customers
-WHERE country <> 'China'
+WHERE joined_on < '2024-01-01'
 ORDER BY country
 LIMIT 3
 OFFSET 1;
 ```
 
-It uses lines 1, 2, 3, 6, 7 and 8 and skips `GROUP BY` and `HAVING`. In logical order: take every customer, drop the ones in China, take their countries and remove duplicates, sort alphabetically, skip the first one, Brazil, and keep the next three: Canada, France and India.
+It uses lines 1, 2, 3, 6, 7 and 8 and skips `GROUP BY` and `HAVING`. In logical order: take every customer, keep those who joined before 2024, take their countries and remove duplicates, sort alphabetically, skip the first one, Canada, and keep the next three: China, France and India.
 
 ## Example {#example}
 

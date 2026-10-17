@@ -4,3 +4,4 @@ summary:
   en: Measure time between events, add to dates, pull out years and months, and steer clear of month-end and time-zone traps.
 dataset: shop
 prereqs: [string-functions]
+introduces: [TIMESTAMP, INTERVAL, extract(), date_trunc(), age(), to_char()]

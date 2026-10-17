@@ -157,18 +157,6 @@ SELECT name, price, stock FROM products WHERE id = 7;
 
 价格还是 399.00，库存从 0 变成了 10。{{Term:savepoint}}就像事务中间的存档点：`ROLLBACK TO` 回到这个存档，之前的修改不受影响，事务也继续进行。
 
-**表结构的修改也能回滚。** 在 PostgreSQL 里，`CREATE TABLE` 这类修改表结构的语句也在事务之内：
-
-```sql run error
-BEGIN;
-CREATE TABLE notes (id integer, body text);
-INSERT INTO notes VALUES (1, 'hello');
-ROLLBACK;
-SELECT * FROM notes;
-```
-
-`relation "notes" does not exist`：建表连同里面的数据一起被撤销了。MySQL 和 Oracle 做不到这一点，它们遇到建表语句会自动提交之前的修改。
-
 ## 深入 {#deeper}
 
 **ACID。** 数据库对事务做出四项保证，取它们英文的首字母，合称 ACID：
@@ -180,7 +168,7 @@ SELECT * FROM notes;
 | I | {{term:isolation}} | 同时进行的事务互不干扰，像是一个接一个执行 | 别人看不到你还没提交的修改 |
 | D | {{term:durability}} | 一旦提交，修改就不会丢，即使马上断电 | `COMMIT` 返回之后，订单 25 就安全了 |
 
-**隔离有不同的程度。** 完全的隔离代价很高，所以数据库提供几种{{term:isolation-level}}，在正确性和速度之间取舍。PostgreSQL 默认是 `read committed`：
+**隔离有不同的程度。** 完全的隔离代价很高，所以数据库提供几种{{term:isolation-level}}，在正确性和速度之间取舍。PostgreSQL 默认是 `read committed`。`current_setting` 函数读出数据库当前的某一项设置，括号里写设置的名字：
 
 ```sql run
 SELECT current_setting('transaction_isolation');

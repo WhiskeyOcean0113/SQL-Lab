@@ -11,7 +11,7 @@ solution: CREATE INDEX order_items_product_id_idx ON order_items (product_id);
 check:
   mode: probe
   probe: |
-    SELECT regexp_replace(pg_get_indexdef(indexrelid), 'INDEX \S+ ON', 'INDEX ON') AS definition
-    FROM pg_index
-    WHERE indrelid = 'order_items'::regclass AND NOT indisprimary
-    ORDER BY 1;
+    SELECT replace(indexdef, indexname || ' ', '') AS definition
+    FROM pg_indexes
+    WHERE tablename = 'order_items' AND indexname <> 'order_items_pkey'
+    ORDER BY definition;

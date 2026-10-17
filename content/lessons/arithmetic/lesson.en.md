@@ -141,7 +141,7 @@ SELECT 0.1 + 0.2 = 0.3 AS numeric_equal,
        0.1::float8 + 0.2::float8 AS float_sum;
 ```
 
-So money always belongs in `numeric`, never `real` or `double precision`. (`::float8` is a type cast, covered in the last lesson of this chapter.)
+So money always belongs in `numeric`, never `real` or `double precision`. (In `0.1::float8`, `::` converts the value on its left to the type on its right; `float8` is `double precision`. Type casts are covered in the last lesson of this chapter.)
 
 **Two ways of rounding.** `round` on `numeric` rounds exact halves away from zero: `round(2.5)` is 3 and `round(-2.5)` is -3. `round` on floating-point values rounds halves to the nearest even number: `round(2.5::float8)` is 2. One more reason to keep money out of floating point.
 

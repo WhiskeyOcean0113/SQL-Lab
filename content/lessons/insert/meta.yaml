@@ -4,3 +4,4 @@ summary:
   en: Add rows to a table by naming the columns, inserting several rows at once or a query's result, and see the new rows with RETURNING.
 dataset: shop
 prereqs: [window-offsets]
+introduces: [RETURNING]

@@ -4,3 +4,4 @@ summary:
   en: Compute across rows with OVER without collapsing them, rank every row, and pick the top few of each group.
 dataset: shop
 prereqs: [recursive-ctes]
+introduces: [OVER, PARTITION, row_number(), rank(), dense_rank(), ntile(), WINDOW]

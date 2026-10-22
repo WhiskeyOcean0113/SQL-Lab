@@ -1,0 +1,19 @@
+# Template 2, built to break nearly every audit rule (all but 13b).
+template: 2
+title: { zh: 排序, en: Sorting }
+summary:
+  zh: 按一列或几列排列结果。
+  en: Sort the result by one or more columns.
+dataset: tiny
+prereqs: [grouping]
+# Rule 8: nine words outside reference. Rule 5: no exercise uses OFFSET, LAST or ROWS.
+# Rule 5b: LIMIT, DESC and ASC appear only in predict or debug exercises.
+introduces: [ORDER, ASC, DESC, LIMIT, OFFSET, NULLS, FIRST, LAST, ROWS, FETCH]
+reference: [FETCH]
+objectives:
+  - id: sort-rows
+    zh: 能写出按一列排序的查询。
+    en: Write a query that sorts by one column.
+  - id: page-rows                  # rule 6: one exercise, and not a write
+    zh: 能预测 LIMIT 会留下几行。
+    en: Predict how many rows LIMIT keeps.

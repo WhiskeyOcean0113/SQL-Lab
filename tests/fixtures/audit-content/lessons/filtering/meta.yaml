@@ -1,0 +1,6 @@
+# Legacy (no template): every finding is a warning.
+title: { zh: 筛选, en: Filtering }
+summary: { zh: 用 WHERE 留下需要的行。, en: Keep the rows you need with WHERE. }
+dataset: tiny
+prereqs: []
+introduces: [SELECT, FROM, WHERE, AND]   # rule 5: no exercise uses AND

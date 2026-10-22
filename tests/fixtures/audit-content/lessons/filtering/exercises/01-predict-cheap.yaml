@@ -1,0 +1,18 @@
+# Rule 3: the prompt states the answer. Rule 4: no choice has a why. Rule 12: a row count.
+kind: predict
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 价格低于 10 的商品有 2 件。下面的查询返回几行？
+  en: Two items cost less than 10. How many rows does this query return?
+hint:
+  zh: 数一数价格低于 10 的商品。
+  en: Count the items under 10.
+query: |
+  SELECT name FROM items WHERE price < 10;
+choices: ['1', '2', '5']
+answer: 1
+verify: { rows: 2 }
+explain:
+  zh: 2 行：pen 和 stapler。
+  en: Two rows, pen and stapler.

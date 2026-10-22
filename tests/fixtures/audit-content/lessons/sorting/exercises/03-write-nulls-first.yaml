@@ -1,0 +1,15 @@
+# Rule 1: the solution is step 2 of the lesson's steps block. Rule 2: the legacy
+# `hint` spells it out. Rule 4: no explain. Rule 14: no traps here or in 04.
+kind: write
+difficulty: 2
+lesson_ref: example
+objective: sort-rows
+prompt:
+  zh: 按分类排列商品，没有分类的排在最前。列依次为 `name` 和 `category`。
+  en: Sort the items by category, with the uncategorised first. The columns are `name` and `category`.
+hint:
+  zh: "`ORDER BY category NULLS FIRST`"
+  en: "`ORDER BY category NULLS FIRST`"
+solution: |
+  SELECT name, category FROM items ORDER BY category NULLS FIRST;
+check: { order_matters: true }

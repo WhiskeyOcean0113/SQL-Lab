@@ -1,0 +1,18 @@
+# Rule 3: the prompt contains the answer. Rule 4: no choice has a why.
+kind: predict
+difficulty: 1
+lesson_ref: core
+objective: page-rows
+prompt:
+  zh: "`LIMIT 3` 会留下几行？"
+  en: "How many rows does `LIMIT 3` keep?"
+hints:
+  - { zh: 看 `LIMIT` 后面的数字。, en: Look at the number after `LIMIT`. }
+query: |
+  SELECT name FROM items ORDER BY price LIMIT 3;
+choices: ['3', '5']
+answer: 0
+verify: { rows: 3 }
+explain:
+  zh: 3 行。
+  en: Three.

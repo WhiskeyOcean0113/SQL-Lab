@@ -54,6 +54,7 @@ npm run dev
 | `npm run dev:fixture` | 同样的界面，加载一门只有两篇讲解的测试课程 |
 | `npm test` | 测试 SQL 引擎、判题器、内容管线和进度存储 |
 | `npm run validate` | 检查所有内容规则：两种语言结构一致、每个示例都能运行、每份参考答案和答案选项都与数据相符 |
+| `npm run audit` | 检查内容好不好学：练习是否照抄课文示例、提示是否泄露答案、教过的 SQL 是否从没练过。`--strict` 只在使用模板 2 的课出现 error 时失败 |
 | `npm run typecheck` | TypeScript 类型检查 |
 | `npm run build` | 先校验，再把静态站点构建到 `dist/` |
 

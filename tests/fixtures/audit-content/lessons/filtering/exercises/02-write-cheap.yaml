@@ -1,0 +1,12 @@
+# Rule 1: the solution is the lesson's `sql run` block. Rule 2: the legacy hint spells it out. Rule 4: no explain.
+kind: write
+difficulty: 1
+lesson_ref: core
+prompt:
+  zh: 列出价格低于 10 的商品，列依次为 `name` 和 `price`。
+  en: List the items that cost less than 10, with the columns `name` and `price`.
+hint:
+  zh: "`SELECT name, price FROM items WHERE price < 10`"
+  en: "`SELECT name, price FROM items WHERE price < 10`"
+solution: |
+  SELECT name, price FROM items WHERE price < 10;

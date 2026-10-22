@@ -1,0 +1,20 @@
+kind: write
+difficulty: 2
+lesson_ref: deeper
+objective: null-group
+prompt:
+  zh: 数一数每个分类有几件商品，没有分类的商品也算作一组。列依次为 `category` 和 `items`。
+  en: Count the items in each category, with the uncategorised ones as a group too. The columns are `category` and `items`.
+hints:
+  - { zh: 空值会自成一组，不需要特别处理。, en: NULL forms a group by itself; nothing special is needed. }
+solution: |
+  SELECT category, count(*) AS items
+  FROM items
+  GROUP BY category;
+explain:
+  zh: "`GROUP BY category` 把台灯放进空值那一组。`count(*)` 数行，所以这一组是 1；`count(category)` 只数非空值，会得到 0。"
+  en: "`GROUP BY category` puts the lamp in the NULL group. `count(*)` counts rows, so that group has 1; `count(category)` counts only non-NULL values and gives 0."
+traps:
+  - sql: |
+      SELECT category, count(category) AS items FROM items GROUP BY category;
+    say: { zh: "`count(category)` 不数空值，空值那一组得到 0。", en: "`count(category)` skips NULLs, so the NULL group gets 0." }

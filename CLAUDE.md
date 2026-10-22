@@ -15,12 +15,23 @@ npm run dev        # site at http://localhost:5173, reloads on content/ changes
 npm run dev:fixture  # same UI against tests/fixtures/content (a tiny two-lesson course)
 npm test           # engine, grader, content pipeline, progress store
 npm run validate   # every content rule below; --verbose lists warnings
+npm run audit      # teaching-quality heuristics; --lesson <id>, --json, --strict
 npm run typecheck
 npm run build      # validate, then build to dist/
 ```
 
+validate checks that content is correct; audit (`scripts/audit.ts`, rules in
+`RULES`) estimates whether it teaches well: write solutions close to lesson
+SQL, hints that give the solution away, introduced SQL no exercise practises,
+objectives without a write exercise, `deeper` longer than `core`, other
+databases named in the main text, too few `check` and `steps` blocks. A lesson
+with `template: 2` gets each rule's own level, a legacy lesson only warnings;
+`--strict` exits 1 on an error in a template-2 lesson, so it passes until
+lessons opt in.
+
 The pre-commit hook (`.githooks/pre-commit`, enabled by `npm install`) runs
-typecheck, validate and tests. Never commit with failures and never bypass it.
+typecheck, validate, tests and `audit --strict`. Never commit with failures and
+never bypass it.
 
 ## Principles
 

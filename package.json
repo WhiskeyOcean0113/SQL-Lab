@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "validate": "tsx scripts/validate.ts",
+    "audit": "tsx scripts/audit.ts",
     "typecheck": "tsc --noEmit",
     "prepare": "git config core.hooksPath .githooks",
     "dev:fixture": "SQL_LAB_CONTENT=tests/fixtures/content vite"

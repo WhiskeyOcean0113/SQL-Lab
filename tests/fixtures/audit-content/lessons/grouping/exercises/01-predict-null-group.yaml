@@ -1,0 +1,24 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+objective: null-group
+prompt:
+  zh: 台灯（lamp）没有分类。先想一想再运行：结果里有没有一组的 `category` 是 NULL？
+  en: "The lamp has no category. Think first, then run it: is there a group whose `category` is NULL?"
+hints:
+  - { zh: 想想 GROUP BY 怎样对待空值。, en: Think about how GROUP BY treats NULL. }
+query: |
+  SELECT category, count(*) AS items FROM items GROUP BY category;
+choices:
+  - zh: 有，台灯自成一组
+    en: Yes, the lamp forms a group of its own
+    why: { zh: 对。所有空值被分进同一组。, en: Right. All NULLs go into one group. }
+  - zh: 没有，台灯被丢掉了
+    en: No, the lamp is dropped
+    why: { zh: 分组不会丢掉任何行。, en: Grouping drops no rows. }
+  - text: ERROR
+    why: { zh: 按含有空值的列分组是合法的。, en: Grouping by a column with NULLs is valid. }
+answer: 0
+explain:
+  zh: 有。台灯的 `category` 是 NULL，分组时所有空值算作同一组，这一组的 `count(*)` 是 1。
+  en: Yes. The lamp's `category` is NULL; grouping puts all NULLs into one group, whose `count(*)` is 1.

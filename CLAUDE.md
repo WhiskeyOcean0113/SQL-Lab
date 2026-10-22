@@ -108,8 +108,8 @@ move the word to an earlier lesson that does not explain it.
 ### Lesson body: the teaching template
 
 Every `##` heading ends with a fixed id. Sections appear in this order;
-`variants` and `deeper` are optional, the rest are required. Both languages
-have exactly the same sections. `syntax` is required from `sql-syntax`, the
+`variants`, `deeper` and `reference` are optional, the rest are required. Both
+languages have exactly the same sections. `syntax` is required from `sql-syntax`, the
 lesson that teaches the notation, onwards; the lessons before it have none.
 `select-basics` is the model for a lesson's `syntax` section.
 
@@ -123,6 +123,7 @@ lesson that teaches the notation, onwards; the lessons before it have none.
 | `deeper`   | 深入          | Going deeper     | Edge cases, NULL behaviour, standard vs. Postgres specifics. |
 | `mistakes` | 常见错误      | Common mistakes  | Real novice errors, each with the wrong query, what happens, and the fix. |
 | `summary`  | 小结          | Summary          | 3–5 bullets. No new information. |
+| `reference`| 参考          | Reference        | Dialect notes and rarely used forms. Rendered collapsed. |
 
 Markdown extensions:
 
@@ -141,7 +142,35 @@ Markdown extensions:
   `{ a | b }` pick one, `[, …]` repeat. Like `sql run` blocks, identical in zh and en.
   Show only the forms the lesson teaches, but never a shape that is wrong;
   the shape grows lesson by lesson towards the full `SELECT`.
+- ` ```check `: an inline checkpoint, YAML inside the fence: `query`, `question`,
+  `choices` (a list of strings), `answer` (0-based), `explain`, optional
+  `verify: { rows: N }`. The learner picks, presses Check, then sees right or
+  wrong, `explain` and the result, and may run the query. Not recorded in
+  progress. `query`, `answer`, the number of choices and `verify` are identical
+  in zh and en; the text fields are in the file's language and may use terms.
+  validate runs the query and checks `answer` and `verify`.
+- ` ```steps `: a step-through of intermediate results, a YAML list of 2–8
+  `{ sql, say, group? }`. The page shows one step at a time with its result;
+  `group` names a result column whose values tint and number the rows.
+  `sql` and `group` are identical in zh and en, in the same order; `say` is in
+  the file's language. Every step must run.
+- `check` and `steps` SQL is lesson code: the vocabulary check covers it, and
+  `previews` apply. Quote YAML values that start with `{{term:…}}`.
 - `###` subheadings may divide a long section; they carry no id.
+
+#### Template 2 lessons
+
+A lesson opts in with `template: 2` in `meta.yaml`. Its objectives and the
+exercise rules are under Exercises. The body follows these rules too:
+
+- `core` is the main part of the lesson and carries a trace table or a
+  `steps` block. `deeper` is not longer than `core`.
+- At most 8 new words in `introduces`, not counting those that `meta.yaml`
+  lists under `reference` (taught for recognition only); split the lesson if
+  it needs more.
+- Other databases are named only in `deeper` or `reference`.
+- No forward references such as “第 N 章会讲” or "a later chapter".
+- At least two `check` blocks: one after `core`, one after `example`.
 
 ### Exercises
 

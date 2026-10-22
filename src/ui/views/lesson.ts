@@ -1,8 +1,13 @@
 import { t } from '../../i18n/index.ts'
 import { href, notFound, type Ctx } from '../app.ts'
 import { $$, html, mount, pad2, raw } from '../dom.ts'
+import { hydrateCheck } from '../check.ts'
 import { hydrateRunner } from '../runner.ts'
+import { hydrateSteps } from '../steps.ts'
 import { chapterNo } from './map.ts'
+
+/** The one section that starts collapsed: dialect notes and rarely used forms. */
+const REFERENCE = 'reference'
 
 export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: string) {
   const { course, lang, status } = ctx
@@ -45,7 +50,15 @@ export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: 
               <span>${raw(t(lang, 'lesson.exercises'))} <b>${raw(t(lang, 'lesson.exerciseCount', { n: lesson.exercises.length }))}</b></span>
             </div>
           </header>
-          ${sections.map((s, i) => html`
+          ${sections.map((s, i) => s.id === REFERENCE
+            ? html`
+            <section class="section ref" id="sec-${s.id}">
+              <details class="ref-box">
+                <summary><h2><span class="no">${pad2(i + 1)}</span><span>${raw(s.heading)}</span></h2><span class="ref-toggle"><span class="ref-show">${raw(t(lang, 'reference.show'))}</span><span class="ref-hide">${raw(t(lang, 'reference.hide'))}</span></span></summary>
+                <div class="prose">${raw(s.html)}</div>
+              </details>
+            </section>`
+            : html`
             <section class="section" id="sec-${s.id}">
               <h2><span class="no">${pad2(i + 1)}</span><span>${raw(s.heading)}</span></h2>
               <div class="prose">${raw(s.html)}</div>
@@ -58,19 +71,29 @@ export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: 
     </div>`)
 
   for (const el of $$<HTMLElement>('.sql-run', root)) void hydrateRunner(el, ctx, lesson.dataset)
+  for (const el of $$<HTMLElement>('.checkpoint', root)) hydrateCheck(el, ctx, lesson.dataset)
+  for (const el of $$<HTMLElement>('.stepper', root)) hydrateSteps(el, ctx, lesson.dataset)
 
   // Rail links scroll within the page instead of re-rendering it.
   for (const a of $$<HTMLAnchorElement>('.toc a', root)) {
     a.addEventListener('click', e => {
       e.preventDefault()
-      document.getElementById(`sec-${a.dataset.sec}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      reveal(a.dataset.sec ?? '')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       history.replaceState(null, '', a.getAttribute('href'))
     })
   }
   scrollSpy(root)
 
-  if (section) requestAnimationFrame(() => document.getElementById(`sec-${section}`)?.scrollIntoView({ block: 'start' }))
+  if (section) requestAnimationFrame(() => reveal(section)?.scrollIntoView({ block: 'start' }))
   else window.scrollTo(0, 0)
+}
+
+/** A section's element, unfolded first if it is collapsed (the reference section). */
+function reveal(sectionId: string): HTMLElement | null {
+  const el = document.getElementById(`sec-${sectionId}`)
+  const details = el?.querySelector<HTMLDetailsElement>(':scope > details')
+  if (details) details.open = true
+  return el
 }
 
 function scrollSpy(root: HTMLElement) {

@@ -4,14 +4,15 @@
 //   npm run validate
 
 import { fileURLToPath } from 'node:url'
+import { LANGS } from '../src/content/types.ts'
 import { gradeRuns, finalResult } from '../src/engine/grade.ts'
 import { PracticeDb } from '../src/engine/practice-db.ts'
 import { buildContent } from './lib/build-content.ts'
-import { runnableBlocks, sqlBlocks, syntaxBlocks } from './lib/markdown.ts'
+import { checkBlocks, runnableBlocks, sqlBlocks, stepBlocks, syntaxBlocks } from './lib/markdown.ts'
 import { exerciseSql, OPERATORS, sqlWords, wordKind, type Lexicon } from './lib/vocabulary.ts'
 
 /** Section ids in teaching order. Required ones must appear; all must keep this order. */
-export const TEMPLATE = ['why', 'core', 'syntax', 'example', 'variants', 'deeper', 'mistakes', 'summary'] as const
+export const TEMPLATE = ['why', 'core', 'syntax', 'example', 'variants', 'deeper', 'mistakes', 'summary', 'reference'] as const
 const REQUIRED = new Set(['why', 'core', 'example', 'mistakes', 'summary'])
 /** Required only from the lesson that teaches the notation onwards: earlier lessons come before it. */
 const NOTATION_LESSON = 'sql-syntax'
@@ -70,12 +71,58 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       problems.push(where('`syntax` blocks differ between zh and en'))
     }
 
+    // Checkpoints and step-throughs: the code and the answer key are shared; the words are each language's own.
+    const zhChecks = checkBlocks(sources[id]?.zh ?? '')
+    const enChecks = checkBlocks(sources[id]?.en ?? '')
+    if (zhChecks.length !== enChecks.length) problems.push(where(`zh has ${zhChecks.length} \`check\` blocks but en has ${enChecks.length}`))
+    else zhChecks.forEach((z, i) => {
+      const e = enChecks[i]!
+      const diffs = [
+        z.query !== e.query && 'query',
+        z.answer !== e.answer && 'answer',
+        z.choices.length !== e.choices.length && 'number of choices',
+        z.verifyRows !== e.verifyRows && 'verify',
+      ].filter(Boolean)
+      if (diffs.length) problems.push(where(`\`check\` block ${i + 1} differs between zh and en: ${diffs.join(', ')}`))
+    })
+    const zhSteps = stepBlocks(sources[id]?.zh ?? '')
+    const enSteps = stepBlocks(sources[id]?.en ?? '')
+    if (zhSteps.length !== enSteps.length) problems.push(where(`zh has ${zhSteps.length} \`steps\` blocks but en has ${enSteps.length}`))
+    else zhSteps.forEach((z, b) => {
+      const e = enSteps[b]!
+      const diffs = z.length !== e.length
+        ? [`number of steps (zh ${z.length}, en ${e.length})`]
+        : z.flatMap((s, i) => (['sql', 'group'] as const).filter(k => s[k] !== e[i]![k]).map(k => `step ${i + 1} ${k}`))
+      if (diffs.length) problems.push(where(`\`steps\` block ${b + 1} differs between zh and en: ${diffs.join(', ')}`))
+    })
+
     if (!course.datasets[lesson.dataset]) continue
     const db = await dbFor(lesson.dataset)
     for (const [i, block] of enRuns.entries()) {
       const r = await db.run(block.sql)
       if (block.expectError && r.ok) problems.push(where(`runnable example ${i + 1} is marked \`error\` but runs without one`))
       if (!block.expectError && !r.ok) problems.push(where(`runnable example ${i + 1} fails: ${r.error?.message}`))
+    }
+    for (const [i, c] of enChecks.entries()) {
+      const r = await db.run(c.query, { limit: Infinity })
+      if (!r.ok) { problems.push(where(`check block ${i + 1}: query fails: ${r.error?.message}`)); continue }
+      const n = finalResult(r)?.rows.length
+      if (c.verifyRows !== undefined && n !== c.verifyRows) problems.push(where(`check block ${i + 1}: verify.rows is ${c.verifyRows} but the query returns ${n ?? 'no'} rows`))
+    }
+    for (const [b, steps] of enSteps.entries()) {
+      for (const [i, s] of steps.entries()) {
+        if (!s.sql) continue
+        const at = (m: string) => where(`steps block ${b + 1}, step ${i + 1}: ${m}`)
+        const r = await db.run(s.sql, { limit: Infinity })
+        if (!r.ok) { problems.push(at(`fails: ${r.error?.message}`)); continue }
+        const rs = finalResult(r)
+        if (!rs) {
+          if (s.group) problems.push(at(`groups by "${s.group}" but returns no result set`))
+          else warnings.push(at('returns no result set to show'))
+        } else if (s.group && !rs.columns.some(c => c.name === s.group)) {
+          problems.push(at(`group column "${s.group}" is not in the result (${rs.columns.map(c => c.name).join(', ')})`))
+        }
+      }
     }
 
     const kinds = new Set(lesson.exercises.map(e => e.kind))
@@ -177,6 +224,10 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       const places: { label: string; sql: string; canPreview: boolean }[] = [
         ...[...new Set([...sqlBlocks(sources[id]?.en ?? ''), ...sqlBlocks(sources[id]?.zh ?? '')])]
           .map(sql => ({ label: 'the lesson', sql, canPreview: true })),
+        ...[...new Set(LANGS.flatMap(l => checkBlocks(sources[id]?.[l] ?? '').map(c => c.query)))]
+          .map(sql => ({ label: 'a `check` block', sql, canPreview: true })),
+        ...[...new Set(LANGS.flatMap(l => stepBlocks(sources[id]?.[l] ?? '').flat().map(s => s.sql)))].filter(Boolean)
+          .map(sql => ({ label: 'a `steps` block', sql, canPreview: true })),
         ...lesson.exercises.flatMap(ex => exerciseSql(ex).map(sql => ({ label: `exercise ${ex.id}`, sql, canPreview: false }))),
       ]
       const early = new Map<string, Set<string>>()

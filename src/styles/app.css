@@ -454,3 +454,86 @@ table.grid { width: 100%; border-collapse: collapse; font: var(--fs-xs)/1.45 var
 .icon-btn:disabled { opacity: 0.3; cursor: default; }
 .icon-btn:disabled:hover { background: none; color: var(--ink-3); }
 .answer li.answer-empty::before { content: none; }
+
+/* ---------- Lesson blocks: checkpoints, step-throughs, reference ---------- */
+/* Group tints for ```steps rows, cycling 1–6. Quiet, away from the green and
+   red of right and wrong, and light (or dark) enough that --ink, --ink-2 and
+   --ink-3 all stay ≥ 4.5:1 on every one. The group number is the non-colour cue. */
+:root {
+  --grp-1: #DDE8F5; --grp-2: #F7E7C8; --grp-3: #E9E4F7; --grp-4: #D5ECEC; --grp-5: #F6E0EC; --grp-6: #EAE6DA;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --grp-1: #1D3049; --grp-2: #3A2E14; --grp-3: #2C2748; --grp-4: #173839; --grp-5: #3B2337; --grp-6: #2E3219;
+  }
+}
+:root[data-theme="dark"] {
+  --grp-1: #1D3049; --grp-2: #3A2E14; --grp-3: #2C2748; --grp-4: #173839; --grp-5: #3B2337; --grp-6: #2E3219;
+}
+
+/* Both blocks are cards like the runnable example, with a quieter text size than the prose. */
+.checkpoint, .stepper { margin: 28px 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; font-size: var(--fs-md); line-height: 1.8; }
+.cp-top, .st-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px 10px 18px; border-bottom: 1px solid var(--line); font-size: var(--fs-xs); line-height: 1.6; color: var(--ink-3); }
+.cp-top .sp, .st-top .sp { margin-left: auto; }
+.cp-kind, .st-kind { padding: 0 8px; border-radius: 10px; }
+/* A checkpoint is a prediction, so it wears the predict hue. */
+.cp-kind { color: var(--violet-ink); background: var(--violet-tint); }
+.st-kind { color: var(--accent-ink); background: var(--accent-tint); }
+.prose .checkpoint pre.sql-static, .prose .stepper pre.sql-static { margin: 0; border-radius: 0; }
+.cp-query .editor-host { background: var(--well); }
+.checkpoint p, .stepper p { margin: 0 0 8px; }
+.checkpoint p:last-child, .stepper p:last-child { margin-bottom: 0; }
+.checkpoint > .out, .stepper > .out { border-top: 1px solid var(--line); }
+
+/* Checkpoint */
+.cp-body { padding: 16px 20px 18px; }
+.cp-q { margin-bottom: 12px; }
+.cp-choices { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.cp-choice { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--sheet); cursor: pointer; }
+.cp-choice:hover { border-color: var(--line-2); }
+.cp-choice input { accent-color: var(--accent); margin: 0; flex: none; }
+.cp-choice:has(input:disabled) { cursor: default; }
+.cp-choice.picked { border-color: var(--accent); background: var(--accent-tint); }
+.cp-tag { margin-left: auto; font-size: var(--fs-xs); white-space: nowrap; }
+.cp-tag:empty { display: none; }
+.cp-choice.right { border-color: var(--ok); background: var(--ok-tint); color: var(--ok-ink); }
+/* Wrong carries a non-colour cue too: the pick is struck through and labelled. */
+.cp-choice.wrong { border-color: var(--bad); background: var(--bad-tint); color: var(--bad-ink); }
+.cp-choice.wrong .cp-text { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad-ink) 70%, transparent); }
+.cp-bar { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.cp-note { font-size: var(--fs-sm); color: var(--ink-2); }
+.cp-verdict { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+/* Right is a filled dot, wrong a hollow ring. */
+.checkpoint .badge.bad::before { background: none; box-shadow: inset 0 0 0 1.5px currentColor; }
+.cp-explain { margin-top: 6px; line-height: 1.85; }
+
+/* Step-through */
+.st-count { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.stepper .btn[disabled] { cursor: default; opacity: 0.4; }
+.st-say { padding: 14px 20px 12px; }
+.stepper > .out { transition: opacity 0.15s ease; }
+.stepper > .out[aria-busy="true"] { opacity: 0.45; }
+.st-legend { font-size: var(--fs-xs); color: var(--ink-2); padding: 0 0 8px; }
+.stepper tr[data-grp="1"] td { background: var(--grp-1); }
+.stepper tr[data-grp="2"] td { background: var(--grp-2); }
+.stepper tr[data-grp="3"] td { background: var(--grp-3); }
+.stepper tr[data-grp="4"] td { background: var(--grp-4); }
+.stepper tr[data-grp="5"] td { background: var(--grp-5); }
+.stepper tr[data-grp="6"] td { background: var(--grp-6); }
+.stepper tr.grp-start td { border-top: 2px solid var(--line-2); }
+.stepper .grp-h { width: 1%; }
+.stepper td.grp-mark { width: 1%; padding-right: 4px; text-align: right; color: var(--ink-2); font-family: var(--font); }
+@media (prefers-reduced-motion: reduce) { .stepper > .out { transition: none; } }
+
+/* Reference: the last section, collapsed until asked for. The heading is the toggle. */
+.ref-box > summary { display: flex; align-items: baseline; gap: 16px; list-style: none; cursor: pointer; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.ref-box > summary::-webkit-details-marker { display: none; }
+.ref-box[open] > summary { margin-bottom: 20px; }
+.ref-box > summary > h2 { font-size: var(--fs-xl); line-height: 1.35; font-weight: 400; letter-spacing: -0.01em; margin: 0; display: flex; align-items: baseline; gap: 14px; }
+.ref-box > summary > h2 .no { color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.ref-toggle { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--accent-ink); white-space: nowrap; }
+.ref-toggle::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); }
+.ref-box[open] .ref-toggle::after { transform: translateY(2px) rotate(-135deg); }
+.ref-box > summary:hover .ref-toggle { text-decoration: underline; text-underline-offset: 3px; }
+.ref-hide, .ref-box[open] .ref-show { display: none; }
+.ref-box[open] .ref-hide { display: inline; }

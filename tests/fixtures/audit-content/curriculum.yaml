@@ -4,6 +4,7 @@
 #   filtering  legacy, chapter 0: breaks many rules, so every finding is a warning
 #   grouping   template 2, chapter 1: passes every rule
 #   sorting    template 2, chapter 1: breaks nearly every rule
+#   chapters/m1/challenge   rules 15 and 16 (see its meta.yaml); m0 has no challenges
 #
 # It is not meant to pass validate: audit runs no lesson or exercise SQL, and
 # the template-2 fields here are ahead of buildContent.

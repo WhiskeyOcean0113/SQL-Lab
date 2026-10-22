@@ -8,7 +8,8 @@ import { createCtx, parseRoute, renderTop, type Ctx } from './ui/app.ts'
 import { $, html, mount, raw } from './ui/dom.ts'
 import { onSystemThemeChange } from './ui/theme.ts'
 import { renderBank } from './ui/views/bank.ts'
-import { renderExercise } from './ui/views/exercise.ts'
+import { renderChapter, renderSitting } from './ui/views/chapter.ts'
+import { renderChapterExercise, renderExercise } from './ui/views/exercise.ts'
 import { renderGlossary } from './ui/views/glossary.ts'
 import { renderLesson } from './ui/views/lesson.ts'
 import { renderMap } from './ui/views/map.ts'
@@ -53,6 +54,9 @@ async function boot() {
       case 'practice': return renderExercise(main, ctx, r.id, r.n, top)
       case 'mistakes': return void renderBank(main, ctx)
       case 'glossary': return renderGlossary(main, ctx)
+      case 'chapter': return void renderChapter(main, ctx, r.id)
+      case 'set': return void renderChapterExercise(main, ctx, r.id, r.set, r.n, top)
+      case 'sitting': return void renderSitting(main, ctx, r.id, r.sitting)
     }
   }
 
@@ -63,6 +67,11 @@ async function boot() {
 
 function titleFor(ctx: Ctx, r: ReturnType<typeof parseRoute>): string {
   const l = ctx.lang
+  if (r.name === 'chapter' || r.name === 'set' || r.name === 'sitting') {
+    const mod = ctx.course.modules.find(m => m.id === r.id)
+    const part = r.name === 'set' ? tText(l, r.set === 'quiz' ? 'chapter.quiz' : 'chapter.challenge') : r.name === 'sitting' ? tText(l, 'sitting.title') : ''
+    if (mod) return [mod.title[l], part, 'SQL Lab'].filter(Boolean).join(' · ')
+  }
   const name = r.name === 'lesson' || r.name === 'practice' ? ctx.course.lessons[r.id]?.title[l] : undefined
   const page = name ?? tText(l, r.name === 'mistakes' ? 'nav.mistakes' : r.name === 'glossary' ? 'nav.glossary' : 'nav.map')
   return `${page} · SQL Lab`

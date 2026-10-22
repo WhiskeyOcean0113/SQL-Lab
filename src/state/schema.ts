@@ -3,17 +3,27 @@
 // switching languages never touches progress.
 //
 // attempts is the single source of truth. The mistake bank is a VIEW over it,
-// so it can never drift from what actually happened.
+// so it can never drift from what actually happened. A chapter quiz answer is
+// an attempt with a sitting_id; lesson states, exercise status and the mistake
+// bank read only attempts without one.
 //
 // SCHEMA_SQL creates a new database at SCHEMA_VERSION and is safe to re-run.
 // An existing database first runs every MIGRATIONS step above its stored
 // schema_version, so a learner's history survives a schema change.
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 /** Step n brings a database from version n - 1 to n. */
 export const MIGRATIONS: Record<number, string> = {
   2: `ALTER TABLE attempts ADD COLUMN IF NOT EXISTS revealed boolean NOT NULL DEFAULT false;`,
+  3: `
+CREATE TABLE IF NOT EXISTS sittings (
+  id           bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  module_id    text        NOT NULL,
+  started_at   timestamptz NOT NULL DEFAULT now(),
+  finished_at  timestamptz
+);
+ALTER TABLE attempts ADD COLUMN IF NOT EXISTS sitting_id bigint REFERENCES sittings (id);`,
 }
 
 export const SCHEMA_SQL = `
@@ -29,9 +39,21 @@ CREATE TABLE IF NOT EXISTS lesson_progress (
   done_at     timestamptz
 );
 
+-- One pass through a chapter quiz (content/chapters/<module>/quiz/). Its
+-- answers are attempts with this sitting_id; its score is derived from them.
+-- A module has at most one unfinished sitting.
+CREATE TABLE IF NOT EXISTS sittings (
+  id           bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  module_id    text        NOT NULL,
+  started_at   timestamptz NOT NULL DEFAULT now(),
+  finished_at  timestamptz
+);
+CREATE UNIQUE INDEX IF NOT EXISTS sittings_open_idx ON sittings (module_id) WHERE finished_at IS NULL;
+
 -- Every submission, right or wrong, exactly as written. A reveal (Show answer)
 -- is recorded as a wrong attempt with revealed = true: the exercise enters the
--- mistake bank and is solved only by a later correct submission.
+-- mistake bank and is solved only by a later correct submission. A quiz answer
+-- carries its sitting_id and counts nowhere else.
 CREATE TABLE IF NOT EXISTS attempts (
   id           bigint      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   exercise_id  text        NOT NULL,
@@ -44,7 +66,8 @@ CREATE TABLE IF NOT EXISTS attempts (
   error_code   text,
   issues       jsonb,
   created_at   timestamptz NOT NULL DEFAULT now(),
-  revealed     boolean     NOT NULL DEFAULT false
+  revealed     boolean     NOT NULL DEFAULT false,
+  sitting_id   bigint      REFERENCES sittings (id)
 );
 CREATE INDEX IF NOT EXISTS attempts_exercise_idx ON attempts (exercise_id, id);
 
@@ -62,7 +85,8 @@ ON CONFLICT (key) DO NOTHING;
 
 -- An exercise enters the bank the first time it is answered wrong (or its
 -- answer is revealed), and counts as mastered once it has been answered right
--- mastery_streak times in a row since the most recent wrong answer.
+-- mastery_streak times in a row since the most recent wrong answer. Quiz
+-- answers (sitting_id set) never count.
 -- New columns go at the end: CREATE OR REPLACE VIEW can only append.
 CREATE OR REPLACE VIEW mistake_bank AS
 WITH wrong AS (
@@ -73,13 +97,13 @@ WITH wrong AS (
          max(created_at) AS last_wrong_at,
          bool_or(revealed) AS revealed
   FROM attempts
-  WHERE NOT is_correct
+  WHERE NOT is_correct AND sitting_id IS NULL
   GROUP BY exercise_id
 ), streak AS (
   SELECT w.exercise_id, count(a.id) AS correct_streak
   FROM wrong w
   LEFT JOIN attempts a
-    ON a.exercise_id = w.exercise_id AND a.id > w.last_wrong_id
+    ON a.exercise_id = w.exercise_id AND a.id > w.last_wrong_id AND a.sitting_id IS NULL
   GROUP BY w.exercise_id
 )
 SELECT w.exercise_id,

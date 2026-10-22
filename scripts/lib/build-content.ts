@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import type { CheckSpec } from '../../src/engine/types.ts'
-import { LANGS, type Bi, type Choice, type Course, type Exercise, type Lang, type Lesson, type Module, type Objective, type Term, type Titled, type Trap } from '../../src/content/types.ts'
+import { chapterKey, LANGS, type Bi, type Choice, type Course, type Exercise, type Lang, type Lesson, type Module, type Objective, type SetKind, type Term, type Titled, type Trap } from '../../src/content/types.ts'
 import { renderInlineText, renderSections, renderSnippet, toPlainText, type RenderEnv } from './markdown.ts'
 
 // Reads content/ and produces the Course the browser loads. Structural
@@ -97,14 +97,28 @@ export function buildContent(root: string): BuildResult {
   }
 
   const curriculum = readYaml(join(root, 'curriculum.yaml')) as { modules?: Raw[] }
-  const modules: Module[] = (curriculum.modules ?? []).map((m, i) => ({
-    id: String(m.id ?? `module-${i}`),
-    ...titled(m.title, `curriculum ${m.id} title`, glossaryMap, problems),
-    summary: bi(m.summary, `curriculum ${m.id} summary`, problems),
-    lessons: ((m.lessons as string[] | undefined) ?? []).map(String),
-    planned: ((m.planned as unknown[] | undefined) ?? []).map((p, j) => titled(p, `curriculum ${m.id} planned[${j}]`, glossaryMap, problems)),
-  }))
+  const modules: Module[] = (curriculum.modules ?? []).map((m, i) => {
+    const id = String(m.id ?? `module-${i}`)
+    return {
+      id,
+      ...titled(m.title, `curriculum ${m.id} title`, glossaryMap, problems),
+      summary: bi(m.summary, `curriculum ${m.id} summary`, problems),
+      lessons: ((m.lessons as string[] | undefined) ?? []).map(String),
+      planned: ((m.planned as unknown[] | undefined) ?? []).map((p, j) => titled(p, `curriculum ${m.id} planned[${j}]`, glossaryMap, problems)),
+      ...buildChapterSets(root, id, datasets, glossaryMap, problems),
+    }
+  })
   const path = modules.flatMap(m => m.lessons)
+
+  // A chapter folder must belong to a module.
+  const chaptersDir = join(root, 'chapters')
+  if (existsSync(chaptersDir)) {
+    for (const dir of readdirSync(chaptersDir, { withFileTypes: true }).filter(d => d.isDirectory())) {
+      const mod = modules.find(m => m.id === dir.name)
+      if (!mod) problems.push(`chapter ${dir.name}: content/chapters/${dir.name}/ matches no module in curriculum.yaml`)
+      else if (!mod.lessons.length) problems.push(`chapter ${dir.name}: has chapter sets but no lessons`)
+    }
+  }
 
   const lessons: Record<string, Lesson> = {}
   const sources: BuildResult['sources'] = {}
@@ -141,7 +155,10 @@ export function buildContent(root: string): BuildResult {
       const exDir = join(dir, 'exercises')
       const files = existsSync(exDir) ? readdirSync(exDir).filter(f => f.endsWith('.yaml')).sort() : []
       if (!files.length) problems.push(where('has no exercises'))
-      const exercises = files.map(f => buildExercise(id, template, basename(f, '.yaml'), readYaml(join(exDir, f)), glossaryMap, problems))
+      const exercises = files.map(f => {
+        const stem = basename(f, '.yaml')
+        return buildExercise({ id: `${id}/${stem}`, lesson: id }, template, readYaml(join(exDir, f)), glossaryMap, problems)
+      })
 
       lessons[id] = {
         id,
@@ -162,8 +179,50 @@ export function buildContent(root: string): BuildResult {
   return { course: { modules, lessons, path, glossary, datasets }, problems, sources, vocabulary }
 }
 
-function buildExercise(lesson: string, template: 1 | 2, stem: string, raw: Raw, glossary: Map<string, Term>, problems: string[]): Exercise {
-  const id = `${lesson}/${stem}`
+const SET_KINDS: SetKind[] = ['quiz', 'challenge']
+const CHAPTER_META_KEYS = ['dataset', 'quiz_intro', 'challenge_intro']
+
+/**
+ * content/chapters/<module>/: an optional meta.yaml (`dataset`, default shop;
+ * `quiz_intro`, `challenge_intro`) and the `quiz/` and `challenge/` exercise
+ * folders. Items are written to the template-2 rules; quiz items need no hints,
+ * since a sitting shows none.
+ */
+function buildChapterSets(root: string, moduleId: string, datasets: Record<string, string>, glossary: Map<string, Term>, problems: string[]): Pick<Module, 'quiz' | 'challenge' | 'dataset' | 'intro'> {
+  const dir = join(root, 'chapters', moduleId)
+  const out: Pick<Module, 'quiz' | 'challenge' | 'dataset' | 'intro'> = { quiz: [], challenge: [], dataset: 'shop', intro: {} }
+  if (!existsSync(dir)) return out
+  const where = (s: string) => `chapter ${moduleId}: ${s}`
+  const metaFile = join(dir, 'meta.yaml')
+  const meta = existsSync(metaFile) ? (readYaml(metaFile) ?? {}) : {}
+  for (const k of Object.keys(meta)) if (!CHAPTER_META_KEYS.includes(k)) problems.push(where(`meta.yaml: unknown key "${k}" (allowed: ${CHAPTER_META_KEYS.join(', ')})`))
+  out.dataset = String(meta.dataset ?? 'shop')
+  if (!datasets[out.dataset]) problems.push(where(`unknown dataset "${out.dataset}"`))
+  for (const kind of SET_KINDS) {
+    const introRaw = meta[`${kind}_intro`]
+    if (introRaw !== undefined) {
+      const text = bi(introRaw, where(`meta.yaml ${kind}_intro`), problems)
+      const html = {} as Bi
+      for (const lang of LANGS) {
+        const env: RenderEnv = { lang, glossary, problems: [] }
+        html[lang] = renderSnippet(text[lang], env)
+        problems.push(...env.problems.map(p => where(`meta.yaml ${kind}_intro.${lang}: ${p}`)))
+      }
+      out.intro[kind] = html
+    }
+    const setDir = join(dir, kind)
+    if (!existsSync(setDir)) continue
+    const owner = chapterKey(moduleId)
+    out[kind] = readdirSync(setDir).filter(f => f.endsWith('.yaml')).sort().map(f => {
+      const stem = basename(f, '.yaml')
+      return buildExercise({ id: `${owner}/${kind}/${stem}`, lesson: owner, set: { module: moduleId, kind } }, 2, readYaml(join(setDir, f)), glossary, problems)
+    })
+  }
+  return out
+}
+
+function buildExercise(at: Pick<Exercise, 'id' | 'lesson' | 'set'>, template: 1 | 2, raw: Raw, glossary: Map<string, Term>, problems: string[]): Exercise {
+  const { id, lesson, set } = at
   const where = (s: string) => `exercise ${id}: ${s}`
   const snippet = (v: unknown, field: string): Bi => {
     const text = bi(v, where(field), problems)
@@ -182,6 +241,7 @@ function buildExercise(lesson: string, template: 1 | 2, stem: string, raw: Raw, 
   const base = {
     id,
     lesson,
+    ...(set ? { set } : {}),
     difficulty: difficulty as 1 | 2 | 3,
     prompt: snippet(raw.prompt, 'prompt'),
     hints: hintsOf(),
@@ -194,7 +254,11 @@ function buildExercise(lesson: string, template: 1 | 2, stem: string, raw: Raw, 
   function hintsOf(): Bi[] {
     if (raw.hint !== undefined && raw.hints !== undefined) problems.push(where('has both `hint` and `hints`; keep only `hints`'))
     if (raw.hints === undefined) {
-      if (raw.hint === undefined) { problems.push(where('missing hints')); return [] }
+      if (raw.hint === undefined) {
+        // A quiz sitting shows no hints, so quiz items may leave them out.
+        if (set?.kind !== 'quiz') problems.push(where('missing hints'))
+        return []
+      }
       if (template === 2) problems.push(where('template-2 lessons use `hints`, not `hint`'))
       return [snippet(raw.hint, 'hint')]
     }

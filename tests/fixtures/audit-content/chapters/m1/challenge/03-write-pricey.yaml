@@ -1,0 +1,11 @@
+# Rule 15: words from one lesson only, filtering.
+kind: write
+difficulty: 2
+prompt:
+  zh: 列出价格高于 50 的家具。
+  en: List the furniture that costs over 50.
+hints:
+  - { zh: 两个条件都要满足。, en: Both conditions must hold. }
+explain: { zh: 两个条件用 AND 连起来。, en: AND joins the two conditions. }
+solution: |
+  SELECT name FROM items WHERE price > 50 AND category = 'furniture';

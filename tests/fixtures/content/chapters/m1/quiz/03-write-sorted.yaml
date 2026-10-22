@@ -1,0 +1,9 @@
+kind: write
+difficulty: 2
+objective: basics/order-rows
+prompt: { zh: 列出每只宠物的 `name`，按名字的字母顺序排序。, en: "List every pet's `name`, in alphabetical order." }
+explain:
+  zh: "`ORDER BY name` 按名字排序：Bean、Mochi、Tofu。少了它，{{term:row}}的顺序没有保证。"
+  en: "`ORDER BY name` sorts by name: Bean, Mochi, Tofu. Without it, the order of the {{term:row|rows}} is not guaranteed."
+solution: SELECT name FROM pets ORDER BY name
+check: { order_matters: true }

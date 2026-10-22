@@ -1,0 +1,13 @@
+kind: parsons
+difficulty: 2
+objective: basics/order-rows
+prompt: { zh: 拼出一条查询：列出 `name` 和 `age`，按年龄从小到大排序。, en: "Build a query that lists `name` and `age`, youngest first." }
+explain:
+  zh: "`ORDER BY age` 放在 `FROM pets` 之后。按 `name` 排就成了字母顺序。"
+  en: "`ORDER BY age` goes after `FROM pets`. Sorting by `name` would give alphabetical order instead."
+solution: |
+  SELECT name, age
+  FROM pets
+  ORDER BY age
+distractors: [ORDER BY name]
+check: { order_matters: true }

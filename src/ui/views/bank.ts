@@ -1,8 +1,9 @@
-import type { Exercise } from '../../content/types.ts'
+import { chapterKey, type Exercise } from '../../content/types.ts'
 import { t, tText } from '../../i18n/index.ts'
 import type { MistakeRow } from '../../state/progress.ts'
 import { href, type Ctx } from '../app.ts'
 import { $, $$, html, mount, raw } from '../dom.ts'
+import { chapterNo } from './map.ts'
 
 type Filter = 'open' | 'mastered' | 'all'
 let filter: Filter = 'open'
@@ -12,11 +13,21 @@ export async function renderBank(root: HTMLElement, ctx: Ctx) {
   const [rows, streakSetting] = await Promise.all([progress.mistakes(), progress.getSetting('mastery_streak')])
   const streak = Number(streakSetting ?? 2)
 
-  const find = (id: string): { ex: Exercise; n: number } | undefined => {
-    const [lessonId] = id.split('/')
-    const lesson = course.lessons[lessonId ?? '']
+  /** The exercise behind a bank row, where it lives and how to open it: a lesson's, or a chapter challenge. */
+  const find = (id: string): { ex: Exercise; where: string; url: string } | undefined => {
+    const [owner = ''] = id.split('/')
+    const mod = owner.startsWith('chapter:') ? course.modules.find(m => chapterKey(m.id) === owner) : undefined
+    if (mod) {
+      const n = mod.challenge.findIndex(e => e.id === id)
+      return n < 0 ? undefined : {
+        ex: mod.challenge[n]!,
+        where: `${tText(lang, 'map.chapter', { n: chapterNo(mod.id) })} · ${tText(lang, 'chapter.challenge')}`,
+        url: href.set(mod.id, 'challenge', n + 1),
+      }
+    }
+    const lesson = course.lessons[owner]
     const n = lesson?.exercises.findIndex(e => e.id === id) ?? -1
-    return lesson && n >= 0 ? { ex: lesson.exercises[n]!, n: n + 1 } : undefined
+    return lesson && n >= 0 ? { ex: lesson.exercises[n]!, where: lesson.title[lang], url: href.practice(lesson.id, n + 1) } : undefined
   }
   const known = rows.filter(r => find(r.exercise_id))
   const open = known.filter(r => !r.mastered)
@@ -25,9 +36,8 @@ export async function renderBank(root: HTMLElement, ctx: Ctx) {
 
   const title = (r: MistakeRow) => {
     const f = find(r.exercise_id)!
-    const lesson = course.lessons[f.ex.lesson]!
     const prompt = f.ex.prompt[lang].replace(/<[^>]+>/g, '').trim()
-    return { text: prompt.length > 60 ? prompt.slice(0, 58) + '…' : prompt, lesson: lesson.title[lang], kind: tText(lang, `kind.${f.ex.kind}`), url: href.practice(lesson.id, f.n) }
+    return { text: prompt.length > 60 ? prompt.slice(0, 58) + '…' : prompt, lesson: f.where, kind: tText(lang, `kind.${f.ex.kind}`), url: f.url }
   }
 
   mount(root, html`

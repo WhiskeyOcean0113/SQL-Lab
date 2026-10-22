@@ -1,0 +1,16 @@
+kind: predict
+difficulty: 2
+objective: basics/predict-filter
+prompt: { zh: 这条查询的第一行是哪只宠物？先想一想，再运行。, en: "Which pet comes first? Think first, then run it." }
+hints:
+  - { zh: 先看 WHERE 去掉了谁，再看排序。, en: "First see which rows WHERE drops, then look at the order." }
+query: SELECT name FROM pets WHERE age IS NOT NULL ORDER BY age DESC
+choices:
+  - text: Tofu
+    why: { zh: Tofu 7 岁，从大到小排在最前。, en: "Tofu is 7, the oldest, so it leads in descending order." }
+  - text: Mochi
+    why: { zh: Mochi 3 岁，排在 Tofu 后面。, en: "Mochi is 3, so it comes after Tofu." }
+  - text: Bean
+    why: { zh: Bean 的年龄未知，已经被 WHERE 去掉了。, en: "Bean's age is unknown, so WHERE has already dropped it." }
+answer: 0
+explain: { zh: 先筛选，再排序：Bean 不在结果里，Tofu 最大。, en: "Filter, then sort: Bean is gone, and Tofu is the oldest." }

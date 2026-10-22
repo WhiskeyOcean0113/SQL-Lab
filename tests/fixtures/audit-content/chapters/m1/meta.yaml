@@ -1,0 +1,5 @@
+# Chapter m1 (grouping, sorting: both template 2) has three challenges.
+# 01 passes rules 15 and 16; 02 is a near-copy of a grouping exercise (rule 16);
+# 03 uses words from only two lessons (rule 15). Chapter m0 has none (rule 15,
+# a warning, since its lesson is legacy).
+dataset: tiny

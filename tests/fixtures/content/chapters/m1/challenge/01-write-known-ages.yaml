@@ -1,0 +1,18 @@
+kind: write
+difficulty: 2
+prompt:
+  zh: 兽医只想看记录了年龄的宠物：列出它们的 `name`，年龄最大的排在最前。
+  en: "The vet only wants the pets whose age is on record: list their `name`, oldest first."
+hints:
+  - { zh: 先去掉年龄未知的行，再排序。, en: "Drop the rows with an unknown age first, then sort." }
+  - { zh: 从大到小排序时，NULL 会排在最前。, en: "In descending order, NULL comes first." }
+explain:
+  zh: "`WHERE age IS NOT NULL` 去掉 Bean，`ORDER BY age DESC` 让 Tofu 在 Mochi 前面。只写排序，Bean 会排在最前。"
+  en: "`WHERE age IS NOT NULL` drops Bean, and `ORDER BY age DESC` puts Tofu before Mochi. Sorting alone would put Bean first."
+solution: SELECT name FROM pets WHERE age IS NOT NULL ORDER BY age DESC
+check: { order_matters: true }
+traps:
+  - sql: SELECT name FROM pets ORDER BY age DESC
+    say:
+      zh: 年龄未知的 Bean 还在结果里，而且排在最前。先用条件去掉它。
+      en: "Bean, whose age is unknown, is still there, and first. Drop it with a condition."

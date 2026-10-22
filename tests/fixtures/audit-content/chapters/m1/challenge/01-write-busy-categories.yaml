@@ -1,0 +1,16 @@
+# Words from filtering (WHERE), grouping (GROUP BY, count()) and sorting (ORDER, DESC).
+kind: write
+difficulty: 3
+prompt:
+  zh: 只看价格高于 5 的商品：列出每个分类和它的商品数，商品数多的在前。
+  en: For items over 5, list each category and its item count, largest count first.
+hints:
+  - { zh: 先筛行，再分组，最后排序。, en: "Filter, then group, then sort." }
+explain: { zh: 筛选、分组、排序各管一步。, en: "Filtering, grouping and sorting each do one step." }
+solution: |
+  SELECT category, count(*) AS n
+  FROM items
+  WHERE price > 5
+  GROUP BY category
+  ORDER BY n DESC, category;
+check: { order_matters: true }

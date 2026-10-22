@@ -4,7 +4,7 @@
 //   npm run validate
 
 import { fileURLToPath } from 'node:url'
-import { LANGS } from '../src/content/types.ts'
+import { LANGS, type Exercise } from '../src/content/types.ts'
 import { gradeRuns, finalResult } from '../src/engine/grade.ts'
 import { PracticeDb } from '../src/engine/practice-db.ts'
 import { buildContent } from './lib/build-content.ts'
@@ -18,6 +18,9 @@ const REQUIRED = new Set(['why', 'core', 'example', 'mistakes', 'summary'])
 const NOTATION_LESSON = 'sql-syntax'
 const MIN_EXERCISES = 4
 const MIN_KINDS = 3
+/** A chapter quiz: long enough to measure every objective, short enough for one sitting. */
+const MIN_QUIZ = 6
+const MAX_QUIZ = 12
 
 export async function validate(root: string): Promise<{ problems: string[]; warnings: string[] }> {
   const { course, problems, sources, vocabulary } = buildContent(root)
@@ -157,69 +160,48 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
         if (ex.kind === 'predict' && ex.choices.some(c => !c.why)) problems.push(at('template 2 needs a `why` on every choice'))
       }
 
-      if (ex.kind === 'predict') {
-        const r = await db.run(ex.query, { limit: Infinity })
-        if (!r.ok) problems.push(at(`query fails: ${r.error?.message}`))
-        else if (ex.verifyRows !== undefined) {
-          const n = finalResult(r)?.rows.length
-          if (n !== ex.verifyRows) problems.push(at(`verify.rows is ${ex.verifyRows} but the query returns ${n} rows`))
-        }
-        continue
-      }
+      await runChecks(ex, db, at)
+    }
+  }
 
-      if (ex.check.mode === 'probe' && !ex.check.probe) { problems.push(at('check mode "probe" needs a probe query')); continue }
-      if (ex.check.mode === 'attempts' && !ex.check.attempts?.length) { problems.push(at('check mode "attempts" needs a list of statements')); continue }
-      const inspect = {
-        probe: ex.check.mode === 'probe' ? ex.check.probe : undefined,
-        attempts: ex.check.mode === 'attempts' ? ex.check.attempts : undefined,
+  // Chapter sets: the quiz (pre- and post-test) and the challenges.
+  for (const mod of course.modules) {
+    const items = [...mod.quiz, ...mod.challenge]
+    const last = Math.max(...mod.lessons.map(l => course.path.indexOf(l)))
+    if (!items.length || last < 0) continue
+    const where = (s: string) => `chapter ${mod.id}: ${s}`
+    const visible = course.path.slice(0, last + 1)
+    for (const ex of items) {
+      const at = (s: string) => `exercise ${ex.id}: ${s}`
+      const quiz = ex.set?.kind === 'quiz'
+      if (ex.lessonRef) {
+        const [l = '', section] = ex.lessonRef.split('/')
+        const lesson = visible.includes(l) ? course.lessons[l] : undefined
+        if (!lesson) problems.push(at(`lesson_ref "${ex.lessonRef}" names no lesson of this chapter or an earlier one (write <lesson-id>/<section-id>)`))
+        else if (section !== undefined && !lesson.body.en.some(s => s.id === section)) problems.push(at(`lesson_ref "${ex.lessonRef}": "${section}" is not a section of ${l}`))
       }
-      const solved = await db.run(ex.solution, {
-        limit: Infinity,
-        snapshot: ex.check.mode === 'tables' ? ex.check.tables : undefined,
-        ...inspect,
-      })
-      if (!solved.ok) { problems.push(at(`solution fails: ${solved.error?.message}`)); continue }
-      if (ex.check.mode === 'result') {
-        const rs = finalResult(solved)
-        if (!rs) problems.push(at('solution returns no result set'))
-        else if (rs.rows.length === 0) warnings.push(at('solution returns zero rows; an empty answer is easy to match by accident'))
-      } else if (ex.check.mode === 'tables' && !ex.check.tables.length) {
-        problems.push(at('check mode "tables" needs a list of tables'))
-      } else if (ex.check.mode === 'probe' || ex.check.mode === 'attempts') {
-        if (!solved.probe) problems.push(at('the probe query returns no result set'))
-        else if (solved.probe.rows.length === 0) warnings.push(at('the probe query returns zero rows after the solution'))
-        if (ex.check.mode === 'attempts' && solved.probe && !solved.probe.rows.some(r => r[1] !== 'ok')) {
-          warnings.push(at('every attempt succeeds after the solution; add one the constraints should reject'))
+      if (ex.objective !== undefined) {
+        const [l = '', o] = ex.objective.split('/')
+        const allowed = quiz ? mod.lessons : visible
+        if (!o || !allowed.includes(l) || !course.lessons[l]?.objectives.some(x => x.id === o)) {
+          problems.push(at(`objective "${ex.objective}" is not an objective of a lesson in ${quiz ? 'this chapter' : 'this chapter or an earlier one'} (write <lesson-id>/<objective-id>)`))
         }
-        const untouched = await db.run('SELECT 1', inspect)
-        if (untouched.ok && untouched.probe && solved.probe
-          && gradeRuns(untouched, solved, ex.check).correct) problems.push(at('the probe gives the same result whether or not the solution ran'))
-      }
-
-      if (ex.kind === 'debug') {
-        const { expected, actual } = await db.runPair(ex.starter, ex.solution, ex.check)
-        if (gradeRuns(expected, actual, ex.check).correct) problems.push(at('the broken starter query already passes'))
-      }
-
-      // A trap is a known wrong answer: it must run, must fail the check, and its result must be one a learner can match.
-      const check = ex.check
-      const trapRuns: Awaited<ReturnType<PracticeDb['run']>>[] = []
-      const sameOutcome = (reference: (typeof trapRuns)[number], learner: (typeof trapRuns)[number]) => {
-        try { return gradeRuns(reference, learner, check).correct } catch { return false }
-      }
-      for (const [i, trap] of ex.traps.entries()) {
-        const label = `trap ${i + 1}`
-        const { expected, actual } = await db.runPair(trap.sql, ex.solution, ex.check)
-        trapRuns.push(actual)
-        if (!actual.ok) problems.push(at(`${label} fails: ${actual.error?.message}`))
-        else if (ex.check.mode === 'result' && !finalResult(actual)) problems.push(at(`${label} returns no result set, so no answer can match it`))
-        else if (gradeRuns(expected, actual, ex.check).correct) problems.push(at(`${label} passes against the solution`))
-        else {
-          const first = trapRuns.findIndex((earlier, j) => j < i && earlier.ok && sameOutcome(earlier, actual))
-          if (first !== -1) warnings.push(at(`${label} gives the same result as trap ${first + 1}, so its \`say\` never shows`))
-        }
-        for (const lang of ['zh', 'en'] as const) {
-          if (squash(plain(trap.say[lang])).includes(squash(ex.solution))) problems.push(at(`${label}.say.${lang} contains the full solution`))
+      } else if (quiz) problems.push(at('quiz items need `objective`: the lesson objective the item measures'))
+      if (!ex.explain) problems.push(at('chapter set items need `explain`'))
+      if (ex.kind === 'predict' && ex.choices.some(c => !c.why)) problems.push(at('chapter set items need a `why` on every choice'))
+      if (quiz && ex.hints.length) warnings.push(at('a quiz sitting shows no hints, so these are never seen'))
+      if (quiz && ex.kind !== 'predict' && ex.traps.length) warnings.push(at('a quiz sitting shows no traps, so these are never seen'))
+      if (!course.datasets[mod.dataset]) continue
+      await runChecks(ex, await dbFor(mod.dataset), at)
+    }
+    if (mod.quiz.length) {
+      const n = mod.quiz.length
+      if (n < MIN_QUIZ || n > MAX_QUIZ) problems.push(where(`the quiz has ${n} items; it needs ${MIN_QUIZ}–${MAX_QUIZ}`))
+      for (const l of mod.lessons) {
+        const lesson = course.lessons[l]
+        if (lesson?.template !== 2) continue
+        for (const o of lesson.objectives) {
+          if (!mod.quiz.some(e => e.objective === `${l}/${o.id}`)) problems.push(where(`the quiz does not measure objective ${l}/${o.id}`))
         }
       }
     }
@@ -237,6 +219,75 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
 
   for (const db of dbs.values()) await db.close()
   return { problems, warnings }
+
+  /** The checks every exercise gets, wherever it lives: its SQL runs, and its answer key and traps behave. */
+  async function runChecks(ex: Exercise, db: PracticeDb, at: (s: string) => string) {
+    if (ex.kind === 'predict') {
+      const r = await db.run(ex.query, { limit: Infinity })
+      if (!r.ok) problems.push(at(`query fails: ${r.error?.message}`))
+      else if (ex.verifyRows !== undefined) {
+        const n = finalResult(r)?.rows.length
+        if (n !== ex.verifyRows) problems.push(at(`verify.rows is ${ex.verifyRows} but the query returns ${n} rows`))
+      }
+      return
+    }
+
+    if (ex.check.mode === 'probe' && !ex.check.probe) { problems.push(at('check mode "probe" needs a probe query')); return }
+    if (ex.check.mode === 'attempts' && !ex.check.attempts?.length) { problems.push(at('check mode "attempts" needs a list of statements')); return }
+    const inspect = {
+      probe: ex.check.mode === 'probe' ? ex.check.probe : undefined,
+      attempts: ex.check.mode === 'attempts' ? ex.check.attempts : undefined,
+    }
+    const solved = await db.run(ex.solution, {
+      limit: Infinity,
+      snapshot: ex.check.mode === 'tables' ? ex.check.tables : undefined,
+      ...inspect,
+    })
+    if (!solved.ok) { problems.push(at(`solution fails: ${solved.error?.message}`)); return }
+    if (ex.check.mode === 'result') {
+      const rs = finalResult(solved)
+      if (!rs) problems.push(at('solution returns no result set'))
+      else if (rs.rows.length === 0) warnings.push(at('solution returns zero rows; an empty answer is easy to match by accident'))
+    } else if (ex.check.mode === 'tables' && !ex.check.tables.length) {
+      problems.push(at('check mode "tables" needs a list of tables'))
+    } else if (ex.check.mode === 'probe' || ex.check.mode === 'attempts') {
+      if (!solved.probe) problems.push(at('the probe query returns no result set'))
+      else if (solved.probe.rows.length === 0) warnings.push(at('the probe query returns zero rows after the solution'))
+      if (ex.check.mode === 'attempts' && solved.probe && !solved.probe.rows.some(r => r[1] !== 'ok')) {
+        warnings.push(at('every attempt succeeds after the solution; add one the constraints should reject'))
+      }
+      const untouched = await db.run('SELECT 1', inspect)
+      if (untouched.ok && untouched.probe && solved.probe
+        && gradeRuns(untouched, solved, ex.check).correct) problems.push(at('the probe gives the same result whether or not the solution ran'))
+    }
+
+    if (ex.kind === 'debug') {
+      const { expected, actual } = await db.runPair(ex.starter, ex.solution, ex.check)
+      if (gradeRuns(expected, actual, ex.check).correct) problems.push(at('the broken starter query already passes'))
+    }
+
+    // A trap is a known wrong answer: it must run, must fail the check, and its result must be one a learner can match.
+    const check = ex.check
+    const trapRuns: Awaited<ReturnType<PracticeDb['run']>>[] = []
+    const sameOutcome = (reference: (typeof trapRuns)[number], learner: (typeof trapRuns)[number]) => {
+      try { return gradeRuns(reference, learner, check).correct } catch { return false }
+    }
+    for (const [i, trap] of ex.traps.entries()) {
+      const label = `trap ${i + 1}`
+      const { expected, actual } = await db.runPair(trap.sql, ex.solution, ex.check)
+      trapRuns.push(actual)
+      if (!actual.ok) problems.push(at(`${label} fails: ${actual.error?.message}`))
+      else if (ex.check.mode === 'result' && !finalResult(actual)) problems.push(at(`${label} returns no result set, so no answer can match it`))
+      else if (gradeRuns(expected, actual, ex.check).correct) problems.push(at(`${label} passes against the solution`))
+      else {
+        const first = trapRuns.findIndex((earlier, j) => j < i && earlier.ok && sameOutcome(earlier, actual))
+        if (first !== -1) warnings.push(at(`${label} gives the same result as trap ${first + 1}, so its \`say\` never shows`))
+      }
+      for (const lang of ['zh', 'en'] as const) {
+        if (squash(plain(trap.say[lang])).includes(squash(ex.solution))) problems.push(at(`${label}.say.${lang} contains the full solution`))
+      }
+    }
+  }
 
   /**
    * Every keyword, function, notable operator and system catalog that a lesson's
@@ -295,6 +346,32 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       for (const [word, labels] of early) problems.push(`lesson ${id}: uses ${word} in ${[...labels].join(', ')}, but it is introduced later, by ${course.path[taughtIn.get(word)!]}`)
       for (const [word, labels] of unknown) problems.push(`lesson ${id}: uses ${word} in ${[...labels].join(', ')}, which no lesson introduces (add it to the introducing lesson's meta.yaml)`)
       for (const word of introduces) if (!used.has(word)) warnings.push(`lesson ${id}: introduces ${word} but its code never uses it`)
+    }
+
+    // A chapter set may use anything taught up to and including the chapter's last lesson.
+    for (const mod of course.modules) {
+      const items = [...mod.quiz, ...mod.challenge]
+      const last = Math.max(...mod.lessons.map(l => course.path.indexOf(l)))
+      if (!items.length || last < 0 || !course.datasets[mod.dataset]) continue
+      if (!lexicons.has(mod.dataset)) lexicons.set(mod.dataset, await lexiconOf(await dbFor(mod.dataset)))
+      const lex = lexicons.get(mod.dataset)!
+      const early = new Map<string, Set<string>>()
+      const unknown = new Map<string, Set<string>>()
+      for (const ex of items) {
+        for (const sql of exerciseSql(ex)) {
+          for (const word of sqlWords(sql, lex)) {
+            const at = taughtIn.get(word)
+            const kind = wordKind(word)
+            if (at === undefined) {
+              if ((kind !== 'name' || /^(pg_|information_schema$)/.test(word)) && (kind !== 'keyword' || lex.keywords.has(word.toLowerCase()))) {
+                (unknown.get(word) ?? unknown.set(word, new Set()).get(word)!).add(`exercise ${ex.id}`)
+              }
+            } else if (at > last) (early.get(word) ?? early.set(word, new Set()).get(word)!).add(`exercise ${ex.id}`)
+          }
+        }
+      }
+      for (const [word, labels] of early) problems.push(`chapter ${mod.id}: uses ${word} in ${[...labels].join(', ')}, but it is introduced later, by ${course.path[taughtIn.get(word)!]}`)
+      for (const [word, labels] of unknown) problems.push(`chapter ${mod.id}: uses ${word} in ${[...labels].join(', ')}, which no lesson introduces (add it to the introducing lesson's meta.yaml)`)
     }
   }
 }

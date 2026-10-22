@@ -559,3 +559,81 @@ pre.code-pane { margin: 0; padding: 12px 14px; border-radius: var(--radius); bac
 .ref-box > summary:hover .ref-toggle { text-decoration: underline; text-underline-offset: 3px; }
 .ref-hide, .ref-box[open] .ref-show { display: none; }
 .ref-box[open] .ref-hide { display: inline; }
+
+/* ---------- Chapter sets: the chapter page, quiz mode, sitting results ---------- */
+.chapter { max-width: 880px; padding: 56px 0 96px; }
+.chapter .lesson-head { margin-bottom: 0; }
+.ch-sec { padding-top: 48px; }
+.ch-sec > h2 { font-size: var(--fs-xl); line-height: 1.35; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 16px; }
+.ch-sec > h3 { font-size: var(--fs-lg); line-height: 1.45; font-weight: 400; margin: 36px 0 12px; }
+.ch-intro, .ch-lead { max-width: 700px; font-size: var(--fs-md); line-height: 1.85; color: var(--ink-2); }
+.ch-intro p, .ch-lead { margin: 0 0 12px; }
+.ch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; }
+.ch-none { font-size: var(--fs-sm); color: var(--ink-3); margin: 0; }
+.quiz-warn { font-size: var(--fs-sm); color: var(--ink-2); }
+
+/* Sittings and the per-objective comparison: quiet tables like the mistake bank's. */
+.ch-table { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow-x: auto; }
+.ch-table table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.ch-table th { text-align: left; font-weight: 400; font-size: var(--fs-xs); color: var(--ink-3); padding: 12px 20px; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+.ch-table td { padding: 12px 20px; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.6; }
+.ch-table tr:last-child td { border-bottom: 0; }
+.ch-table .r { text-align: right; }
+.ch-table .actions { text-align: right; white-space: nowrap; }
+.ch-table .th-sub { display: block; color: var(--ink-3); font-size: var(--fs-xs); }
+.ch-table .ex-l { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 2px; }
+.ch-table tr.total td { border-bottom-color: var(--line-2); }
+.score { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Challenges: one row each, with the usual pip for solved / attempted. */
+.chapter .next-bar .segs { width: 168px; flex: none; }
+.ch-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.ch-list li { border-bottom: 1px solid var(--line); }
+.ch-list a { display: flex; align-items: center; gap: 14px; padding: 14px 0; color: var(--ink); text-decoration: none; font-size: var(--fs-md); line-height: 1.6; }
+.ch-list a:hover .ch-prompt { text-decoration: underline; text-underline-offset: 3px; }
+.ch-list .no { color: var(--ink-3); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+.ch-prompt { flex: 1; min-width: 0; }
+:where(.ch-list, .sit-top) .type { display: inline-block; flex: none; font-size: var(--fs-xs); line-height: 1.6; padding: 2px 10px; border-radius: 10px; color: var(--accent-ink); background: var(--accent-tint); }
+
+/* The map: a chapter's own row after its lessons, and the quiet "quiz first" line. */
+.st-chapter { border-radius: 4px; box-shadow: inset 0 0 0 1px var(--track); }
+.st-chapter::after { content: ""; width: 8px; height: 1.5px; background: var(--ink-3); box-shadow: 0 -3px 0 var(--ink-3), 0 3px 0 var(--ink-3); }
+.lessons .ch-row .name { color: var(--ink-2); }
+.quiz-first { display: block; padding: 0 0 10px 32px; font-size: var(--fs-xs); line-height: 1.6; color: var(--ink-2); text-decoration: none; }
+.quiz-first:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.lesson-head .quiz-first { padding: 0; margin-top: 14px; font-size: var(--fs-sm); }
+
+/* Quiz mode: answered steps are neutral, since nothing is marked yet. */
+.steps a.answered { background: var(--ink-2); }
+.quiz-note { margin: 20px 0 0; padding: 14px 18px; border-radius: 10px; background: var(--well); font-size: var(--fs-sm); line-height: 1.7; color: var(--ink-2); }
+.badge.rec { color: var(--accent-ink); }
+
+/* Sitting results: every item says right or wrong in words; wrong also wears a hollow ring and a striped edge. */
+.sit-score { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; margin: 16px 0 0; }
+.sit-score .score { font-size: var(--fs-2xl); line-height: 1.2; letter-spacing: -0.01em; }
+.sit-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.sit-item { position: relative; overflow: hidden; padding: 18px 20px 16px 24px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.sit-item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ok); }
+.sit-item.wrong::before, .sit-item.skipped::before { background: repeating-linear-gradient(-45deg, var(--bad) 0 3px, color-mix(in srgb, var(--bad) 35%, transparent) 3px 6px); }
+.sit-item .badge.bad::before { background: none; box-shadow: inset 0 0 0 1.5px currentColor; }
+.sit-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 10px; }
+.sit-top .no { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.sit-top .badge { margin-left: auto; }
+.sit-item .prompt { font-size: var(--fs-md); line-height: 1.85; margin-bottom: 10px; }
+.sit-item .prompt p { margin: 0 0 8px; }
+.sit-item .side-by-side, .sit-item .compare { padding: 0; }
+.sit-item .explain { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: var(--fs-md); line-height: 1.85; }
+.sit-item .explain p { margin: 0 0 8px; }
+.sit-choices { margin-top: 10px; font-size: var(--fs-md); line-height: 1.8; }
+.sit-choices p { margin: 0 0 4px; }
+.sit-choices .cw-label { font-size: var(--fs-xs); color: var(--ink-3); margin-right: 6px; }
+.sit-why { margin-top: 6px; color: var(--ink-2); }
+.sit-why p { margin: 0; }
+.struck { color: var(--bad-ink); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad-ink) 70%, transparent); }
+
+@media (max-width: 900px) {
+  .chapter { padding-top: 32px; }
+  .ch-list a { flex-wrap: wrap; gap: 6px 12px; }
+  .ch-prompt { flex-basis: calc(100% - 3em); }
+  .ch-table td, .ch-table th { padding: 10px 14px; }
+}

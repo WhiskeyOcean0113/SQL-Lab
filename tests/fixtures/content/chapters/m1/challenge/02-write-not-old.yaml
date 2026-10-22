@@ -1,0 +1,17 @@
+kind: write
+difficulty: 2
+lesson_ref: filtering/core
+prompt:
+  zh: 年轻的宠物要做一次专门的体检：列出年龄已知、且不超过 5 岁的宠物的 `name`。
+  en: "Young pets get a special check-up: list the `name` of every pet with a known age of 5 or under."
+hints:
+  - { zh: “不超过 5 岁”就是“不是大于 5 岁”。, en: "“5 or under” is the same as “not over 5”." }
+explain:
+  zh: "`WHERE NOT age > 5` 只留下 Mochi。Bean 的 age 是 NULL，`NOT (NULL > 5)` 仍然不是 true，所以它也被去掉了。"
+  en: "`WHERE NOT age > 5` keeps only Mochi. Bean's age is NULL, and `NOT (NULL > 5)` is still not true, so Bean is dropped too."
+solution: SELECT name FROM pets WHERE NOT age > 5
+traps:
+  - sql: SELECT name FROM pets WHERE age > 5
+    say:
+      zh: 这是超过 5 岁的宠物。题目要的是另外那一部分。
+      en: "These are the pets over 5. The task wants the others."

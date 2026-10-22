@@ -24,10 +24,12 @@ validate checks that content is correct; audit (`scripts/audit.ts`, rules in
 `RULES`) estimates whether it teaches well: write solutions close to lesson
 SQL, hints that give the solution away, introduced SQL no exercise practises,
 objectives without a write exercise, `deeper` longer than `core`, other
-databases named in the main text, too few `check` and `steps` blocks. A lesson
-with `template: 2` gets each rule's own level, a legacy lesson only warnings;
-`--strict` exits 1 on an error in a template-2 lesson, so it passes until
-lessons opt in.
+databases named in the main text, too few `check` and `steps` blocks, and per
+chapter, too few or too narrow challenges (rules 15, 16). A lesson
+with `template: 2` gets each rule's own level, a legacy lesson only warnings
+(a chapter: its own level once all its lessons are template 2);
+`--strict` exits 1 on an error in a template-2 lesson or chapter, so it passes
+until lessons opt in.
 
 The pre-commit hook (`.githooks/pre-commit`, enabled by `npm install`) runs
 typecheck, validate, tests and `audit --strict`. Never commit with failures and
@@ -61,6 +63,10 @@ content/
     lesson.zh.md
     lesson.en.md
     exercises/<NN-slug>.yaml   NN sets the order within the lesson
+  chapters/<module-id>/    optional chapter sets for one curriculum module
+    meta.yaml              optional: dataset, quiz_intro, challenge_intro
+    quiz/<NN-slug>.yaml    the chapter quiz: pre- and post-test
+    challenge/<NN-slug>.yaml   chapter challenges
 scripts/
   validate.ts              all content rules; also used by tests
   lib/build-content.ts     content/ → Course object (src/content/types.ts)
@@ -251,6 +257,37 @@ check:                 # all optional
   whether rows must be sorted. If the prompt does not say it, do not check it.
 - At least four exercises per lesson, covering at least three kinds.
 
+### Chapter sets
+
+A module may have two sets under `content/chapters/<module-id>/`, in the
+exercise YAML format and kinds above. Their ids are `chapter:<module-id>/quiz/<stem>`
+and `chapter:<module-id>/challenge/<stem>`, so they never collide with lesson
+exercises. `meta.yaml` is optional:
+
+```yaml
+dataset: shop                        # default shop
+quiz_intro: { zh: …, en: … }         # Markdown, shown above the set
+challenge_intro: { zh: …, en: … }
+```
+
+- Items follow the template-2 rules: `explain` on every item, `why` on every
+  predict choice. `objective` is `<lesson-id>/<objective-id>`. `lesson_ref`
+  is optional, as `<lesson-id>/<section-id>` or `<lesson-id>`.
+- They may use every word introduced up to and including the chapter's last
+  lesson, and nothing later; validate runs the same checks as for lesson
+  exercises (solutions, traps, debug starters, `verify`).
+- **Quiz**: 6–12 items. Each names the objective it measures, of a lesson in
+  this chapter, and together they measure every objective of every template-2
+  lesson in the chapter. Hints and traps are optional, since a sitting shows
+  none. Write items that are isomorphic to the lessons' exercises, not copies.
+- **Challenge**: integrative problems that need several lessons of the chapter
+  and earlier ones; prompts are business questions in plain language, without
+  column hints. Hints are required (the usual ladder). audit wants at least
+  three, each solution using words from at least three lessons (rule 15), and
+  warns when a write solution is close to SQL in the chapter's lessons (rule 16).
+- Neither set affects lesson completion. Challenges enter the mistake bank;
+  quiz answers do not.
+
 ### YAML pitfalls
 
 Quote values YAML would otherwise convert: `"NULL"`, `"null"`, `"yes"`,
@@ -344,6 +381,13 @@ submission; reveals do not count as submissions.
 is mastered after `mastery_streak` (setting, default 2) correct answers in a
 row since its latest wrong one. `Progress.exportAll()` dumps everything as JSON
 for a future "analyse my mistakes" workflow, which is not designed yet.
+A chapter quiz is taken in `sittings`: one pass through all items, at most one
+unfinished per module. Its answers are attempts with `sitting_id` set; lesson
+states, exercise status and the mistake bank read only attempts without one.
+A sitting's score (overall and per objective, the latest answer per item,
+unanswered items wrong) is derived by `scoreSitting`, and whether it was a
+pre- or post-test from how many of the chapter's lessons were done when it
+started; neither is stored.
 A schema change bumps `SCHEMA_VERSION` and adds a `MIGRATIONS` step, which
 `Progress.open` runs on an older database before `SCHEMA_SQL`, so a learner's
 history survives; append new view columns at the end (`CREATE OR REPLACE VIEW`).
@@ -355,7 +399,18 @@ SQL worker and the hash router (`src/ui/app.ts`); each page is one module in
 `src/ui/views/` that renders into `#main`.
 
 - Routes: `#/` map, `#/lesson/<id>[/<section>]`, `#/practice/<id>/<n>`,
-  `#/mistakes`, `#/glossary`. Every lesson and exercise route opens directly.
+  `#/mistakes`, `#/glossary`, and per module with chapter sets
+  `#/chapter/<module-id>` (quiz, past sittings, first-vs-latest per objective,
+  challenges), `#/chapter/<module-id>/quiz/<n>`, `#/chapter/<module-id>/challenge/<n>`
+  and `#/chapter/<module-id>/sitting/<id>` (a finished sitting's results).
+  Every lesson and exercise route opens directly; a quiz item needs an open
+  sitting, started from the chapter page.
+- `src/ui/views/exercise.ts` serves lesson exercises, challenges and quiz items.
+  In quiz mode it shows no hints, traps, diff or explain, only "answer
+  recorded", and keeps Run locked on predict items; the results page shows
+  the score, every item right or wrong, its solution and `explain`.
+- The map lists a chapter's sets after its lessons, with the challenges'
+  segments, and on its first lesson suggests the quiz until one is taken.
 - Templating: `html\`…\`` from `src/ui/dom.ts` escapes every value; only
   build-time lesson HTML and `t()` output go through `raw()`.
 - Every visible string comes from `src/i18n/strings.ts` through `t()`, which

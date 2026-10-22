@@ -1,0 +1,9 @@
+kind: debug
+difficulty: 2
+objective: basics/predict-filter
+prompt: { zh: 这条查询想找出年龄未知的宠物，却什么都没返回。修好它。, en: "This query should find the pets whose age is unknown, but returns nothing. Fix it." }
+explain:
+  zh: "`age = NULL` 永远不是 true，所以没有行留下。`IS NULL` 才能判断空值。"
+  en: "`age = NULL` is never true, so no row stays. `IS NULL` is the test for a missing value."
+starter: SELECT name FROM pets WHERE age = NULL
+solution: SELECT name FROM pets WHERE age IS NULL

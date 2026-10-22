@@ -1,0 +1,15 @@
+kind: predict
+difficulty: 2
+objective: basics/predict-filter
+prompt: { zh: 这条查询返回几行？先想一想。, en: How many rows does this query return? Think first. }
+query: SELECT name FROM pets WHERE age < 5
+choices:
+  - text: '1'
+    why: { zh: 只有 Mochi（3 岁）满足；Bean 的 age 是 NULL。, en: "Only Mochi (3) matches; Bean's age is NULL." }
+  - text: '2'
+    why: { zh: "Bean 的 age 是 NULL，`NULL < 5` 不是 true。", en: "Bean's age is NULL, and `NULL < 5` is not true." }
+  - text: '3'
+    why: { zh: Tofu 7 岁，不小于 5。, en: "Tofu is 7, which is not under 5." }
+answer: 0
+explain: { zh: 条件不是 true 的行都会被去掉，NULL 也一样。, en: "Every row whose condition is not true is dropped, NULL included." }
+verify: { rows: 1 }

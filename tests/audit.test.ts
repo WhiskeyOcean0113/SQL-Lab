@@ -1,9 +1,13 @@
 import { fileURLToPath } from 'node:url'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { cpSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { audit, RULES, runCli, scanMarkdown, similarity, type AuditReport } from '../scripts/audit.ts'
 
 // tests/fixtures/audit-content: `filtering` is legacy, `grouping` (template 2)
-// passes every rule, `sorting` (template 2) breaks nearly all of them. The
+// passes every rule, `sorting` (template 2) breaks nearly all of them. Chapter
+// m1 (grouping and sorting) has a challenge set for rules 15 and 16. The
 // comments in its files say which file triggers which rule.
 const root = fileURLToPath(new URL('./fixtures/audit-content', import.meta.url))
 
@@ -23,6 +27,7 @@ describe('audit levels', () => {
       { id: 'grouping', template: 2 },
       { id: 'sorting', template: 2 },
     ])
+    expect(report.chapters).toEqual([{ id: 'chapter:m0', template: 1 }, { id: 'chapter:m1', template: 2 }])
   })
 
   it('finds nothing in a template-2 lesson that follows every rule', () => {
@@ -38,7 +43,8 @@ describe('audit levels', () => {
   it("gives template-2 findings their rule's own level", () => {
     const v2 = report.findings.filter(f => f.lesson === 'sorting')
     for (const f of v2) expect(f.level).toBe(RULES.find(r => r.id === f.rule)!.level)
-    expect(new Set(v2.map(f => f.rule))).toEqual(new Set(RULES.map(r => r.id).filter(id => id !== '13b')))
+    const lessonRules = RULES.filter(r => !('scope' in r)).map(r => r.id as string)
+    expect(new Set(v2.map(f => f.rule))).toEqual(new Set(lessonRules.filter(id => id !== '13b')))
   })
 })
 
@@ -123,6 +129,39 @@ describe('audit rules', () => {
   })
 })
 
+describe('audit chapter rules', () => {
+  it('15: needs three challenges, each using words from three lessons', () => {
+    expect(findings('15', 'chapter:m1')).toEqual([{
+      lesson: 'chapter:m1', exercise: 'challenge/03-write-pricey', rule: '15', level: 'error', template: 2,
+      message: 'solution uses words from 1 lesson(s): filtering; needs 3',
+    }])
+    // m0's only lesson is legacy, so its missing challenges are a warning.
+    expect(findings('15', 'chapter:m0')).toEqual([expect.objectContaining({ level: 'warning', template: 1, message: '0 challenge(s), needs 3' })])
+  })
+
+  it('15: is an error for a template-2 chapter with too few challenges', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sql-lab-audit-'))
+    cpSync(root, dir, { recursive: true })
+    rmSync(join(dir, 'chapters/m1/challenge/01-write-busy-categories.yaml'))
+    const { findings: all } = await audit(dir)
+    expect(all.filter(f => f.lesson === 'chapter:m1' && f.rule === '15').map(f => [f.level, f.message])).toEqual([
+      ['error', '2 challenge(s), needs 3'],
+      ['error', 'solution uses words from 1 lesson(s): filtering; needs 3'],
+    ])
+  })
+
+  it('16: warns when a challenge solution is a near-copy of SQL in the chapter', () => {
+    expect(findings('16')).toEqual([expect.objectContaining({
+      lesson: 'chapter:m1', exercise: 'challenge/02-write-cheap-sorted', level: 'warning',
+      message: expect.stringMatching(/^solution has bigram Jaccard 0\.\d\d with exercise grouping\/02-write-cheap-per-category$/),
+    })])
+  })
+
+  it('leaves the lesson findings alone', () => {
+    expect(report.findings.filter(f => f.lesson.startsWith('chapter:')).every(f => ['15', '16'].includes(f.rule))).toBe(true)
+  })
+})
+
 describe('audit command line', () => {
   const run = async (...args: string[]) => {
     const out: string[] = []
@@ -141,7 +180,8 @@ describe('audit command line', () => {
     const { code, out } = await run('--strict')
     expect(code).toBe(1)
     expect(out).toContain('sorting')
-    expect(out).not.toContain('filtering')
+    expect(out).toMatch(/^chapter:m1 /m)
+    expect(out).not.toMatch(/^(filtering|chapter:m0) /m)
     expect(out).not.toMatch(/^\s+warning/m)
   })
 
@@ -158,6 +198,13 @@ describe('audit command line', () => {
     const json = JSON.parse(out)
     expect(json.findings).toEqual(report.findings.filter(f => f.lesson === 'sorting'))
     expect(json.summary).toHaveLength(RULES.length)
+  })
+
+  it('--lesson also takes a chapter', async () => {
+    const { code, out } = await run('--strict', '--lesson', 'chapter:m1')
+    expect(code).toBe(1)
+    expect(out).toMatch(/^chapter:m1 {2}\(template 2\)$/m)
+    expect(out).not.toContain('sorting  (')
   })
 
   it('rejects an unknown lesson or flag', async () => {

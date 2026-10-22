@@ -44,6 +44,8 @@ export function renderLesson(root: HTMLElement, ctx: Ctx, id: string, section?: 
             <p class="kicker">${raw(t(lang, 'lesson.kicker', { n: index, total: course.path.length }))}</p>
             <h1 class="display ttl">${raw(lesson.titleHtml[lang])}</h1>
             <p class="lede">${lesson.summary[lang]}</p>
+            ${module && module.lessons[0] === id && module.quiz.length && !ctx.sittingCounts.get(module.id)
+              ? html`<p><a class="quiz-first" href="${href.chapter(module.id)}">${raw(t(lang, 'map.quizFirst'))}</a></p>` : ''}
             <div class="facts">
               <span>${raw(t(lang, 'lesson.dataset'))} <b>${lesson.dataset}</b></span>
               <span>${raw(t(lang, 'lesson.prereqs'))} <b>${prereqs || raw(t(lang, 'lesson.none'))}</b></span>

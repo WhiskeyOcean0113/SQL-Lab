@@ -1,0 +1,14 @@
+kind: predict
+difficulty: 1
+objective: basics/pick-columns
+prompt: { zh: 这条查询返回几列？先想一想。, en: How many columns does this query return? Think first. }
+query: SELECT name, age FROM pets
+choices:
+  - text: '1'
+    why: { zh: SELECT 后面列了两列。, en: Two columns are listed after SELECT. }
+  - text: '2'
+    why: { zh: "`name` 和 `age`，正好两列。", en: "`name` and `age`: exactly two." }
+  - text: '3'
+    why: { zh: 只取列出的列，`id` 不在其中。, en: "Only the listed columns come back; `id` is not one of them." }
+answer: 1
+explain: { zh: SELECT 后面列出几列，结果就有几列。, en: The result has as many columns as SELECT lists. }

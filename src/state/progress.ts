@@ -1,6 +1,6 @@
 import { PGlite } from '@electric-sql/pglite'
 import type { Issue } from '../engine/types.ts'
-import type { Course, Lang } from '../content/types.ts'
+import type { Course, Exercise, Lang } from '../content/types.ts'
 import { MIGRATIONS, SCHEMA_SQL, SCHEMA_VERSION } from './schema.ts'
 
 export interface AttemptInput {
@@ -14,6 +14,46 @@ export interface AttemptInput {
   issues?: Issue[]
   /** Show answer was used. Recorded with isCorrect false. */
   revealed?: boolean
+  /** A chapter quiz answer: the open sitting it belongs to. Counts towards nothing else. */
+  sittingId?: number
+}
+
+/** One pass through a chapter quiz. */
+export interface Sitting {
+  id: number
+  moduleId: string
+  startedAt: Date
+  finishedAt: Date | null
+  /** Lessons of the chapter already done when the sitting started: 0 for a pre-test. */
+  lessonsDone: number
+}
+
+/** A quiz item's latest answer in a sitting. */
+export interface SittingAnswer {
+  submitted: string
+  isCorrect: boolean
+}
+
+export interface Score {
+  correct: number
+  total: number
+}
+
+/**
+ * A sitting's score, overall and per objective (`<lesson>/<objective>`). Every
+ * item counts: one without an answer is wrong. The latest answer per item counts.
+ */
+export function scoreSitting(items: Exercise[], answers: Map<string, SittingAnswer>): Score & { byObjective: Map<string, Score> } {
+  const byObjective = new Map<string, Score>()
+  let correct = 0
+  for (const ex of items) {
+    const right = answers.get(ex.id)?.isCorrect ? 1 : 0
+    correct += right
+    if (!ex.objective) continue
+    const s = byObjective.get(ex.objective) ?? { correct: 0, total: 0 }
+    byObjective.set(ex.objective, { correct: s.correct + right, total: s.total + 1 })
+  }
+  return { correct, total: items.length, byObjective }
 }
 
 export interface MistakeRow {
@@ -74,23 +114,28 @@ export class Progress {
     return new Set(r.rows.map(x => x.lesson_id))
   }
 
-  /** Exercise ids answered correctly at least once. */
+  /** Exercise ids answered correctly at least once, outside quiz sittings. */
   async solvedExercises(): Promise<Set<string>> {
-    const r = await this.db.query<{ exercise_id: string }>('SELECT DISTINCT exercise_id FROM attempts WHERE is_correct')
+    const r = await this.db.query<{ exercise_id: string }>('SELECT DISTINCT exercise_id FROM attempts WHERE is_correct AND sitting_id IS NULL')
     return new Set(r.rows.map(x => x.exercise_id))
   }
 
   /**
    * Record a submission. When it completes the lesson (every exercise answered
-   * correctly at least once), mark the lesson done and say so.
+   * correctly at least once), mark the lesson done and say so. A quiz answer
+   * (`sittingId`) goes to its open sitting and completes nothing.
    */
   async recordAttempt(a: AttemptInput, course: Course): Promise<{ lessonCompleted: boolean }> {
+    if (a.sittingId !== undefined) {
+      const open = await this.db.query('SELECT 1 FROM sittings WHERE id = $1 AND finished_at IS NULL', [a.sittingId])
+      if (!open.rows.length) throw new Error(`Sitting ${a.sittingId} is not open`)
+    }
     await this.db.query(
-      `INSERT INTO attempts (exercise_id, lesson_id, kind, lang, submitted, is_correct, error, error_code, issues, revealed)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [a.exerciseId, a.lessonId, a.kind, a.lang, a.submitted, a.isCorrect, a.error?.message ?? null, a.error?.code ?? null, a.issues ? JSON.stringify(a.issues) : null, Boolean(a.revealed)],
+      `INSERT INTO attempts (exercise_id, lesson_id, kind, lang, submitted, is_correct, error, error_code, issues, revealed, sitting_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [a.exerciseId, a.lessonId, a.kind, a.lang, a.submitted, a.isCorrect, a.error?.message ?? null, a.error?.code ?? null, a.issues ? JSON.stringify(a.issues) : null, Boolean(a.revealed), a.sittingId ?? null],
     )
-    if (!a.isCorrect) return { lessonCompleted: false }
+    if (!a.isCorrect || a.sittingId !== undefined) return { lessonCompleted: false }
     const lesson = course.lessons[a.lessonId]
     if (!lesson) return { lessonCompleted: false }
     const solved = await this.solvedExercises()
@@ -104,20 +149,76 @@ export class Progress {
     return { lessonCompleted: true }
   }
 
-  /** Per exercise: ever solved, and how many submissions so far (reveals are not submissions). */
+  /** Per exercise: ever solved, and how many submissions so far (reveals are not submissions). Quiz answers do not count. */
   async exerciseStatus(): Promise<Map<string, { solved: boolean; attempts: number }>> {
     const r = await this.db.query<{ exercise_id: string; solved: boolean; attempts: number }>(
-      'SELECT exercise_id, bool_or(is_correct) AS solved, (count(*) FILTER (WHERE NOT revealed))::int AS attempts FROM attempts GROUP BY exercise_id',
+      'SELECT exercise_id, bool_or(is_correct) AS solved, (count(*) FILTER (WHERE NOT revealed))::int AS attempts FROM attempts WHERE sitting_id IS NULL GROUP BY exercise_id',
     )
     return new Map(r.rows.map(x => [x.exercise_id, { solved: x.solved, attempts: x.attempts }]))
   }
 
   async attemptsFor(exerciseId: string) {
     const r = await this.db.query<{ submitted: string; is_correct: boolean; revealed: boolean; created_at: Date }>(
-      'SELECT submitted, is_correct, revealed, created_at FROM attempts WHERE exercise_id = $1 ORDER BY id DESC LIMIT 20',
+      'SELECT submitted, is_correct, revealed, created_at FROM attempts WHERE exercise_id = $1 AND sitting_id IS NULL ORDER BY id DESC LIMIT 20',
       [exerciseId],
     )
     return r.rows
+  }
+
+  /* ---------- chapter quiz sittings ---------- */
+
+  /** The module's unfinished sitting, or a new one. */
+  async startSitting(moduleId: string): Promise<number> {
+    const open = await this.openSitting(moduleId)
+    if (open !== undefined) return open
+    const r = await this.db.query<{ id: number }>('INSERT INTO sittings (module_id) VALUES ($1) RETURNING id', [moduleId])
+    return Number(r.rows[0]!.id)
+  }
+
+  /** Id of the module's unfinished sitting, if there is one. */
+  async openSitting(moduleId: string): Promise<number | undefined> {
+    const r = await this.db.query<{ id: number }>('SELECT id FROM sittings WHERE module_id = $1 AND finished_at IS NULL', [moduleId])
+    return r.rows[0] ? Number(r.rows[0].id) : undefined
+  }
+
+  async finishSitting(id: number) {
+    await this.db.query('UPDATE sittings SET finished_at = now() WHERE id = $1 AND finished_at IS NULL', [id])
+  }
+
+  /**
+   * A module's sittings, oldest first. `lessons` are the chapter's lesson ids:
+   * how many were done when a sitting started tells a pre-test from a post-test.
+   */
+  async sittings(moduleId: string, lessons: string[]): Promise<Sitting[]> {
+    const r = await this.db.query<{ id: number; module_id: string; started_at: Date; finished_at: Date | null; lessons_done: number }>(
+      `SELECT s.id, s.module_id, s.started_at, s.finished_at,
+              (SELECT count(*) FROM lesson_progress p
+                WHERE p.status = 'done' AND p.done_at <= s.started_at AND p.lesson_id = ANY($2))::int AS lessons_done
+       FROM sittings s WHERE s.module_id = $1 ORDER BY s.id`,
+      [moduleId, lessons],
+    )
+    return r.rows.map(x => ({ id: Number(x.id), moduleId: x.module_id, startedAt: x.started_at, finishedAt: x.finished_at, lessonsDone: x.lessons_done }))
+  }
+
+  /** One sitting of a module, as `sittings` lists it. */
+  async sitting(moduleId: string, id: number, lessons: string[]): Promise<Sitting | undefined> {
+    return (await this.sittings(moduleId, lessons)).find(s => s.id === id)
+  }
+
+  /** Each item's latest answer in a sitting. */
+  async sittingAnswers(id: number): Promise<Map<string, SittingAnswer>> {
+    const r = await this.db.query<{ exercise_id: string; submitted: string; is_correct: boolean }>(
+      `SELECT DISTINCT ON (exercise_id) exercise_id, submitted, is_correct
+       FROM attempts WHERE sitting_id = $1 ORDER BY exercise_id, id DESC`,
+      [id],
+    )
+    return new Map(r.rows.map(x => [x.exercise_id, { submitted: x.submitted, isCorrect: x.is_correct }]))
+  }
+
+  /** Per module: how many sittings, finished or not. */
+  async sittingCounts(): Promise<Map<string, number>> {
+    const r = await this.db.query<{ module_id: string; n: number }>('SELECT module_id, count(*)::int AS n FROM sittings GROUP BY module_id')
+    return new Map(r.rows.map(x => [x.module_id, x.n]))
   }
 
   async mistakes(): Promise<MistakeRow[]> {
@@ -136,7 +237,7 @@ export class Progress {
 
   /** Everything, as plain JSON: the raw material for a later "analyse my mistakes" export. */
   async exportAll() {
-    const tables = ['settings', 'lesson_progress', 'attempts', 'mistake_notes'] as const
+    const tables = ['settings', 'lesson_progress', 'attempts', 'mistake_notes', 'sittings'] as const
     const out: Record<string, unknown[]> = {}
     for (const t of tables) out[t] = (await this.db.query(`SELECT * FROM ${t}`)).rows
     out.mistake_bank = (await this.db.query('SELECT * FROM mistake_bank')).rows

@@ -1,4 +1,4 @@
-import type { Course, Lang, Lesson } from '../content/types.ts'
+import type { Course, Exercise, Lang, Lesson, Module, SetKind } from '../content/types.ts'
 import type { Engine } from '../engine/client.ts'
 import { t, tText } from '../i18n/index.ts'
 import { lessonStates, type LessonState, type Progress } from '../state/progress.ts'
@@ -15,6 +15,8 @@ export interface Ctx {
   lang: Lang
   states: Record<string, LessonState>
   status: Map<string, { solved: boolean; attempts: number }>
+  /** Per module: how many chapter quiz sittings, finished or not. */
+  sittingCounts: Map<string, number>
   /** Re-read progress from the database (after a submission). */
   refresh(): Promise<void>
   /** The lesson to resume: the first unfinished one, or the last when all are done. */
@@ -29,10 +31,18 @@ export type Route =
   | { name: 'practice'; id: string; n: number }
   | { name: 'mistakes' }
   | { name: 'glossary' }
+  | { name: 'chapter'; id: string }
+  | { name: 'set'; id: string; set: SetKind; n: number }
+  | { name: 'sitting'; id: string; sitting: number }
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent)
   if (parts[0] === 'lesson' && parts[1]) return { name: 'lesson', id: parts[1], section: parts[2] }
+  if (parts[0] === 'chapter' && parts[1]) {
+    if (parts[2] === 'quiz' || parts[2] === 'challenge') return { name: 'set', id: parts[1], set: parts[2], n: Math.max(1, Number(parts[3]) || 1) }
+    if (parts[2] === 'sitting' && Number(parts[3])) return { name: 'sitting', id: parts[1], sitting: Number(parts[3]) }
+    return { name: 'chapter', id: parts[1] }
+  }
   if (parts[0] === 'practice' && parts[1]) return { name: 'practice', id: parts[1], n: Math.max(1, Number(parts[2]) || 1) }
   if (parts[0] === 'mistakes') return { name: 'mistakes' }
   if (parts[0] === 'glossary') return { name: 'glossary' }
@@ -45,6 +55,24 @@ export const href = {
   practice: (id: string, n: number) => `#/practice/${encodeURIComponent(id)}/${n}`,
   mistakes: () => '#/mistakes',
   glossary: () => '#/glossary',
+  chapter: (id: string) => `#/chapter/${encodeURIComponent(id)}`,
+  set: (id: string, set: SetKind, n: number) => `#/chapter/${encodeURIComponent(id)}/${set}/${n}`,
+  sitting: (id: string, sitting: number) => `#/chapter/${encodeURIComponent(id)}/sitting/${sitting}`,
+}
+
+/** A module with a chapter quiz or chapter challenges. */
+export const hasSets = (m: Module) => m.quiz.length > 0 || m.challenge.length > 0
+
+/**
+ * The lesson section to reread when an exercise goes wrong. A chapter set item
+ * names it as `<lesson>/<section>`, or the lesson only; failing that, its
+ * objective's lesson.
+ */
+export function revisitOf(ex: Exercise): { lesson: string; section?: string } | undefined {
+  if (!ex.set) return { lesson: ex.lesson, section: ex.lessonRef }
+  const [lesson, section] = (ex.lessonRef || ex.objective || '').split('/')
+  if (!lesson) return undefined
+  return { lesson, section: ex.lessonRef ? section : undefined }
 }
 
 export async function createCtx(course: Course, engine: Engine, progress: Progress, lang: Lang): Promise<Ctx> {
@@ -52,10 +80,12 @@ export async function createCtx(course: Course, engine: Engine, progress: Progre
     course, engine, progress, lang,
     states: {},
     status: new Map(),
+    sittingCounts: new Map(),
     async refresh() {
       const done = await progress.doneLessons()
       ctx.states = lessonStates(course.path, done)
       ctx.status = await progress.exerciseStatus()
+      ctx.sittingCounts = await progress.sittingCounts()
     },
     /** The suggested next lesson: the first unfinished one on the path. */
     currentLesson() {
@@ -126,7 +156,7 @@ export function paintThemeSwitch(el: HTMLButtonElement, lang: Lang) {
  * One segment per exercise: solved, attempted (striped, like the exercise
  * page's steps) or untouched, followed by the count.
  */
-export function exerciseBar(ctx: Ctx, lesson: Lesson): Raw {
+export function exerciseBar(ctx: Ctx, lesson: Pick<Lesson, 'exercises'>): Raw {
   const cells = lesson.exercises.map(e => {
     const st = ctx.status.get(e.id)
     return st?.solved ? 'ok' : st ? 'bad' : ''
@@ -142,6 +172,6 @@ export function sectionHeading(lesson: Lesson, sectionId: string, lang: Lang): s
   return s ? s.heading.replace(/<[^>]+>/g, '') : sectionId
 }
 
-export function notFound(root: HTMLElement, ctx: Ctx, key: 'lesson.notFound') {
+export function notFound(root: HTMLElement, ctx: Ctx, key: 'lesson.notFound' | 'chapter.notFound') {
   mount(root, html`<div class="empty">${raw(t(ctx.lang, key))}<p><a class="btn" href="${href.map()}">${raw(t(ctx.lang, 'ex.backToMap'))}</a></p></div>`)
 }

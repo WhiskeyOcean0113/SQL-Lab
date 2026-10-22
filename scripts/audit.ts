@@ -9,8 +9,11 @@
 // a legacy lesson gets every finding as a warning. With --strict the exit code
 // is 1 when a template-2 lesson has an error; pre-commit runs it after validate.
 //
+// Chapter rules (15, 16) audit a module's chapter sets; a chapter whose lessons
+// are all template 2 gets their own level, any other chapter only warnings.
+//
 //   npm run audit                        findings by lesson, then counts per rule
-//   npm run audit -- --lesson group-by   one lesson
+//   npm run audit -- --lesson group-by   one lesson (or a chapter: chapter:m3)
 //   npm run audit -- --json              machine-readable
 //   npm run audit -- --strict            list only the errors; exit 1 if there are any
 
@@ -18,7 +21,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml } from 'yaml'
-import { LANGS, type Bi, type Exercise, type Lang, type Term } from '../src/content/types.ts'
+import { chapterKey, LANGS, type Bi, type Course, type Exercise, type Lang, type Module, type Term } from '../src/content/types.ts'
 import { finalResult } from '../src/engine/grade.ts'
 import { PracticeDb } from '../src/engine/practice-db.ts'
 import { buildContent } from './lib/build-content.ts'
@@ -45,18 +48,24 @@ export const RULES = [
   { id: '13', level: 'error', title: 'fewer than two check blocks' },
   { id: '13b', level: 'warning', title: 'no steps block' },
   { id: '14', level: 'warning', title: 'traps on under half of write + debug' },
-] as const satisfies readonly { id: string; level: Level; title: string }[]
+  { id: '15', level: 'error', title: 'chapter challenges missing or too narrow', scope: 'chapter' },
+  { id: '16', level: 'warning', title: 'challenge solution close to lesson SQL', scope: 'chapter' },
+] as const satisfies readonly { id: string; level: Level; title: string; scope?: 'chapter' }[]
 
 export type RuleId = (typeof RULES)[number]['id']
 const RULE = new Map<RuleId, (typeof RULES)[number]>(RULES.map(r => [r.id, r]))
 
 export interface Finding {
+  /** The lesson id, or `chapter:<module id>` for a chapter rule. */
   lesson: string
-  /** Exercise file stem (`08-write-orders-per-month`) when the finding is about one exercise. */
+  /**
+   * Exercise file stem (`08-write-orders-per-month`) when the finding is about
+   * one exercise; for a chapter set item, `challenge/<stem>`.
+   */
   exercise?: string
   rule: RuleId
   level: Level
-  /** The lesson's template: 2, or 1 for legacy lessons. */
+  /** The lesson's template: 2, or 1 for legacy lessons. A chapter is 2 when all its lessons are. */
   template: number
   message: string
 }
@@ -64,6 +73,8 @@ export interface Finding {
 export interface AuditReport {
   /** Every lesson audited, in curriculum order. */
   lessons: { id: string; template: number }[]
+  /** Every chapter with lessons, as `chapter:<module id>`, in curriculum order. */
+  chapters: { id: string; template: number }[]
   findings: Finding[]
 }
 
@@ -71,6 +82,8 @@ const COPY_SIMILARITY = 0.6 // rule 1: bigram Jaccard
 const HINT_COVERAGE = 0.6 // rule 2
 const MAX_NEW_WORDS = 8 // rule 8
 const MIN_CHECKS = 2 // rule 13
+const MIN_CHALLENGES = 3 // rule 15
+const MIN_CHALLENGE_LESSONS = 3 // rule 15: lessons whose words each challenge uses
 /** Rule 11: the sections where other databases may be named. */
 const DIALECT_SECTIONS = new Set(['deeper', 'reference'])
 const OTHER_DATABASES = /\b(?:MySQL|SQLite|Oracle|SQL Server)\b/g
@@ -87,7 +100,7 @@ const ANSWER_NUMBER = /^\s*(-?\d+(?:\.\d+)?)\s*(?:rows?|行)?\s*$/i
 export async function audit(root: string): Promise<AuditReport> {
   const { course, sources, vocabulary } = buildContent(root)
   const glossary = new Map(course.glossary.map(t => [t.id, t]))
-  const report: AuditReport = { lessons: [], findings: [] }
+  const report: AuditReport = { lessons: [], chapters: [], findings: [] }
 
   for (const [chapter, mod] of course.modules.entries()) {
     for (const id of mod.lessons) {
@@ -111,7 +124,66 @@ export async function audit(root: string): Promise<AuditReport> {
       }))
     }
   }
+
+  // Taught where: the path index of the lesson that introduces each word.
+  const taughtIn = new Map<string, string>()
+  for (const id of course.path) for (const word of vocabulary[id]?.introduces ?? []) if (!taughtIn.has(word)) taughtIn.set(word, id)
+  for (const mod of course.modules) {
+    const lessons = mod.lessons.filter(id => course.lessons[id])
+    const dataset = course.datasets[mod.dataset]
+    if (!lessons.length) continue
+    const template = lessons.every(id => readMeta(root, id).template >= 2) ? 2 : 1
+    report.chapters.push({ id: chapterKey(mod.id), template })
+    if (dataset === undefined && mod.challenge.length) continue // validate reports it
+    report.findings.push(...auditChapter(mod, template, course, sources, taughtIn, dataset === undefined ? undefined : await lexiconFor(dataset)))
+  }
   return report
+}
+
+/** Rules 15 and 16: a chapter's challenges integrate several lessons and are not copies of lesson SQL. */
+function auditChapter(mod: Module, template: number, course: Course, sources: Record<string, Record<Lang, string>>, taughtIn: Map<string, string>, lex: Lexicon | undefined): Finding[] {
+  const out: Finding[] = []
+  const lesson = chapterKey(mod.id)
+  const report = (rule: RuleId, message: string, exercise?: string) => out.push({
+    lesson,
+    ...(exercise === undefined ? {} : { exercise }),
+    rule,
+    level: template >= 2 ? RULE.get(rule)!.level : 'warning',
+    template,
+    message,
+  })
+  const stem = (ex: Exercise) => ex.id.slice(lesson.length + 1)
+
+  // 15. Enough challenges, each drawing on several lessons.
+  if (mod.challenge.length < MIN_CHALLENGES) report('15', `${mod.challenge.length} challenge(s), needs ${MIN_CHALLENGES}`)
+  for (const ex of lex ? mod.challenge : []) {
+    const from = new Set([...sqlWords(answerSql(ex), lex!)].map(w => taughtIn.get(w)).filter((l): l is string => l !== undefined))
+    if (from.size < MIN_CHALLENGE_LESSONS) {
+      report('15', `solution uses words from ${from.size} lesson(s)${from.size ? `: ${[...from].join(', ')}` : ''}; needs ${MIN_CHALLENGE_LESSONS}`, stem(ex))
+    }
+  }
+
+  // 16. A challenge is solved, not copied from the chapter's lessons.
+  const shown = mod.lessons.flatMap(id => [
+    ...LANGS.flatMap(lang => scanMarkdown(sources[id]?.[lang] ?? '').flatMap(s => s.fences.flatMap(f => {
+      const at = `${id}/lesson.${lang}.md:${f.line}`
+      if (f.kind === 'sql') return [{ sql: f.body, where: `the sql block at ${at}` }]
+      if (f.kind === 'check') return [{ sql: checkQuery(f), where: `the check block at ${at}` }]
+      if (f.kind === 'steps') return stepsSql(f).map((sql, i) => ({ sql, where: `step ${i + 1} of the steps block at ${at}` }))
+      return []
+    }))),
+    ...(course.lessons[id]?.exercises ?? []).map(ex => ({ sql: answerSql(ex), where: `exercise ${ex.id}` })),
+  ]).filter(s => s.sql.trim())
+  for (const ex of mod.challenge) {
+    if (ex.kind !== 'write') continue
+    let best = { score: 0, where: '' }
+    for (const s of shown) {
+      const score = similarity(ex.solution, s.sql)
+      if (score > best.score) best = { score, where: s.where }
+    }
+    if (best.score >= COPY_SIMILARITY) report('16', `solution has bigram Jaccard ${best.score.toFixed(2)} with ${best.where}`, stem(ex))
+  }
+  return out
 }
 
 interface LessonInput {
@@ -480,26 +552,29 @@ export async function runCli(args: string[], root: string, print: (text: string)
     }
   }
 
-  let { lessons, findings } = await audit(root)
+  const full = await audit(root)
+  let { lessons, chapters, findings } = full
   if (opts.lesson !== undefined) {
-    if (!lessons.some(l => l.id === opts.lesson)) {
-      print(`audit: no lesson "${opts.lesson}" in the curriculum`)
+    if (![...lessons, ...chapters].some(l => l.id === opts.lesson)) {
+      print(`audit: no lesson or chapter "${opts.lesson}" in the curriculum`)
       return 2
     }
     lessons = lessons.filter(l => l.id === opts.lesson)
+    chapters = chapters.filter(l => l.id === opts.lesson)
     findings = findings.filter(f => f.lesson === opts.lesson)
   }
+  const units = [...lessons, ...chapters]
   const errors = findings.filter(f => f.level === 'error')
   const code = opts.strict && errors.length ? 1 : 0
 
   if (opts.json) {
-    print(JSON.stringify({ lessons, findings, summary: summarise(findings) }, null, 2))
+    print(JSON.stringify({ lessons, chapters, findings, summary: summarise(findings) }, null, 2))
     return code
   }
   if (opts.strict) {
     const warnings = findings.length - errors.length
     if (errors.length) {
-      print(byLesson(errors, lessons).join('\n'))
+      print(byLesson(errors, units).join('\n'))
       print(`\n${errors.length} audit error(s) in template-2 lessons. Fix them before committing.`)
     } else {
       print(`Audit: no errors in template-2 lessons (${warnings} warning(s); npm run audit lists them).`)
@@ -507,13 +582,13 @@ export async function runCli(args: string[], root: string, print: (text: string)
     return code
   }
 
-  if (findings.length) print(byLesson(findings, lessons).join('\n') + '\n')
+  if (findings.length) print(byLesson(findings, units).join('\n') + '\n')
   const rows = summarise(findings).map(r => `${r.rule.padEnd(4)}  ${r.level.padEnd(7)}  ${String(r.findings).padStart(8)}  ${String(r.lessons).padStart(7)}  ${r.title}`)
   print(['rule  level    findings  lessons', ...rows].join('\n'))
   const v2 = lessons.filter(l => l.template >= 2).length
-  const flagged = new Set(findings.map(f => f.lesson)).size
+  const flagged = (of: { id: string }[]) => of.filter(u => findings.some(f => f.lesson === u.id)).length
   print(`\nlevel is the template-2 level; legacy lessons report every finding as a warning.`)
-  print(`${findings.length} finding(s) in ${flagged} of ${lessons.length} lesson(s). ${v2} lesson(s) use template 2, with ${errors.length} error(s).`)
+  print(`${findings.length} finding(s) in ${flagged(lessons)} of ${lessons.length} lesson(s) and ${flagged(chapters)} of ${chapters.length} chapter(s). ${v2} lesson(s) use template 2, with ${errors.length} error(s).`)
   return code
 }
 

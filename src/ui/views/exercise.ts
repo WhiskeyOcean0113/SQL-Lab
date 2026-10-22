@@ -1,49 +1,129 @@
 import { highlightSql } from '../../content/highlight.ts'
-import type { Exercise, Lang, Lesson, PredictExercise, QueryExercise } from '../../content/types.ts'
+import { chapterKey, type Exercise, type Lang, type Lesson, type PredictExercise, type QueryExercise, type SetKind } from '../../content/types.ts'
 import type { Grade } from '../../engine/types.ts'
 import { t, tText, type StringKey } from '../../i18n/index.ts'
-import { href, notFound, sectionHeading, type Ctx } from '../app.ts'
+import type { SittingAnswer } from '../../state/progress.ts'
+import { href, notFound, revisitOf, sectionHeading, type Ctx } from '../app.ts'
 import { $, $$, html, mount, raw, type Raw } from '../dom.ts'
 import { createEditor, type EditorHandle } from '../editor.ts'
 import { failureBody, runOutput } from '../results.ts'
 import { schemaFor } from '../runner.ts'
+import { chapterNo } from './map.ts'
 
 // One exercise: the task on the left, the work on the right, and a verdict
 // that says what is wrong and points back to the lesson section it practises.
+//
+// The same view serves a lesson's exercises, a chapter's challenges and a
+// chapter quiz. In a quiz sitting (quiz mode) there are no hints, traps, diff
+// or explain: a submission only says "answer recorded", and the sitting's
+// results page shows everything once it is finished.
 
 const draftKey = (id: string) => `sql-lab:draft:${id}`
 const readDraft = (id: string) => { try { return localStorage.getItem(draftKey(id)) } catch { return null } }
 const writeDraft = (id: string, text: string) => { try { localStorage.setItem(draftKey(id), text) } catch { /* private mode */ } }
 
+/** The exercises one page steps through: a lesson's, a chapter's challenges, or a quiz. */
+interface PracticeSet {
+  /** What attempts record as `lesson_id`: the lesson id, or `chapter:<module id>`. */
+  owner: string
+  exercises: Exercise[]
+  dataset: string
+  /** Predict: Run stays locked until an answer is in. */
+  lockRun: boolean
+  /** The lesson these exercises complete, when they belong to one. */
+  lesson?: Lesson
+  kicker(n: number): string
+  href(n: number): string
+  /** Where the first exercise's "back" leads. */
+  home: { href: string; label: string }
+  /** Where the set leads once done; the course map when absent. */
+  next?: { href: string; pager: string; foot: string }
+  /** Quiz mode: the open sitting and its answers so far. */
+  sitting?: { id: number; module: string; answers: Map<string, SittingAnswer> }
+}
+
 export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n: number, onProgress: () => void) {
   const { course, lang } = ctx
   const lesson = course.lessons[lessonId]
   if (!lesson) return notFound(root, ctx, 'lesson.notFound')
-  const ex = lesson.exercises[n - 1]
-  if (!ex) return notFound(root, ctx, 'lesson.notFound')
+  if (!lesson.exercises[n - 1]) return notFound(root, ctx, 'lesson.notFound')
   void ctx.progress.startLesson(lessonId)
+  const nextId = course.path[course.path.indexOf(lesson.id) + 1]
+  const next = nextId ? course.lessons[nextId] : undefined
+  renderInSet(root, ctx, {
+    owner: lesson.id,
+    exercises: lesson.exercises,
+    dataset: lesson.dataset,
+    // Predict first, then run. Legacy lessons keep Run open: some of their prompts say "run the query below".
+    lockRun: lesson.template === 2,
+    lesson,
+    kicker: i => t(lang, 'ex.kicker', { lesson: lesson.title[lang], n: i, total: lesson.exercises.length }),
+    href: i => href.practice(lesson.id, i),
+    home: { href: href.lesson(lesson.id), label: t(lang, 'ex.backToLesson') },
+    next: next && { href: href.lesson(next.id), pager: t(lang, 'ex.nextLessonNamed', { title: next.title[lang] }), foot: t(lang, 'ex.nextLesson') },
+  }, n, onProgress)
+}
+
+/** A chapter quiz item or challenge: `#/chapter/<module>/<set>/<n>`. */
+export async function renderChapterExercise(root: HTMLElement, ctx: Ctx, moduleId: string, kind: SetKind, n: number, onProgress: () => void) {
+  const { course, lang } = ctx
+  const mod = course.modules.find(m => m.id === moduleId)
+  const items = mod?.[kind] ?? []
+  if (!mod || !items[n - 1]) return notFound(root, ctx, 'chapter.notFound')
+  const chapter = tText(lang, 'map.chapter', { n: chapterNo(mod.id) })
+  const toChapter = t(lang, 'quiz.toChapter')
+  const set: PracticeSet = {
+    owner: chapterKey(mod.id),
+    exercises: items,
+    dataset: mod.dataset,
+    lockRun: true,
+    kicker: i => t(lang, kind === 'quiz' ? 'quiz.kicker' : 'challenge.kicker', { chapter, n: i, total: items.length }),
+    href: i => href.set(mod.id, kind, i),
+    home: { href: href.chapter(mod.id), label: toChapter },
+    next: { href: href.chapter(mod.id), pager: toChapter, foot: toChapter },
+  }
+  if (kind === 'quiz') {
+    const hash = location.hash
+    const id = await ctx.progress.openSitting(mod.id)
+    const answers = id === undefined ? undefined : await ctx.progress.sittingAnswers(id)
+    if (location.hash !== hash) return // the learner has moved on
+    if (id === undefined || !answers) {
+      mount(root, html`<div class="wrap"><div class="empty">${raw(t(lang, 'quiz.notStarted'))}<p><a class="btn" href="${href.chapter(mod.id)}">${raw(toChapter)}</a></p></div></div>`)
+      return
+    }
+    set.sitting = { id, module: mod.id, answers }
+  }
+  renderInSet(root, ctx, set, n, onProgress)
+}
+
+function renderInSet(root: HTMLElement, ctx: Ctx, set: PracticeSet, n: number, onProgress: () => void) {
+  const { lang } = ctx
+  const ex = set.exercises[n - 1]!
+  const quiz = Boolean(set.sitting)
 
   mount(root, html`
     <div class="wrap">
-      <div class="exercise">
+      <div class="exercise${quiz ? ' quiz-mode' : ''}">
         <div class="ex-head">
           <div>
-            <p class="kicker">${raw(t(lang, 'ex.kicker', { lesson: lesson.title[lang], n, total: lesson.exercises.length }))}</p>
+            <p class="kicker">${raw(set.kicker(n))}</p>
             <h1 class="h2">${raw(t(lang, `ex.title.${ex.kind}`))}</h1>
           </div>
-          <nav class="steps" aria-label="${tText(lang, 'lesson.exercises')}"></nav>
+          <nav class="steps" aria-label="${tText(lang, quiz ? 'chapter.quiz' : 'lesson.exercises')}"></nav>
         </div>
         <div class="split">
           <div class="task">
             <span class="type kind-${ex.kind}">${raw(t(lang, `kind.${ex.kind}`))}</span>
             <div class="prompt">${raw(ex.prompt[lang])}</div>
             <ul class="req"></ul>
-            <div class="hint" data-help>
+            ${quiz
+              ? html`<p class="quiz-note">${raw(t(lang, 'quiz.noFeedback'))}</p>`
+              : html`<div class="hint" data-help>
               <div class="hint-levels" aria-live="polite">${ex.hints.map(h => html`<div class="hint-body" tabindex="-1" hidden>${raw(h[lang])}</div>`)}</div>
               <div class="hint-answer" tabindex="-1" aria-live="polite" hidden></div>
               <div class="hint-actions"></div>
-              <p><a class="link" href="${href.lesson(lessonId, ex.lessonRef)}">${raw(t(lang, 'ex.back', { section: sectionHeading(lesson, ex.lessonRef, lang) }))}</a></p>
-            </div>
+              ${revisitLink(ctx, ex) ? html`<p>${revisitLink(ctx, ex)}</p>` : ''}
+            </div>`}
           </div>
           <div class="work"></div>
         </div>
@@ -51,11 +131,10 @@ export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n:
       </div>
     </div>`)
 
-  renderSteps(root, ctx, lesson, n)
-  renderPager(root, ctx, lesson, n)
-
-  const env = { root, ctx, lesson, ex, n, onProgress, sql: () => '' } as Env
-  env.help = mountHelp(env)
+  const env = { root, ctx, set, ex, n, onProgress, sql: () => '' } as Env
+  renderSteps(env)
+  renderPager(env)
+  env.help = quiz ? NO_HELP : mountHelp(env)
   if (ex.kind === 'predict') renderPredict(env, ex)
   else void renderQuery(env, ex)
   window.scrollTo(0, 0)
@@ -64,13 +143,22 @@ export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n:
 interface Env {
   root: HTMLElement
   ctx: Ctx
-  lesson: Lesson
+  set: PracticeSet
   ex: Exercise
   n: number
   onProgress: () => void
   /** The learner's current SQL, recorded with a reveal. */
   sql: () => string
   help: Help
+}
+
+/** "Reread …": the lesson section this exercise practises, if it names one. */
+function revisitLink(ctx: Ctx, ex: Exercise): Raw | undefined {
+  const r = revisitOf(ex)
+  const lesson = r && ctx.course.lessons[r.lesson]
+  if (!lesson) return undefined
+  const label = r.section ? sectionHeading(lesson, r.section, ctx.lang) : lesson.title[ctx.lang]
+  return html`<a class="link" href="${href.lesson(lesson.id, r.section || undefined)}">${raw(t(ctx.lang, 'ex.back', { section: label }))}</a>`
 }
 
 /* ---------- hint ladder ---------- */
@@ -85,6 +173,9 @@ interface Help {
   /** Redraw the button after a submission: Show answer may now be available. */
   refresh(): void
 }
+
+/** A quiz sitting has no help at all. */
+const NO_HELP: Help = { next: () => undefined, advance() {}, refresh() {} }
 
 /**
  * Show hint opens the first authored level, More help each next one, and
@@ -150,36 +241,66 @@ function mountHelp(env: Env): Help {
 
 const codePane = (sql: string) => html`<pre class="code-pane"><code>${raw(highlightSql(sql))}</code></pre>`
 
-function renderSteps(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
-  mount($('.steps', root), html`${lesson.exercises.map((e, i) => {
-    const st = ctx.status.get(e.id)
-    const cls = st?.solved ? 'ok' : st ? 'bad' : ''
-    const label = `${i + 1}. ${tText(ctx.lang, `kind.${e.kind}`)}`
-    return html`<a class="${cls}" href="${href.practice(lesson.id, i + 1)}" title="${label}" aria-label="${label}"${i + 1 === n ? raw(' aria-current="step"') : ''}></a>`
+/** One segment per exercise: solved / attempted, or in a sitting, answered (no right or wrong yet). */
+function renderSteps(env: Env) {
+  const { root, ctx, set, n } = env
+  mount($('.steps', root), html`${set.exercises.map((e, i) => {
+    let cls = ''
+    let label = `${i + 1}. ${tText(ctx.lang, `kind.${e.kind}`)}`
+    if (set.sitting) {
+      if (set.sitting.answers.has(e.id)) { cls = 'answered'; label += ` · ${tText(ctx.lang, 'quiz.answered')}` }
+    } else {
+      const st = ctx.status.get(e.id)
+      cls = st?.solved ? 'ok' : st ? 'bad' : ''
+    }
+    return html`<a class="${cls}" href="${set.href(i + 1)}" title="${label}" aria-label="${label}"${i + 1 === n ? raw(' aria-current="step"') : ''}></a>`
   })}`)
 }
 
 /**
- * Always-visible way on: previous / next exercise, and on the last exercise the
- * next lesson.
+ * Always-visible way on: previous / next exercise, and on the last one where
+ * the set leads (the next lesson, the chapter page), or in a sitting, Finish.
  */
-function renderPager(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
+function renderPager(env: Env) {
+  const { root, ctx, set, n } = env
   const lang = ctx.lang
-  const total = lesson.exercises.length
-  const nextId = ctx.course.path[ctx.course.path.indexOf(lesson.id) + 1]
-  const next = nextId ? ctx.course.lessons[nextId] : undefined
+  const total = set.exercises.length
   const left = n > 1
-    ? html`<a class="btn" href="${href.practice(lesson.id, n - 1)}">← ${raw(t(lang, 'ex.prev'))}</a>`
-    : html`<a class="btn" href="${href.lesson(lesson.id)}">← ${raw(t(lang, 'ex.backToLesson'))}</a>`
+    ? html`<a class="btn" href="${set.href(n - 1)}">← ${raw(t(lang, 'ex.prev'))}</a>`
+    : html`<a class="btn" href="${set.home.href}">← ${raw(set.home.label)}</a>`
   let right: Raw
-  if (n < total) {
-    right = html`<a class="btn" href="${href.practice(lesson.id, n + 1)}">${raw(t(lang, 'ex.next'))} →</a>`
-  } else if (!next) {
-    right = html`<a class="btn" href="${href.map()}">${raw(t(lang, 'ex.backToMap'))}</a>`
-  } else {
-    right = html`<a class="btn primary" href="${href.lesson(next.id)}">${raw(t(lang, 'ex.nextLessonNamed', { title: next.title[lang] }))} →</a>`
+  if (n < total) right = html`<a class="btn" href="${set.href(n + 1)}">${raw(t(lang, 'ex.next'))} →</a>`
+  else if (set.sitting) right = html`<button type="button" class="btn primary" data-finish>${raw(t(lang, 'quiz.finish'))}</button>`
+  else if (set.next) right = html`<a class="btn primary" href="${set.next.href}">${raw(set.next.pager)} →</a>`
+  else right = html`<a class="btn" href="${href.map()}">${raw(t(lang, 'ex.backToMap'))}</a>`
+  const pager = $('.ex-pager', root)
+  mount(pager, html`${left}<span class="sp"></span>${right}`)
+  wireFinish(env, pager)
+}
+
+/** Finish buttons in `el` end the sitting; with unanswered items, after one confirming click. */
+function wireFinish(env: Env, el: HTMLElement) {
+  const { ctx, set } = env
+  const sitting = set.sitting
+  if (!sitting) return
+  for (const btn of $$<HTMLButtonElement>('[data-finish]', el)) {
+    btn.addEventListener('click', async () => {
+      const unanswered = set.exercises.filter(e => !sitting.answers.has(e.id)).length
+      if (unanswered && !btn.dataset.confirmed) {
+        btn.dataset.confirmed = '1'
+        const warn = document.createElement('span')
+        warn.className = 'quiz-warn'
+        btn.before(warn)
+        mount(warn, raw(t(ctx.lang, 'quiz.unanswered', { n: unanswered })))
+        mount(btn, raw(t(ctx.lang, 'quiz.finishAnyway')))
+        return
+      }
+      btn.disabled = true
+      await ctx.progress.finishSitting(sitting.id)
+      await ctx.refresh()
+      location.hash = href.sitting(sitting.module, sitting.id)
+    })
   }
-  mount($('.ex-pager', root), html`${left}<span class="sp"></span>${right}`)
 }
 
 /**
@@ -187,56 +308,79 @@ function renderPager(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
  * and say whether the lesson just completed.
  */
 async function record(env: Env, submitted: string, grade: Pick<Grade, 'correct' | 'issues' | 'error'>, revealed = false) {
-  const { ctx, ex, lesson } = env
+  const { ctx, ex, set } = env
   const { lessonCompleted } = await ctx.progress.recordAttempt({
-    exerciseId: ex.id, lessonId: lesson.id, kind: ex.kind, lang: ctx.lang, submitted,
-    isCorrect: grade.correct, error: grade.error, issues: grade.issues, revealed,
+    exerciseId: ex.id, lessonId: set.owner, kind: ex.kind, lang: ctx.lang, submitted,
+    isCorrect: grade.correct, error: grade.error, issues: grade.issues, revealed, sittingId: set.sitting?.id,
   }, ctx.course)
+  set.sitting?.answers.set(ex.id, { submitted, isCorrect: grade.correct })
   await ctx.refresh()
-  renderSteps(env.root, ctx, lesson, env.n)
-  renderPager(env.root, ctx, lesson, env.n)
+  renderSteps(env)
+  renderPager(env)
   env.onProgress()
   env.help.refresh()
   return { lessonCompleted, attempts: ctx.status.get(ex.id)?.attempts ?? 1 }
 }
 
 /** The learner's SQL next to the reference solution, or one pane when they are the same. */
-function comparison(sql: string, ex: QueryExercise, lang: Lang) {
+export function comparison(sql: string, ex: QueryExercise, lang: Lang) {
   const norm = (s: string) => s.replace(/\s+/g, ' ').replace(/\s*;\s*$/, '').trim()
   if (norm(sql) === norm(ex.solution)) return html`<div class="compare"><h4>${raw(t(lang, 'answer.same'))}</h4>${codePane(sql)}</div>`
   return html`<div class="side-by-side">
-    <div><h4>${raw(t(lang, 'answer.yours'))}</h4>${codePane(sql)}</div>
+    <div><h4>${raw(t(lang, 'answer.yours'))}</h4>${sql.trim() ? codePane(sql) : html`<p class="muted">${raw(t(lang, 'sitting.none'))}</p>`}</div>
     <div><h4>${raw(t(lang, 'answer.reference'))}</h4>${codePane(ex.solution)}</div>
   </div>`
 }
 
 function successFoot(env: Env, lessonCompleted: boolean): Raw {
-  const { ctx, lesson, n } = env
+  const { ctx, set, n } = env
   const lang = ctx.lang
+  const items = set.exercises
   // The next unsolved exercise after this one, wrapping around to earlier ones.
-  const unsolved = (from: number, to: number) => lesson.exercises.findIndex((e, i) => i >= from && i < to && !ctx.status.get(e.id)?.solved)
-  const after = unsolved(n, lesson.exercises.length)
+  const unsolved = (from: number, to: number) => items.findIndex((e, i) => i >= from && i < to && !ctx.status.get(e.id)?.solved)
+  const after = unsolved(n, items.length)
   const before = after === -1 ? unsolved(0, n - 1) : -1
-  const nextIndex = after !== -1 ? after + 1 : before !== -1 ? before + 1 : n < lesson.exercises.length ? n + 1 : 0
-  const nextLessonId = ctx.course.path[ctx.course.path.indexOf(lesson.id) + 1]
-  const lessonDone = ctx.states[lesson.id] === 'done'
-  const primary = !lessonDone && nextIndex
-    ? html`<a class="btn primary" href="${href.practice(lesson.id, nextIndex)}">${raw(t(lang, 'ex.next'))}</a>`
-    : lessonDone && nextLessonId
-      ? html`<a class="btn primary" href="${href.lesson(nextLessonId)}">${raw(t(lang, 'ex.nextLesson'))}</a>`
-      : nextIndex
-        ? html`<a class="btn primary" href="${href.practice(lesson.id, nextIndex)}">${raw(t(lang, 'ex.next'))}</a>`
-        : html`<a class="btn primary" href="${href.map()}">${raw(t(lang, 'ex.backToMap'))}</a>`
-  const note = lessonCompleted ? html`<div class="done-note">${raw(t(lang, nextLessonId ? 'verdict.lessonDone' : 'verdict.courseDone'))}</div>` : ''
+  const nextIndex = after !== -1 ? after + 1 : before !== -1 ? before + 1 : n < items.length ? n + 1 : 0
+  const setDone = set.lesson ? ctx.states[set.lesson.id] === 'done' : items.every(e => ctx.status.get(e.id)?.solved)
+  const nextEx = html`<a class="btn primary" href="${set.href(nextIndex)}">${raw(t(lang, 'ex.next'))}</a>`
+  const onward = set.next
+    ? html`<a class="btn primary" href="${set.next.href}">${raw(set.next.foot)}</a>`
+    : html`<a class="btn primary" href="${href.map()}">${raw(t(lang, 'ex.backToMap'))}</a>`
+  const primary = !setDone && nextIndex ? nextEx : setDone && set.next ? onward : nextIndex ? nextEx : onward
+  const note = lessonCompleted
+    ? html`<div class="done-note">${raw(t(lang, set.next ? 'verdict.lessonDone' : 'verdict.courseDone'))}</div>`
+    : ''
   return html`${note}<div class="verdict-foot">${primary}</div>`
+}
+
+/** Quiz mode's whole verdict: the answer is in, and the way on. */
+function recordedVerdict(env: Env): Raw {
+  const { ctx, set, n } = env
+  const lang = ctx.lang
+  const last = n >= set.exercises.length
+  return html`<div class="verdict">
+    <div class="verdict-top"><span class="badge rec">${raw(t(lang, 'quiz.recorded'))}</span></div>
+    <div class="verdict-foot">${last
+      ? html`<button type="button" class="btn primary" data-finish>${raw(t(lang, 'quiz.finish'))}</button>`
+      : html`<a class="btn primary" href="${set.href(n + 1)}">${raw(t(lang, 'ex.next'))}</a>`}</div>
+  </div>`
+}
+
+function showRecorded(env: Env, verdictEl: HTMLElement) {
+  mount(verdictEl, recordedVerdict(env))
+  wireFinish(env, verdictEl)
+  verdictEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 }
 
 /* ---------- write / debug / parsons ---------- */
 
 async function renderQuery(env: Env, ex: QueryExercise) {
-  const { root, ctx, lesson } = env
+  const { root, ctx, set } = env
   const lang = ctx.lang
   const work = $('.work', root)
+  const sitting = set.sitting
+  // A sitting's draft is its own: the pre-test answer must not prefill the post-test.
+  const draftId = sitting ? `${ex.id}@${sitting.id}` : ex.id
 
   // Requirements the grader checks, stated next to the task.
   const req: Raw[] = []
@@ -244,10 +388,10 @@ async function renderQuery(env: Env, ex: QueryExercise) {
   else if (ex.check.mode === 'probe') req.push(html`<li>${raw(t(lang, 'ex.req.probe'))}<pre class="probe"><code>${raw(highlightSql(ex.check.probe ?? ''))}</code></pre></li>`)
   else if (ex.check.mode === 'attempts') req.push(html`<li>${raw(t(lang, 'ex.req.attempts'))}<pre class="probe"><code>${raw(highlightSql((ex.check.attempts ?? []).join('\n')))}</code></pre></li>`)
   else req.push(html`<li>${raw(t(lang, ex.check.orderMatters ? 'ex.req.ordered' : 'ex.req.unordered'))}</li>`)
-  req.push(html`<li>${raw(t(lang, 'ex.req.dataset', { name: lesson.dataset }))}</li>`)
+  req.push(html`<li>${raw(t(lang, 'ex.req.dataset', { name: set.dataset }))}</li>`)
   mount($('.req', root), html`${req}`)
   if (ex.check.columnNames && ex.check.mode === 'result') {
-    void ctx.engine.run(lesson.dataset, ex.solution).then(r => {
+    void ctx.engine.run(set.dataset, ex.solution).then(r => {
       const cols = [...r.results].reverse().find(x => x.columns.length)?.columns.map(c => c.name)
       if (!cols || !root.isConnected) return
       $('.req', root).insertAdjacentHTML('afterbegin', `<li>${t(lang, 'ex.req.columns', { cols: cols.join(', ') })}</li>`)
@@ -255,12 +399,15 @@ async function renderQuery(env: Env, ex: QueryExercise) {
   }
 
   const attempts = () => ctx.status.get(ex.id)?.attempts ?? 0
+  const counter = (): Raw => sitting
+    ? raw(sitting.answers.has(ex.id) ? t(lang, 'quiz.answered') : '')
+    : raw(attempts() ? t(lang, 'ex.submitted', { n: attempts() }) : '')
   const bar = (extra: Raw = html``) => html`
     <div class="editor-bar">
       <button type="button" class="btn" data-run>${raw(t(lang, 'ex.run'))}</button>
       <button type="button" class="btn primary" data-submit>${raw(t(lang, 'ex.submit'))}</button>
       ${extra}
-      <span class="sp" data-attempts>${attempts() ? raw(t(lang, 'ex.submitted', { n: attempts() })) : ''}</span>
+      <span class="sp" data-attempts>${counter()}</span>
     </div>`
 
   let getSql: () => string
@@ -277,21 +424,21 @@ async function renderQuery(env: Env, ex: QueryExercise) {
       <div data-verdict aria-live="polite"></div>`)
     getSql = mountParsons(work, ex, lang)
   } else {
-    const starter = readDraft(ex.id) ?? ex.starter
+    const starter = readDraft(draftId) ?? ex.starter
     mount(work, html`
       <div class="editor">
         <div class="editor-host"></div>
-        ${bar(ex.starter || readDraft(ex.id) ? html`<button type="button" class="btn ghost small" data-restore>${raw(t(lang, 'ex.reset'))}</button>` : html``)}
+        ${bar(ex.starter || readDraft(draftId) ? html`<button type="button" class="btn ghost small" data-restore>${raw(t(lang, 'ex.reset'))}</button>` : html``)}
       </div>
       <div class="panel-out" aria-live="polite"></div>
       <div data-verdict aria-live="polite"></div>`)
-    const schema = await schemaFor(ctx, lesson.dataset)
+    const schema = await schemaFor(ctx, set.dataset)
     if (!work.isConnected) return
     editor = createEditor($('.editor-host', work), {
       doc: starter, schema, gutter: true,
       placeholder: 'SELECT …',
       onRun: () => void run(), onSubmit: () => void submit(),
-      onChange: text => writeDraft(ex.id, text),
+      onChange: text => writeDraft(draftId, text),
     })
     getSql = () => editor!.get()
     $$<HTMLButtonElement>('[data-restore]', work).forEach(b => b.addEventListener('click', () => { editor!.set(ex.starter); editor!.markError(undefined) }))
@@ -315,7 +462,7 @@ async function renderQuery(env: Env, ex: QueryExercise) {
     if (needAnswer(sql)) return
     runBtn.disabled = true
     try {
-      const r = await ctx.engine.run(lesson.dataset, sql)
+      const r = await ctx.engine.run(set.dataset, sql)
       editor?.markError(r.error?.position)
       mount(out, html`<div class="out">${runOutput(r, sql, lang)}</div>`)
     } finally { runBtn.disabled = false }
@@ -327,11 +474,21 @@ async function renderQuery(env: Env, ex: QueryExercise) {
     if (needAnswer(sql)) return
     submitBtn.disabled = true
     try {
-      const g = await ctx.engine.grade(lesson.dataset, sql, ex.solution, ex.check, ex.traps.map(tr => tr.sql))
+      if (sitting) {
+        // Graded and kept for the results page; nothing about it shows now.
+        const g = await ctx.engine.grade(set.dataset, sql, ex.solution, ex.check)
+        mount(out, html``)
+        await record(env, sql, g)
+        mount($('[data-attempts]', work), counter())
+        showRecorded(env, verdictEl)
+        return
+      }
+      const g = await ctx.engine.grade(set.dataset, sql, ex.solution, ex.check, ex.traps.map(tr => tr.sql))
       editor?.markError(g.error?.position)
       mount(out, html``)
       const { lessonCompleted, attempts: count } = await record(env, sql, g)
       mount($('[data-attempts]', work), raw(t(lang, 'ex.submitted', { n: count })))
+      const back = revisitLink(ctx, ex) ?? ''
       if (g.correct) {
         mount(verdictEl, html`<div class="verdict">
           <div class="verdict-top"><span class="badge ok">${raw(t(lang, 'verdict.correct'))}</span><span class="sum">${raw(t(lang, 'ex.attempt', { n: count }))}</span></div>
@@ -348,7 +505,7 @@ async function renderQuery(env: Env, ex: QueryExercise) {
           ${failureBody(g, sql, lang, say)}
           <div class="verdict-foot">
             ${rung ? html`<button type="button" class="btn" data-help-verdict>${raw(t(lang, RUNG_LABEL[rung]))}</button>` : ''}
-            <a class="link" href="${href.lesson(lesson.id, ex.lessonRef)}">${raw(t(lang, 'ex.back', { section: sectionHeading(lesson, ex.lessonRef, lang) }))}</a>
+            ${back}
           </div>
         </div>`)
         $$<HTMLButtonElement>('[data-help-verdict]', verdictEl).forEach(b => b.addEventListener('click', () => {
@@ -405,26 +562,35 @@ function mountParsons(work: HTMLElement, ex: QueryExercise, lang: Ctx['lang']): 
 
 /* ---------- predict ---------- */
 
+/** How a predict answer is recorded; `chosenIndex` reads it back. */
+const predictAnswer = (choice: number, ex: PredictExercise) => `choice ${choice}: ${ex.choices[choice]!.en.replace(/<[^>]+>/g, '')}`
+export const chosenIndex = (submitted: string): number | undefined => {
+  const m = /^choice (\d+):/.exec(submitted)
+  return m ? Number(m[1]) : undefined
+}
+
 function renderPredict(env: Env, ex: PredictExercise) {
-  const { root, ctx, lesson } = env
+  const { root, ctx, set } = env
   const lang = ctx.lang
-  // Predict first, then run. Legacy lessons keep Run open: some of their prompts say "run the query below".
-  const locked = lesson.template === 2
-  mount($('.req', root), html`<li>${raw(t(lang, 'ex.req.dataset', { name: lesson.dataset }))}</li>`)
+  const sitting = set.sitting
+  const locked = set.lockRun || Boolean(sitting)
+  // In a sitting, Run stays locked: its result would give the answer away, and nothing is marked until the end.
+  const before = sitting ? chosenIndex(sitting.answers.get(ex.id)?.submitted ?? '') : undefined
+  mount($('.req', root), html`<li>${raw(t(lang, 'ex.req.dataset', { name: set.dataset }))}</li>`)
   const work = $('.work', root)
   mount(work, html`
     <div class="editor">
       <pre class="predict-query"><code>${raw(highlightSql(ex.query))}</code></pre>
       <fieldset class="choices" style="border:0;margin:0">
         <legend class="sr-only">${raw(t(lang, 'ex.predict.choose'))}</legend>
-        ${ex.choices.map((c, i) => html`<label class="choice"><input type="radio" name="choice" value="${i}"><span>${raw(c[lang])}</span></label>`)}
+        ${ex.choices.map((c, i) => html`<label class="choice${i === before ? ' picked' : ''}"><input type="radio" name="choice" value="${i}"${i === before ? raw(' checked') : ''}><span>${raw(c[lang])}</span></label>`)}
       </fieldset>
       <div class="editor-bar">
         ${locked
           ? html`<button type="button" class="btn locked" data-run disabled>${raw(t(lang, 'ex.run'))}</button>`
           : html`<button type="button" class="btn" data-run>${raw(t(lang, 'ex.run'))}</button>`}
         <button type="button" class="btn primary" data-submit>${raw(t(lang, 'ex.submit'))}</button>
-        <span class="sp" data-run-note>${locked ? raw(t(lang, 'answer.runLocked')) : ''}</span>
+        <span class="sp" data-run-note>${sitting ? raw(t(lang, 'quiz.runLocked')) : locked ? raw(t(lang, 'answer.runLocked')) : ''}</span>
       </div>
     </div>
     <div data-verdict aria-live="polite"></div>
@@ -444,7 +610,7 @@ function renderPredict(env: Env, ex: PredictExercise) {
   runBtn.addEventListener('click', async () => {
     runBtn.disabled = true
     try {
-      const r = await ctx.engine.run(lesson.dataset, ex.query)
+      const r = await ctx.engine.run(set.dataset, ex.query)
       mount($('.panel-out', work), html`<div class="out">${runOutput(r, ex.query, lang)}</div>`)
     } finally { runBtn.disabled = false }
   })
@@ -458,20 +624,20 @@ function renderPredict(env: Env, ex: PredictExercise) {
     const choice = Number(picked.value)
     const chosen = ex.choices[choice]!
     const correct = choice === ex.answer
-    const { lessonCompleted } = await record(env, `choice ${choice}: ${chosen.en.replace(/<[^>]+>/g, '')}`, { correct, issues: [] })
+    const { lessonCompleted } = await record(env, predictAnswer(choice, ex), { correct, issues: [] })
+    if (sitting) { showRecorded(env, verdictEl); return }
     labels.forEach((l, i) => {
       l.classList.remove('picked', 'right', 'wrong')
       if (i === ex.answer && correct) l.classList.add('right')
       else if (i === choice && !correct) l.classList.add('wrong')
     })
     // Right or wrong: why this choice, then why the answer is what it is.
+    const back = revisitLink(ctx, ex) ?? ''
     mount(verdictEl, html`<div class="verdict">
       <div class="verdict-top"><span class="badge ${correct ? 'ok' : 'bad'}">${raw(t(lang, correct ? 'verdict.correct' : 'verdict.wrong'))}</span></div>
       ${chosen.why ? html`<div class="choice-why"><p class="cw-label"><span>${raw(t(lang, 'answer.yourChoice'))}</span><span class="cw-choice">${raw(chosen[lang])}</span></p>${raw(chosen.why[lang])}</div>` : ''}
       <div class="explain">${raw(ex.explain[lang])}</div>
-      ${correct ? successFoot(env, lessonCompleted) : html`<div class="verdict-foot">
-        <a class="link" href="${href.lesson(lesson.id, ex.lessonRef)}">${raw(t(lang, 'ex.back', { section: sectionHeading(lesson, ex.lessonRef, lang) }))}</a>
-      </div>`}
+      ${correct ? successFoot(env, lessonCompleted) : html`<div class="verdict-foot">${back}</div>`}
     </div>`)
     unlockRun()
   })

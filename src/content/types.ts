@@ -30,7 +30,20 @@ export interface Module extends Titled {
   lessons: string[]
   /** Lessons announced in the curriculum but not written yet. Shown, but cannot be opened. */
   planned: Titled[]
+  /** The chapter quiz, a pre- and post-test (content/chapters/<id>/quiz/). Empty when there is none. */
+  quiz: Exercise[]
+  /** Chapter challenges: integrative problems (content/chapters/<id>/challenge/). */
+  challenge: Exercise[]
+  /** The dataset both sets run against: chapters/<id>/meta.yaml, default shop. */
+  dataset: string
+  /** Short intros shown above each set (rendered HTML). */
+  intro: { quiz?: Bi; challenge?: Bi }
 }
+
+export type SetKind = 'quiz' | 'challenge'
+
+/** What attempts record as `lesson_id` for a chapter set item; also the prefix of its exercise ids. */
+export const chapterKey = (moduleId: string) => `chapter:${moduleId}`
 
 /** One `## Heading {#id}` block of a lesson, already rendered to HTML. */
 export interface Section {
@@ -42,9 +55,15 @@ export interface Section {
 export type ExerciseKind = 'write' | 'debug' | 'parsons' | 'predict'
 
 interface ExerciseBase {
-  /** `<lesson id>/<file stem>`, e.g. `inner-join/01-match-orders`. */
+  /**
+   * `<lesson id>/<file stem>`, e.g. `inner-join/01-match-orders`; for a chapter
+   * set item `chapter:<module id>/<set>/<file stem>`, e.g. `chapter:m3/quiz/01-…`.
+   */
   id: string
+  /** The lesson it belongs to, or `chapter:<module id>` for a chapter set item. */
   lesson: string
+  /** Set only on chapter set items. */
+  set?: { module: string; kind: SetKind }
   kind: ExerciseKind
   difficulty: 1 | 2 | 3
   /** Rendered HTML in each language. */
@@ -53,9 +72,15 @@ interface ExerciseBase {
   hints: Bi[]
   /** Why the reference answer is right. Required for predict and in template-2 lessons. */
   explain?: Bi
-  /** Id of the lesson objective this exercise practises (template 2). */
+  /**
+   * Id of the lesson objective this exercise practises (template 2). On a
+   * chapter set item, `<lesson id>/<objective id>`.
+   */
   objective?: string
-  /** Section id in the lesson that this exercise practises. */
+  /**
+   * Section id in the lesson that this exercise practises. On a chapter set
+   * item, `<lesson id>/<section id>`, `<lesson id>`, or empty.
+   */
   lessonRef: string
 }
 

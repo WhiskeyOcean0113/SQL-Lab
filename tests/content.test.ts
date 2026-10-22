@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,12 +8,16 @@ import { validate } from '../scripts/validate.ts'
 
 const root = fileURLToPath(new URL('./fixtures/content', import.meta.url))
 
-/** A copy of the fixture course with some files rewritten: `{ 'lessons/x/meta.yaml': text => … }`. */
-function fixtureWith(edits: Record<string, (text: string) => string>): string {
+/**
+ * A copy of the fixture course with some files rewritten: `{ 'lessons/x/meta.yaml': text => … }`.
+ * An edit of `null` deletes the file.
+ */
+function fixtureWith(edits: Record<string, ((text: string) => string) | null>): string {
   const dir = mkdtempSync(join(tmpdir(), 'sql-lab-'))
   cpSync(root, dir, { recursive: true })
   for (const [file, edit] of Object.entries(edits)) {
     const path = join(dir, file)
+    if (edit === null) { rmSync(path); continue }
     const before = readFileSync(path, 'utf8')
     const after = edit(before)
     if (after === before) throw new Error(`edit of ${file} changed nothing`)
@@ -229,6 +233,112 @@ describe('validate: nothing used before it is taught', () => {
     const { problems } = await validate(dir)
     expect(problems).toEqual(['lesson basics: uses WHERE in exercise basics/03-order, exercise basics/04-predict, exercise basics/06-older, but it is introduced later, by filtering'])
   }, 30_000)
+})
+
+describe('chapter sets', () => {
+  const { course, problems } = buildContent(root)
+  const m1 = course.modules[0]!
+  const quizFile = (n: string) => `chapters/m1/quiz/${n}.yaml`
+
+  it('parses the quiz and the challenges onto their module, with ids no lesson can use', () => {
+    expect(problems).toEqual([])
+    expect(m1.dataset).toBe('tiny')
+    expect(m1.quiz.map(e => e.id)).toEqual([
+      'chapter:m1/quiz/01-write-columns', 'chapter:m1/quiz/02-predict-columns', 'chapter:m1/quiz/03-write-sorted',
+      'chapter:m1/quiz/04-parsons-sorted', 'chapter:m1/quiz/05-predict-filter', 'chapter:m1/quiz/06-debug-null',
+    ])
+    expect(m1.challenge.map(e => e.id)).toEqual(['chapter:m1/challenge/01-write-known-ages', 'chapter:m1/challenge/02-write-not-old', 'chapter:m1/challenge/03-predict-first'])
+    expect(m1.quiz[0]).toMatchObject({ lesson: 'chapter:m1', set: { module: 'm1', kind: 'quiz' }, objective: 'basics/pick-columns', hints: [], lessonRef: '' })
+    expect(m1.challenge[1]).toMatchObject({ set: { module: 'm1', kind: 'challenge' }, lessonRef: 'filtering/core', objective: undefined })
+    expect(m1.challenge[0]!.kind !== 'predict' && m1.challenge[0]!.traps).toHaveLength(1)
+    expect(m1.intro.quiz?.en).toBe('<p>Six questions, one or more for each objective of <code>basics</code>.</p>\n')
+    // Lessons and other modules are untouched; a module without a folder has empty sets.
+    expect(course.lessons.basics!.exercises.every(e => e.set === undefined)).toBe(true)
+  })
+
+  it('gives a module without a chapter folder empty sets', () => {
+    const dir = fixtureWith({ 'chapters/m1/meta.yaml': null })
+    const built = buildContent(dir)
+    expect(built.course.modules[0]!.dataset).toBe('shop')
+    expect(built.problems).toContain('chapter m1: unknown dataset "shop"')
+  })
+
+  it('needs hints on challenges but not on quiz items, and flags stray meta keys', () => {
+    const dir = fixtureWith({
+      'chapters/m1/challenge/02-write-not-old.yaml': t => t.replace(/hints:\n.*\n/, ''),
+      'chapters/m1/meta.yaml': t => t.replace('dataset: tiny', 'dataset: tiny\nquizz_intro: oops'),
+    })
+    expect(buildContent(dir).problems).toEqual([
+      'chapter m1: meta.yaml: unknown key "quizz_intro" (allowed: dataset, quiz_intro, challenge_intro)',
+      'exercise chapter:m1/challenge/02-write-not-old: missing hints',
+    ])
+  })
+
+  it('runs the same exercise checks as for lessons', async () => {
+    const dir = fixtureWith({
+      'chapters/m1/quiz/06-debug-null.yaml': t => t.replace('starter: SELECT name FROM pets WHERE age = NULL', 'starter: SELECT name FROM pets WHERE age IS NULL'),
+      'chapters/m1/quiz/05-predict-filter.yaml': t => t.replace('verify: { rows: 1 }', 'verify: { rows: 2 }'),
+      'chapters/m1/challenge/01-write-known-ages.yaml': t => t.replace('- sql: SELECT name FROM pets ORDER BY age DESC', '- sql: SELECT name FROM pets WHERE age IS NOT NULL ORDER BY age DESC, id'),
+    })
+    expect((await validate(dir)).problems).toEqual([
+      'exercise chapter:m1/quiz/05-predict-filter: verify.rows is 2 but the query returns 1 rows',
+      'exercise chapter:m1/quiz/06-debug-null: the broken starter query already passes',
+      'exercise chapter:m1/challenge/01-write-known-ages: trap 1 passes against the solution',
+    ])
+  }, 30_000)
+
+  it('needs an objective and explain on every quiz item, and the objective must exist', async () => {
+    const dir = fixtureWith({
+      [quizFile('01-write-columns')]: t => t.replace('objective: basics/pick-columns\n', '').replace(/explain:\n.*\n.*\n/, ''),
+      [quizFile('02-predict-columns')]: t => t.replace('objective: basics/pick-columns', 'objective: basics/pick-colums'),
+      [quizFile('03-write-sorted')]: t => t.replace('objective: basics/order-rows', 'objective: order-rows'),
+      'chapters/m1/challenge/02-write-not-old.yaml': t => t.replace('lesson_ref: filtering/core', 'lesson_ref: filtering/nope'),
+    })
+    expect((await validate(dir)).problems).toEqual([
+      'exercise chapter:m1/quiz/01-write-columns: quiz items need `objective`: the lesson objective the item measures',
+      'exercise chapter:m1/quiz/01-write-columns: chapter set items need `explain`',
+      'exercise chapter:m1/quiz/02-predict-columns: objective "basics/pick-colums" is not an objective of a lesson in this chapter (write <lesson-id>/<objective-id>)',
+      'exercise chapter:m1/quiz/03-write-sorted: objective "order-rows" is not an objective of a lesson in this chapter (write <lesson-id>/<objective-id>)',
+      'exercise chapter:m1/challenge/02-write-not-old: lesson_ref "filtering/nope": "nope" is not a section of filtering',
+      'chapter m1: the quiz does not measure objective basics/pick-columns',
+    ])
+  }, 30_000)
+
+  it('needs a quiz that measures every objective of the chapter\'s template-2 lessons', async () => {
+    const dir = fixtureWith({
+      [quizFile('05-predict-filter')]: t => t.replace('objective: basics/predict-filter', 'objective: basics/order-rows'),
+      [quizFile('06-debug-null')]: t => t.replace('objective: basics/predict-filter', 'objective: basics/order-rows'),
+    })
+    expect((await validate(dir)).problems).toEqual(['chapter m1: the quiz does not measure objective basics/predict-filter'])
+  }, 30_000)
+
+  it('needs 6–12 quiz items', async () => {
+    const dir = fixtureWith({ [quizFile('03-write-sorted')]: null })
+    expect((await validate(dir)).problems).toEqual(['chapter m1: the quiz has 5 items; it needs 6–12'])
+  }, 30_000)
+
+  it('allows words up to the chapter\'s last lesson and nothing from a later chapter', async () => {
+    // Move `filtering` (IS, NULL, NOT, DESC) into a chapter of its own, after m1.
+    const dir = fixtureWith({
+      'curriculum.yaml': t => t.replace('lessons: [basics, filtering]', 'lessons: [basics]')
+        + '  - id: m2\n    title: { zh: 筛选, en: Filtering }\n    summary: { zh: 第二步。, en: Second steps. }\n    lessons: [filtering]\n',
+    })
+    const { problems } = await validate(dir)
+    const later = (word: string, items: string[]) =>
+      `chapter m1: uses ${word} in ${items.map(i => `exercise chapter:m1/${i}`).join(', ')}, but it is introduced later, by filtering`
+    expect(problems.filter(p => p.startsWith('chapter m1: uses'))).toEqual([
+      later('IS', ['quiz/06-debug-null', 'challenge/01-write-known-ages', 'challenge/03-predict-first']),
+      later('NULL', ['quiz/06-debug-null', 'challenge/01-write-known-ages', 'challenge/03-predict-first']),
+      later('NOT', ['challenge/01-write-known-ages', 'challenge/02-write-not-old', 'challenge/03-predict-first']),
+      later('DESC', ['challenge/01-write-known-ages', 'challenge/03-predict-first']),
+    ])
+    expect(problems).toContain('exercise chapter:m1/challenge/02-write-not-old: lesson_ref "filtering/core" names no lesson of this chapter or an earlier one (write <lesson-id>/<section-id>)')
+  }, 30_000)
+
+  it('rejects a chapter folder that matches no module', () => {
+    const dir = fixtureWith({ 'curriculum.yaml': t => t.replace('id: m1', 'id: m9') })
+    expect(buildContent(dir).problems).toContain('chapter m1: content/chapters/m1/ matches no module in curriculum.yaml')
+  })
 })
 
 describe('sqlWords', () => {

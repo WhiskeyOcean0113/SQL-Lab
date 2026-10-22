@@ -1,0 +1,9 @@
+# The fixture's chapter sets: a six-item quiz that measures every objective of
+# `basics` (the chapter's template-2 lesson) and three challenges.
+dataset: tiny
+quiz_intro:
+  zh: 六道题，覆盖 `basics` 的每个目标。
+  en: Six questions, one or more for each objective of `basics`.
+challenge_intro:
+  zh: 三道题，每道都要同时用到两篇讲解。
+  en: Three problems, each needing both lessons.

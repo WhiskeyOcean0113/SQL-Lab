@@ -1,0 +1,16 @@
+# Rule 16: grouping/02-write-cheap-per-category plus an ORDER BY.
+kind: write
+difficulty: 2
+prompt:
+  zh: 每个分类里有几件价格低于 50 的商品？按分类排序。
+  en: How many items under 50 are there in each category? Sort by category.
+hints:
+  - { zh: 先筛行，再分组。, en: "Filter first, then group." }
+explain: { zh: 和分组练习一样，再加排序。, en: "As in the grouping exercise, plus a sort." }
+solution: |
+  SELECT category, count(*) AS cheap_items
+  FROM items
+  WHERE price < 50
+  GROUP BY category
+  ORDER BY category;
+check: { order_matters: true }

@@ -1,0 +1,45 @@
+kind: parsons
+difficulty: 2
+lesson_ref: syntax
+objective: filter-clause
+prompt:
+  zh: 用下面的片段拼出一条查询：每笔订单一行，依次是 `order_id`、明细条数 `lines`，以及其中购买数量大于 1 的明细条数 `multi`。有两个片段用不上。
+  en: Arrange the pieces into a query with one row per order, giving `order_id`, the number of lines `lines`, and how many of those lines buy more than one unit, `multi`. Two pieces are not needed.
+hints:
+  - zh: "`lines` 要数每笔订单的全部明细，`multi` 只数其中一部分。哪个片段能只影响一列？"
+    en: "`lines` counts all of an order's lines, `multi` only some of them. Which piece can affect one column only?"
+  - zh: 放进 `WHERE` 的条件会作用于所有列；只该影响一个聚合函数的条件，要写在它后面的 `FILTER` 里。
+    en: A condition in `WHERE` applies to every column; a condition meant for one aggregate goes in a `FILTER` after it.
+solution: |
+  SELECT order_id,
+         count(*) AS lines,
+         count(*) FILTER (WHERE quantity > 1) AS multi
+  FROM order_items
+  GROUP BY order_id;
+distractors:
+  - WHERE quantity > 1
+  - count(quantity > 1) AS multi
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT order_id,
+             count(*) AS lines,
+             count(*) FILTER (WHERE quantity > 1) AS multi
+      FROM order_items
+      WHERE quantity > 1
+      GROUP BY order_id;
+    say:
+      zh: 多用了 `WHERE quantity > 1`。它在分组之前就去掉了只买一件的明细，于是 `lines` 也只数到了多件的明细，没有这种明细的订单整个消失了。条件只放在 `FILTER` 里。
+      en: The `WHERE quantity > 1` piece does not belong. It removes the single-unit lines before grouping, so `lines` counts only multi-unit lines too, and orders without one disappear. Keep the condition in the `FILTER` only.
+  - sql: |
+      SELECT order_id,
+             count(*) AS lines,
+             count(quantity > 1) AS multi
+      FROM order_items
+      GROUP BY order_id;
+    say:
+      zh: "`count(quantity > 1)` 数的是比较结果不为 NULL 的行，false 也算，所以 `multi` 总是等于 `lines`。按条件计数要用 `FILTER`。"
+      en: "`count(quantity > 1)` counts every row whose comparison is not NULL, false included, so `multi` always equals `lines`. Counting by a condition takes `FILTER`."
+explain:
+  zh: "`GROUP BY order_id` 让每笔订单一组。`count(*)` 数这一组的全部明细；`count(*) FILTER (WHERE quantity > 1)` 只让购买多件的明细进入这一个计数，`lines` 不受影响。两个多余的片段各对应一种常见错误：`WHERE quantity > 1` 会同时缩小两列，还会删掉整组；`count(quantity > 1)` 会把 false 也数进去。"
+  en: "`GROUP BY order_id` makes one group per order. `count(*)` counts all the lines in the group; `count(*) FILTER (WHERE quantity > 1)` lets only the multi-unit lines into that one count, leaving `lines` alone. Each spare piece is a common mistake: `WHERE quantity > 1` would shrink both columns and drop whole groups, and `count(quantity > 1)` would count false as well."

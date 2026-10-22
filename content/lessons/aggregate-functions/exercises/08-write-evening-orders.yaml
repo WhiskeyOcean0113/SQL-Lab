@@ -1,0 +1,56 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+objective: filter-then-aggregate
+prompt:
+  zh: |
+    傍晚以后（18:00 及以后）下的订单有几笔，来自几位不同的顾客？其中有没有还在等待处理、`status` 为 `'pending'` 的订单？不管是哪一天，只看下单时间是几点。
+
+    列名依次为 `evening_orders`、`customers` 和 `any_pending`。
+  en: |
+    How many orders were placed in the evening, at 18:00 or later, and by how many different customers? Is any of them still waiting, with `status` `'pending'`? The day does not matter, only the time of day the order was placed.
+
+    Name the columns `evening_orders`, `customers` and `any_pending`, in that order.
+hints:
+  - zh: 钟点藏在下单时间这个时间戳里。第 2 章的哪个函数能从时间戳里取出一部分？
+    en: The hour is hidden inside the timestamp of when the order was placed. Which function from chapter 2 takes one part out of a timestamp?
+  - zh: "“几位顾客”不能把同一位顾客数两次。“18:00 及以后”也包括 18 点这一整个小时。“有没有”只要一行满足就成立。"
+    en: "\"How many customers\" must not count anyone twice. \"18:00 or later\" includes the whole hour from 18:00. \"Is any\" holds as soon as one row does."
+solution: |
+  SELECT count(*) AS evening_orders,
+         count(DISTINCT customer_id) AS customers,
+         bool_or(status = 'pending') AS any_pending
+  FROM orders
+  WHERE extract(hour FROM ordered_at) >= 18;
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT count(*) AS evening_orders,
+             count(customer_id) AS customers,
+             bool_or(status = 'pending') AS any_pending
+      FROM orders
+      WHERE extract(hour FROM ordered_at) >= 18;
+    say:
+      zh: "`count(customer_id)` 每笔订单数一次，傍晚下过两单的顾客被数了两次。要数不同的顾客。"
+      en: "`count(customer_id)` counts once per order, so a customer with two evening orders is counted twice. Count the different customers."
+  - sql: |
+      SELECT count(*) AS evening_orders,
+             count(DISTINCT customer_id) AS customers,
+             bool_or(status = 'pending') AS any_pending
+      FROM orders
+      WHERE extract(hour FROM ordered_at) > 18;
+    say:
+      zh: 18:40 下的订单，钟点是 18，`> 18` 把它漏掉了。“18:00 及以后”要用 `>=`。
+      en: "An order placed at 18:40 has hour 18, and `> 18` leaves it out. \"18:00 or later\" needs `>=`."
+  - sql: |
+      SELECT count(*) AS evening_orders,
+             count(DISTINCT customer_id) AS customers,
+             bool_and(status = 'pending') AS any_pending
+      FROM orders
+      WHERE extract(hour FROM ordered_at) >= 18;
+    say:
+      zh: "`bool_and` 问的是“是不是每一笔都在等待”。“有没有”只要一笔满足就成立。"
+      en: "`bool_and` asks whether every order is waiting. \"Is any\" is true as soon as one order is."
+explain:
+  zh: "`extract(hour FROM ordered_at)` 取出每笔订单下单时的钟点，`WHERE` 留下钟点不小于 18 的 6 笔订单。`count(*)` 数这 6 行；`count(DISTINCT customer_id)` 去掉重复的顾客，得 4：Ava Thompson 和 Lin Wei 各在傍晚下过两单；订单 22 还是 pending，所以 `bool_or(status = 'pending')` 是 true。写成 `> 18` 会漏掉 18:40 下的订单 2，因为它的钟点正好是 18。"
+  en: "`extract(hour FROM ordered_at)` takes the hour each order was placed, and `WHERE` keeps the 6 orders from hour 18 on. `count(*)` counts those rows; `count(DISTINCT customer_id)` drops repeated customers and gives 4, since Ava Thompson and Lin Wei each placed two evening orders; order 22 is still pending, so `bool_or(status = 'pending')` is true. Writing `> 18` would miss order 2, placed at 18:40, whose hour is exactly 18."

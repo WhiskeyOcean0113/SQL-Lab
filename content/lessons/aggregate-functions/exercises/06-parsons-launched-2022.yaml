@@ -1,0 +1,33 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+objective: filter-then-aggregate
+prompt:
+  zh: 用下面的片段拼出一条查询：2022 年上市的商品有几件，它们的库存一共多少件？列名依次为 `products` 和 `units`。有两个片段是多余的。
+  en: "Arrange the pieces into a query: how many products were launched in 2022, and how many units of them are in stock altogether? Name the columns `products` and `units`, in that order. Two pieces are not needed."
+hints:
+  - zh: "“库存一共多少件”是在数商品，还是在把每件商品的库存加起来？"
+    en: "Does \"how many units in stock altogether\" count products, or add up each product's stock?"
+  - zh: 只看单行就能判断的条件放在 `WHERE` 里；聚合函数不能进 `WHERE`。
+    en: A condition that one row can decide goes in `WHERE`; aggregates cannot go there.
+solution: |
+  SELECT count(*) AS products, sum(stock) AS units
+  FROM products
+  WHERE launched_on >= '2022-01-01'
+    AND launched_on < '2023-01-01';
+distractors:
+  - SELECT count(*) AS products, count(stock) AS units
+  - WHERE sum(stock) > 0
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT count(*) AS products, count(stock) AS units
+      FROM products
+      WHERE launched_on >= '2022-01-01'
+        AND launched_on < '2023-01-01';
+    say:
+      zh: "`count(stock)` 只是又数了一遍有几件商品。库存件数要把每件商品的 `stock` 加起来。"
+      en: "`count(stock)` just counts the products a second time. The units in stock are each product's `stock` added up."
+explain:
+  zh: "`WHERE` 用半开区间留下 2022 年上市的 7 件商品；`count(*)` 数这些行，`sum(stock)` 把它们的库存加起来，得 1359，其中 999 件是 Gift Card。`count(stock)` 只会再数一遍商品；`WHERE sum(stock) > 0` 把聚合放进了 `WHERE`，会报错。"
+  en: "`WHERE` keeps the 7 products launched in 2022 with a half-open range; `count(*)` counts those rows and `sum(stock)` adds up their stock to 1359, of which 999 are Gift Cards. `count(stock)` would only count the products again, and `WHERE sum(stock) > 0` puts an aggregate in `WHERE`, which is an error."

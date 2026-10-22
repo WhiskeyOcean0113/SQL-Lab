@@ -1,0 +1,76 @@
+kind: write
+difficulty: 3
+lesson_ref: aggregate-functions/variants
+prompt:
+  zh: |
+    老板担心有些订单几乎全靠一件贵东西撑着。只看至少有两行明细的订单，每笔订单返回一行，列依次为：
+
+    - `order_id`
+    - `value`：订单的价值，即各行数量乘以单价再相加
+    - `top_share`：价值最高的那一行占订单价值的百分比，保留一位小数
+
+    只列出 `top_share` 最高的五笔订单，从高到低。
+  en: |
+    The owner worries that some orders hang on a single expensive item. Looking only at orders with at least two lines, return one row per order with these columns in order:
+
+    - `order_id`
+    - `value`: what the order is worth, each line's quantity times unit price, added up
+    - `top_share`: the percentage of that value that comes from the order's most valuable line, rounded to one decimal place
+
+    List only the five orders with the highest `top_share`, highest first.
+hints:
+  - zh: 一行明细的价值是一个{{term:expression}}。订单价值和“最有价值的一行”分别是这个表达式的哪种聚合？“至少两行”说的是一行，还是一整笔订单？
+    en: "A line's value is an {{term:expression}}. Which aggregate of it is the order's value, and which the most valuable line? Is \"at least two lines\" about one line or a whole order?"
+  - zh: 两个聚合结果可以直接相除再乘以 100。“至少两行”是数行，不是数件数；最后排序，再只取前五行。
+    en: "You can divide one aggregate by the other and multiply by 100. \"At least two lines\" counts lines, not units; then sort and keep only the first five rows."
+explain:
+  zh: "`GROUP BY order_id` 让每笔订单一行。`sum(quantity * unit_price)` 是订单价值，`max(quantity * unit_price)` 是最有价值的一行，`round(100 * max(…) / sum(…), 1)` 用两个聚合结果算出百分比。`HAVING count(*) >= 2` 数的是明细行数，它不必出现在 SELECT 里；写成 `sum(quantity) >= 2`，买了 2 件同一商品的单行订单也会混进来，占比都是 100%。最后 `ORDER BY top_share DESC` 和 `LIMIT 5` 取前五：订单 11、6、17、19、4。"
+  en: "`GROUP BY order_id` gives one row per order. `sum(quantity * unit_price)` is the order's value, `max(quantity * unit_price)` its most valuable line, and `round(100 * max(…) / sum(…), 1)` turns the two aggregates into a percentage. `HAVING count(*) >= 2` counts lines and need not appear in SELECT; with `sum(quantity) >= 2`, single-line orders that buy 2 of one product slip in, each at 100%. Finally `ORDER BY top_share DESC` and `LIMIT 5` keep the top five: orders 11, 6, 17, 19 and 4."
+solution: |
+  SELECT order_id,
+         sum(quantity * unit_price) AS value,
+         round(100 * max(quantity * unit_price) / sum(quantity * unit_price), 1) AS top_share
+  FROM order_items
+  GROUP BY order_id
+  HAVING count(*) >= 2
+  ORDER BY top_share DESC
+  LIMIT 5;
+traps:
+  - sql: |
+      SELECT order_id,
+             sum(quantity * unit_price) AS value,
+             round(100 * max(quantity * unit_price) / sum(quantity * unit_price), 1) AS top_share
+      FROM order_items
+      GROUP BY order_id
+      HAVING sum(quantity) >= 2
+      ORDER BY top_share DESC
+      LIMIT 5;
+    say:
+      zh: 前几笔的占比都是 100%，它们只有一行明细，只是那一行买了好几件。`sum(quantity)` 把件数加起来；“至少两行”要数的是行。
+      en: "The first few orders are at 100%: each has a single line that buys several units. `sum(quantity)` adds up units; \"at least two lines\" counts rows."
+  - sql: |
+      SELECT order_id,
+             sum(quantity * unit_price) AS value,
+             round(100 * max(quantity * unit_price) / sum(quantity * unit_price), 1) AS top_share
+      FROM order_items
+      GROUP BY order_id
+      ORDER BY top_share DESC
+      LIMIT 5;
+    say:
+      zh: 五笔都是 100%：只有一行明细的订单，那一行当然占了全部。分组之后，还要去掉不到两行的订单。
+      en: "All five are at 100%: in an order with one line, that line is the whole value. After grouping, drop the orders with fewer than two lines."
+  - sql: |
+      SELECT order_id,
+             sum(quantity * unit_price) AS value,
+             round(100 * max(quantity * unit_price) / sum(quantity * unit_price), 1) AS top_share
+      FROM order_items
+      GROUP BY order_id
+      HAVING count(*) >= 2
+      ORDER BY top_share
+      LIMIT 5;
+    say:
+      zh: 这是占比最低的五笔。不写方向时 `ORDER BY` 从小到大排，要最高的在前得写 `DESC`。
+      en: "These are the five lowest. Without a direction `ORDER BY` sorts from smallest up; for the highest first, write `DESC`."
+check:
+  order_matters: true
+  column_names: true

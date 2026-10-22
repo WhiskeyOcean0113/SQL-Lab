@@ -1,0 +1,44 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+objective: where-changes-having
+prompt:
+  zh: 每位下过单的顾客都至少有 2 笔订单。先预测这条查询的结果，再运行。
+  en: Every customer who has ordered has at least 2 orders. Predict this query's result, then run it.
+hints:
+  - zh: 按逻辑执行顺序走一遍：`HAVING` 数的时候，哪些订单已经不在了？
+    en: "Walk through the logical order: when `HAVING` counts, which orders are already gone?"
+  - zh: 只看 4 月 1 日之前的订单，再按顾客数一数。
+    en: Look only at the orders placed before 1 April, and count them per customer.
+query: |
+  SELECT customer_id, count(*) AS orders
+  FROM orders
+  WHERE ordered_at < '2024-04-01'
+  GROUP BY customer_id
+  HAVING count(*) >= 2
+  ORDER BY customer_id;
+choices:
+  - zh: 顾客 1 和 2，各 2 笔
+    en: Customers 1 and 2, with 2 orders each
+    why:
+      zh: "`WHERE` 先留下 4 月之前的 10 笔订单，只有顾客 1 和 2 在这段时间里各下了 2 笔，其他顾客只剩 1 笔。"
+      en: "`WHERE` first keeps the 10 orders placed before April. Only customers 1 and 2 placed 2 orders in that time; everyone else is down to 1."
+  - zh: 顾客 1 和 2，分别是 4 笔和 3 笔
+    en: Customers 1 and 2, with 4 and 3 orders
+    why:
+      zh: 这是以为 `WHERE` 只决定哪些顾客留下、`count(*)` 仍数全部订单。被 `WHERE` 去掉的行不进入分组，也就不会被数到。
+      en: This assumes `WHERE` only picks which customers stay while `count(*)` still counts every order. Rows `WHERE` removes never enter a group, so they are never counted.
+  - zh: 全部 10 位顾客
+    en: All 10 customers
+    why:
+      zh: 这是以为 `HAVING` 先于 `WHERE`，看的是全部订单。顺序正好相反：`HAVING` 只看得到 `WHERE` 留下的行。
+      en: "This assumes `HAVING` runs before `WHERE` and sees every order. It is the other way round: `HAVING` sees only the rows `WHERE` kept."
+  - zh: 报错：ordered_at 不是分组列
+    en: "An error: ordered_at is not a grouping column"
+    why:
+      zh: "`WHERE` 在分组之前执行，那时还没有分组，表里的任何列都能用。分组列的限制只针对 `SELECT` 和 `HAVING`。"
+      en: "`WHERE` runs before grouping, when there are no groups yet, so any column of the table may be used. The grouping-column rule applies to `SELECT` and `HAVING`."
+answer: 0
+explain:
+  zh: "`WHERE` 先一行一行地留下 4 月 1 日之前的 10 笔订单；`GROUP BY` 把它们按顾客分组，顾客 1 和 2 各有 2 笔，其余 6 位顾客各 1 笔；`HAVING` 最后去掉不到 2 笔的组。最常见的误判是以为 `count(*)` 仍会数到全部订单，可 `HAVING` 能数的只有 `WHERE` 留下的行。"
+  en: "`WHERE` first keeps, row by row, the 10 orders placed before 1 April; `GROUP BY` groups them by customer, giving customers 1 and 2 two orders each and six other customers one each; `HAVING` then removes the groups with fewer than 2. The usual misjudgement is that `count(*)` still sees every order, but `HAVING` can only count the rows `WHERE` kept."

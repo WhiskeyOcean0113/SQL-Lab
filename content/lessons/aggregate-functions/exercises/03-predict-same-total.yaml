@@ -1,0 +1,37 @@
+kind: predict
+difficulty: 2
+lesson_ref: variants
+objective: aggregate-expressions
+prompt:
+  zh: 这条查询算出订单 13 的总金额。把 `SELECT` 后面的表达式换成哪一个，对任何订单都得到同样的结果？先预测；作答之后，可以把选项换进查询里运行，对比结果。
+  en: This query works out the total value of order 13. Which expression, put in place of the one after `SELECT`, gives the same result for any order? Predict first; once you have answered, you can swap the choices into the query and compare.
+hints:
+  - zh: 不用看数据。想想每个函数各自交出什么：总和、平均值、行数。哪种组合能变回“每行金额之和”？
+    en: "You do not need the data. Think about what each function hands back: a total, an average, a row count. Which combination turns back into the sum of each line's value?"
+  - zh: 平均值就是总和除以行数。
+    en: An average is a total divided by the number of rows.
+query: |
+  SELECT sum(quantity * unit_price) AS total
+  FROM order_items
+  WHERE order_id = 13;
+choices:
+  - text: "`sum(quantity) * sum(unit_price)`"
+    why:
+      zh: 先汇总再相乘，等于让每一件商品都按所有单价之和来算。订单 13 买了 7 件，两种单价合计 37.50，得 262.50，而真实金额是 103.50。
+      en: Summarising first and multiplying after prices every item at all the prices put together. Order 13 has 7 items and two prices totalling 37.50, giving 262.50 instead of 103.50.
+  - text: "`avg(quantity * unit_price) * count(*)`"
+    why:
+      zh: 对。`avg` 是每行金额之和除以行数，再乘回行数，就是每行金额之和。订单 13 是 51.75 × 2 = 103.50。
+      en: Right. `avg` is the sum of the line values divided by the number of rows, so multiplying by the number of rows gives the sum back. For order 13, 51.75 × 2 = 103.50.
+  - text: "`sum(quantity) * avg(unit_price)`"
+    why:
+      zh: 平均单价没有按件数加权：订单 13 里便宜的那种买了 5 件，贵的只买了 2 件，可两种单价在平均值里分量相同。结果是 7 × 18.75 = 131.25。只有每行件数都相同时才会碰巧相等。
+      en: "The average price is not weighted by quantity: order 13 bought 5 of the cheap item and 2 of the dear one, yet both prices count equally in the average. That gives 7 × 18.75 = 131.25, and it matches only when every line has the same quantity."
+  - text: "`count(quantity * unit_price)`"
+    why:
+      zh: "`count` 只数有几个值，不把它们加起来。订单 13 有 2 行明细，所以是 2。"
+      en: "`count` counts how many values there are; it does not add them. Order 13 has 2 lines, so this gives 2."
+answer: 1
+explain:
+  zh: "原查询先逐行算出 `quantity * unit_price`，再用 `sum` 加起来。`avg` 对同一批值求平均，等于这个总和除以行数 `count(*)`；再乘以 `count(*)`，就回到了总和，所以对任何订单都相等。另外两种乘法写法先把数量和单价各自汇总，丢掉了“哪个数量配哪个单价”，结果只在特殊数据上碰巧相同。"
+  en: "The original works out `quantity * unit_price` for each line and then adds them with `sum`. `avg` over the same values is that sum divided by the row count, `count(*)`, so multiplying by `count(*)` restores the sum for every order. The two other multiplications summarise quantity and price separately, which loses which quantity went with which price, and they agree only on special data."

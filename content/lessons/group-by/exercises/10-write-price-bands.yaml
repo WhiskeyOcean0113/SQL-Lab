@@ -1,0 +1,66 @@
+kind: write
+difficulty: 3
+lesson_ref: variants
+objective: group-expression
+prompt:
+  zh: |
+    采购想按价格档看看现在有库存（`stock` 大于 0）的商品。价格低于 30 美元的属于 `'budget'`，30 到 100 美元以下的属于 `'mid-range'`，100 美元及以上的属于 `'premium'`。每个价格档一行，列依次为 `band`、该档的商品数 `products`、该档的最低价 `cheapest` 和库存总数 `units`，按 `cheapest` 从低到高排列。
+  en: |
+    Purchasing wants an overview of the products currently in stock (`stock` greater than 0) by price band. Products under 30 dollars are `'budget'`, from 30 up to but not including 100 dollars `'mid-range'`, and 100 dollars or more `'premium'`. One row per band, with the columns `band`, the number of products in it `products`, its lowest price `cheapest` and its total stock `units`, sorted by `cheapest` from lowest to highest.
+hints:
+  - zh: 价格档不是现成的列。你在第 2 章学过的哪种表达式能把价格变成三种文字？分组时用的必须是它，而不是价格本身。
+    en: The band is not a stored column. Which kind of expression from chapter 2 turns a price into one of three labels? That expression, not the price, is what you group by.
+  - zh: 先用 `WHERE` 去掉缺货的商品；`GROUP BY` 里写的表达式要和 `SELECT` 里算 `band` 的那个一模一样。
+    en: Remove the out-of-stock products with `WHERE` first. The expression in `GROUP BY` must be exactly the one that computes `band` in `SELECT`.
+solution: |
+  SELECT CASE WHEN price < 30 THEN 'budget'
+              WHEN price < 100 THEN 'mid-range'
+              ELSE 'premium'
+         END AS band,
+         count(*) AS products,
+         min(price) AS cheapest,
+         sum(stock) AS units
+  FROM products
+  WHERE stock > 0
+  GROUP BY CASE WHEN price < 30 THEN 'budget'
+                WHEN price < 100 THEN 'mid-range'
+                ELSE 'premium'
+           END
+  ORDER BY cheapest;
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT CASE WHEN price < 30 THEN 'budget'
+                  WHEN price < 100 THEN 'mid-range'
+                  ELSE 'premium'
+             END AS band,
+             count(*) AS products,
+             min(price) AS cheapest,
+             sum(stock) AS units
+      FROM products
+      WHERE stock > 0
+      GROUP BY price
+      ORDER BY cheapest;
+    say:
+      zh: 这里按 `price` 分组，每个价格一组，所以同一个价格档出现了很多次。`SELECT` 里的 `CASE` 由分组列算出来，不会报错，但要每档一行，`GROUP BY` 里就得写同一个 `CASE` 表达式。
+      en: This groups by `price`, one group per price, so each band appears many times. The `CASE` in `SELECT` is computed from the grouping column, so there is no error, but for one row per band `GROUP BY` must use the same `CASE` expression.
+  - sql: |
+      SELECT CASE WHEN price < 30 THEN 'budget'
+                  WHEN price < 100 THEN 'mid-range'
+                  ELSE 'premium'
+             END AS band,
+             count(*) AS products,
+             min(price) AS cheapest,
+             sum(stock) AS units
+      FROM products
+      GROUP BY CASE WHEN price < 30 THEN 'budget'
+                    WHEN price < 100 THEN 'mid-range'
+                    ELSE 'premium'
+               END
+      ORDER BY cheapest;
+    say:
+      zh: 分组对了，但缺货的 4K Monitor 也被算进了 premium。题目只看有库存的商品，要在分组之前把它筛掉。
+      en: The grouping is right, but the sold-out 4K Monitor is counted in premium. The task covers only products in stock, so filter it out before grouping.
+explain:
+  zh: "`WHERE stock > 0` 先去掉缺货的 4K Monitor，剩下的行才分组。`CASE` 把每个价格变成一档，`GROUP BY` 写同一个 `CASE`，所以每档一组，`band` 在组内只有一个值。`count(*)`、`min(price)` 和 `sum(stock)` 在每档里分别计算，`ORDER BY cheapest` 让 budget 在前、premium 在后。看似可以的写法是 `GROUP BY price`：不报错，但每个价格一行，粒度错了。"
+  en: "`WHERE stock > 0` first removes the sold-out 4K Monitor, and only the remaining rows are grouped. `CASE` turns each price into a band, and `GROUP BY` uses the same `CASE`, so there is one group per band and `band` has one value per group. `count(*)`, `min(price)` and `sum(stock)` are computed within each band, and `ORDER BY cheapest` puts budget first and premium last. `GROUP BY price` looks plausible and raises no error, but gives one row per price: the wrong grain."

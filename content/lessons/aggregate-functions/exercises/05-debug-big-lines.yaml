@@ -1,0 +1,38 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+objective: filter-then-aggregate
+prompt:
+  zh: 一行明细的金额是数量乘单价。下面这条查询想回答：金额超过 100 美元的明细有几行，加起来值多少？列依次为 `lines` 和 `value`。它报错了。修好它。
+  en: "A line's value is its quantity times its unit price. This query should answer: how many lines are worth more than 100 dollars, and what are they worth together? The columns are `lines` and `value`, in that order. It fails. Fix it."
+hints:
+  - zh: 读报错，再想：`WHERE` 判断一行时，手里有哪些值？
+    en: "Read the error, then ask: when `WHERE` tests a row, which values does it have to work with?"
+  - zh: "`WHERE` 逐行判断，条件里只能用这一行自己的值。“这一行的金额”用不着任何函数。"
+    en: "`WHERE` tests one row at a time, so its condition can use only that row's own values. A line's value needs no function at all."
+starter: |
+  SELECT count(*) AS lines, sum(quantity * unit_price) AS value
+  FROM order_items
+  WHERE sum(quantity * unit_price) > 100;
+solution: |
+  SELECT count(*) AS lines, sum(quantity * unit_price) AS value
+  FROM order_items
+  WHERE quantity * unit_price > 100;
+traps:
+  - sql: |
+      SELECT count(*) AS lines, sum(quantity * unit_price) AS value
+      FROM order_items
+      WHERE quantity * unit_price >= 100;
+    say:
+      zh: "`>=` 把正好值 100 美元的那一行也留下了。题目要的是超过 100。"
+      en: "`>=` also keeps the line worth exactly 100 dollars. The task asks for more than 100."
+  - sql: |
+      SELECT count(*) AS lines, sum(quantity * unit_price) AS value
+      FROM order_items
+      WHERE unit_price > 100;
+    say:
+      zh: 条件只看了单价，没看数量：单价不到 100 美元、但买了好几件的明细也可能超过 100 美元。条件要比较的是整行的金额。
+      en: "The condition looks at the price and ignores the quantity, yet a line priced under 100 dollars can still be worth more than 100 if it buys several. Compare the whole line's value."
+explain:
+  zh: "`WHERE quantity * unit_price > 100` 逐行判断每行明细的金额，留下 8 行；`count(*)` 数这 8 行，`sum` 把它们的金额加起来，得 1628.00。原查询把聚合放进了 `WHERE`：判断每一行的时候，总和还不存在。常见的半对改法是 `WHERE unit_price > 100`：它漏掉了买 3 件、每件 35 美元的那行 USB-C Hub。"
+  en: "`WHERE quantity * unit_price > 100` tests each line's value and keeps 8 lines; `count(*)` counts them and `sum` adds their values to 1628.00. The original put an aggregate in `WHERE`, where no total exists yet while each row is being tested. A common half-right fix is `WHERE unit_price > 100`, which misses the line of 3 USB-C Hubs at 35 dollars each."

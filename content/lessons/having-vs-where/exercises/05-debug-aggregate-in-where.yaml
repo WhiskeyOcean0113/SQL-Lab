@@ -1,0 +1,34 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+objective: where-or-having
+prompt:
+  zh: 下面这条查询想找出下过至少 3 笔订单的顾客，列依次为顾客编号和订单数。它报错了，修好它。
+  en: This query should find the customers who have placed at least 3 orders, with the customer id and the number of orders as its columns. It fails. Fix it.
+hints:
+  - zh: 读一读报错：哪个子句里不允许出现聚合函数？“至少 3 笔”说的是一行，还是一整组？
+    en: "Read the error: which clause may not contain an aggregate? Is \"at least 3 orders\" about one row or a whole group?"
+  - zh: 对组的条件只能在分组之后判断，它的子句写在 `GROUP BY` 后面。
+    en: "A condition on a group can only be judged after grouping; its clause comes after `GROUP BY`."
+starter: |
+  SELECT customer_id, count(*) AS orders
+  FROM orders
+  WHERE count(*) >= 3
+  GROUP BY customer_id;
+solution: |
+  SELECT customer_id, count(*) AS orders
+  FROM orders
+  GROUP BY customer_id
+  HAVING count(*) >= 3;
+traps:
+  - sql: |
+      SELECT customer_id, count(*) AS orders
+      FROM orders
+      GROUP BY customer_id
+      HAVING count(*) > 3;
+    say:
+      zh: 条件放对了位置，但 `>` 把正好 3 笔的顾客也去掉了。“至少 3 笔”包括 3 笔。
+      en: "The condition is in the right clause, but `>` also drops the customers with exactly 3 orders. \"At least 3\" includes 3."
+explain:
+  zh: "`WHERE` 在分组之前执行，那时还没有组，`count(*)` 无从算起，所以 PostgreSQL 报 42803。把条件挪到 `GROUP BY customer_id` 之后的 `HAVING count(*) >= 3`：先分组、数出每位顾客的订单，再去掉不到 3 笔的组，留下顾客 1、2、3。另一种看似合理的改法是把 `>=` 写成 `>`，查询能跑，却漏掉了正好 3 笔的顾客 2 和 3。"
+  en: "`WHERE` runs before grouping, when no groups exist and `count(*)` cannot be computed, so PostgreSQL stops with error 42803. Move the condition to `HAVING count(*) >= 3` after `GROUP BY customer_id`: group first, count each customer's orders, then drop the groups with fewer than 3, leaving customers 1, 2 and 3. A plausible slip is writing `>` instead of `>=`; the query runs but misses customers 2 and 3, who have exactly 3."

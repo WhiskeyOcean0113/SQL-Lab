@@ -1,0 +1,38 @@
+kind: write
+difficulty: 1
+lesson_ref: core
+objective: form-groups
+prompt:
+  zh: 每个国家各有几位顾客？每个国家一行，列依次为 `country` 和 `customers`。顾客多的国家排在前面，人数相同时按国家名的字母顺序排列。
+  en: How many customers does each country have? One row per country, with the columns `country` and `customers`. Countries with more customers come first; on a tie, sort by country name alphabetically.
+hints:
+  - zh: 结果要“每个什么一行”？这就是分组列。
+    en: One row per what? That is your grouping column.
+  - zh: 排序有两个依据：先按人数从多到少，再按国家名。人数指的是聚合出来的那一列。
+    en: The sort has two keys, the number of customers from most to fewest, then the country name. The number is the aggregated column.
+solution: |
+  SELECT country, count(*) AS customers
+  FROM customers
+  GROUP BY country
+  ORDER BY customers DESC, country;
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT country, count(*) AS customers
+      FROM customers
+      GROUP BY country
+      ORDER BY customers, country;
+    say:
+      zh: 分组和计数都对了，但排序是从少到多。题目要顾客多的国家在前，人数那一项要降序。
+      en: The grouping and the counts are right, but the sort runs from fewest to most. The task wants the biggest countries first, so the count has to sort descending.
+  - sql: |
+      SELECT country, count(*) AS customers
+      FROM customers
+      GROUP BY country
+      ORDER BY country;
+    say:
+      zh: 现在只按国家名排序了。题目的第一排序依据是顾客人数，国家名只在人数相同时才起作用。
+      en: This sorts by country name only. The first sort key is the number of customers; the name only breaks ties.
+explain:
+  zh: "`GROUP BY country` 让每个国家一组，`count(*)` 数出每组的顾客数，`country` 作为分组列可以直接选。`ORDER BY customers DESC, country` 先按聚合结果从多到少排，China 的 3 位排第一；人数相同的再按国家名排。分组本身不排序，少了 `ORDER BY` 或把 `DESC` 漏掉，顺序都不对。"
+  en: "`GROUP BY country` makes one group per country, `count(*)` counts each group's customers, and `country`, as the grouping column, can be selected. `ORDER BY customers DESC, country` sorts by the aggregate, most first, so China's 3 lead, and breaks ties by name. Grouping itself does not sort, so leaving out the `ORDER BY` or its `DESC` gives the wrong order."

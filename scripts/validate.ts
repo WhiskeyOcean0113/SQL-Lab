@@ -18,7 +18,10 @@ const REQUIRED = new Set(['why', 'core', 'example', 'mistakes', 'summary'])
 const NOTATION_LESSON = 'sql-syntax'
 const MIN_EXERCISES = 4
 const MIN_KINDS = 3
-/** A chapter quiz: long enough to measure every objective, short enough for one sitting. */
+/**
+ * A chapter quiz: long enough to measure every objective, short enough for one
+ * sitting. A chapter with more objectives than MAX_QUIZ may have one item each.
+ */
 const MIN_QUIZ = 6
 const MAX_QUIZ = 12
 
@@ -196,7 +199,9 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
     }
     if (mod.quiz.length) {
       const n = mod.quiz.length
-      if (n < MIN_QUIZ || n > MAX_QUIZ) problems.push(where(`the quiz has ${n} items; it needs ${MIN_QUIZ}–${MAX_QUIZ}`))
+      const objectives = mod.lessons.reduce((sum, l) => sum + (course.lessons[l]?.template === 2 ? course.lessons[l]!.objectives.length : 0), 0)
+      const max = Math.max(MAX_QUIZ, objectives)
+      if (n < MIN_QUIZ || n > max) problems.push(where(`the quiz has ${n} items; it needs ${MIN_QUIZ}–${max}`))
       for (const l of mod.lessons) {
         const lesson = course.lessons[l]
         if (lesson?.template !== 2) continue

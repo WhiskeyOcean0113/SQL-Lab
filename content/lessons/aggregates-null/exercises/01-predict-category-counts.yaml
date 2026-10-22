@@ -1,0 +1,36 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+objective: null-inputs
+prompt:
+  zh: shop 卖 16 件商品，只有 Gift Card 没有分类（`category_id` 是 NULL）。先想好下面这条查询返回哪三个数，再运行验证。
+  en: shop sells 16 products, and only Gift Card has no category (its `category_id` is NULL). Decide which three numbers this query returns, then run it to check.
+hints:
+  - zh: 逐个问这三个 `count`：它看的是行，还是某一列的值？
+    en: "Ask each of the three `count`s: does it look at rows, or at the values of a column?"
+  - zh: "`count(*)` 数行；`count(x)` 和 `count(DISTINCT x)` 先扔掉 NULL，再数剩下的值。"
+    en: "`count(*)` counts rows; `count(x)` and `count(DISTINCT x)` drop NULL first and count what is left."
+query: |
+  SELECT count(*), count(category_id), count(DISTINCT category_id)
+  FROM products;
+choices:
+  - text: '16, 16, 6'
+    why:
+      zh: 这是把 NULL 当成普通值来数了。`count(category_id)` 和 `count(DISTINCT category_id)` 都会先扔掉 Gift Card 的 NULL。
+      en: This counts NULL as an ordinary value. Both `count(category_id)` and `count(DISTINCT category_id)` drop Gift Card's NULL first.
+  - text: '16, 15, 5'
+    why:
+      zh: 对。`count(*)` 数 16 行；`count(category_id)` 扔掉一个 NULL，剩 15 个值；这 15 个值里只有 5 个不同的分类。
+      en: "Right. `count(*)` counts 16 rows; `count(category_id)` drops one NULL and keeps 15 values; those 15 values hold 5 different categories."
+  - text: '15, 15, 5'
+    why:
+      zh: "`count(*)` 没有参数，也就没有值会是 NULL，它数的是全部 16 行，Gift Card 也在内。"
+      en: "`count(*)` has no argument, so there is no value that could be NULL: it counts all 16 rows, Gift Card included."
+  - text: '16, 15, 6'
+    why:
+      zh: "`GROUP BY` 和 `SELECT DISTINCT` 会让 NULL 自成一组，但 `count(DISTINCT …)` 不会：它先扔掉 NULL，再去重。"
+      en: "`GROUP BY` and `SELECT DISTINCT` give NULL a group of its own, but `count(DISTINCT …)` does not: it drops NULL first, then removes duplicates."
+answer: 1
+explain:
+  zh: 16、15、5。`count(*)` 问“有几行”，与内容无关；`count(category_id)` 问“有几行的分类是已知的”，Gift Card 不算；`count(DISTINCT category_id)` 在这 15 个已知值里数不同的值，1 到 5 共 5 个。容易出错的是最后一个：以为 NULL 会像在 `GROUP BY` 里那样多算一组。
+  en: Sixteen, 15 and 5. `count(*)` asks how many rows there are, whatever they hold; `count(category_id)` asks how many rows have a known category, so Gift Card is left out; `count(DISTINCT category_id)` counts the different values among those 15, the ids 1 to 5. The tempting mistake is the last one, expecting NULL to add a group as it does in `GROUP BY`.

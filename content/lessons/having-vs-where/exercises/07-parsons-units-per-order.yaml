@@ -1,0 +1,33 @@
+kind: parsons
+difficulty: 2
+lesson_ref: example
+objective: having-aggregate
+prompt:
+  zh: 用下面的片段拼出一条查询：哪些订单一共买了至少 5 件商品（把这笔订单每行的 `quantity` 加起来）？列依次为 `order_id` 和总件数 `units`。有两个片段用不上。
+  en: "Arrange the pieces into a query: which orders contain at least 5 units in total (adding up the `quantity` of the order's lines)? The columns are `order_id` and the total, `units`. Two pieces are not needed."
+hints:
+  - zh: “一共至少 5 件”是对单独一行的条件，还是对一整笔订单的条件？
+    en: Is "at least 5 units in total" a condition on one line or on a whole order?
+  - zh: "`HAVING` 在 `SELECT` 之前执行，所以它看不到 `SELECT` 里起的别名。"
+    en: "`HAVING` runs before `SELECT`, so it cannot see aliases defined in `SELECT`."
+solution: |
+  SELECT order_id, sum(quantity) AS units
+  FROM order_items
+  GROUP BY order_id
+  HAVING sum(quantity) >= 5
+distractors:
+  - WHERE quantity >= 5
+  - HAVING units >= 5
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT order_id, sum(quantity) AS units
+      FROM order_items
+      WHERE quantity >= 5
+      GROUP BY order_id
+    say:
+      zh: "`WHERE quantity >= 5` 留下的是单行就买了 5 件以上的明细，像订单 3、7 这样分几行才凑够 5 件的订单被漏掉了。总件数是整笔订单的汇总，条件要放在分组之后。"
+      en: "`WHERE quantity >= 5` keeps only the lines that buy 5 or more on their own, so orders such as 3 and 7, which reach 5 across several lines, are missed. The total belongs to the whole order, so the condition goes after grouping."
+explain:
+  zh: "`GROUP BY order_id` 把明细按订单分组，`sum(quantity)` 算出每笔订单的总件数，`HAVING sum(quantity) >= 5` 再去掉不够 5 件的组，留下订单 3、7、13、16。`HAVING units >= 5` 会报 `column \"units\" does not exist`，因为别名在 `SELECT` 这一步才有。`WHERE quantity >= 5` 能运行，但筛的是单行，只剩订单 13 和 16。"
+  en: "`GROUP BY order_id` groups the lines by order, `sum(quantity)` gives each order's total, and `HAVING sum(quantity) >= 5` drops the groups below 5, leaving orders 3, 7, 13 and 16. `HAVING units >= 5` fails with `column \"units\" does not exist`, since the alias only exists from the `SELECT` step on. `WHERE quantity >= 5` runs, but it filters single lines and leaves only orders 13 and 16."

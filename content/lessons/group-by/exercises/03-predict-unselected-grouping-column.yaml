@@ -1,0 +1,41 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+objective: one-value
+prompt:
+  zh: 这条查询按 `customer_id` 分组，`SELECT` 里却没有 `customer_id`。先预测，再运行：会发生什么？
+  en: This query groups by `customer_id` but does not select `customer_id`. Predict first, then run it. What happens?
+hints:
+  - zh: 那条规则管的是 `SELECT` 里写了什么，还是没写什么？
+    en: Does the rule restrict what is in `SELECT`, or what is missing from it?
+  - zh: 分组照常进行，每组一行。只是每一行还剩下哪些列？
+    en: The grouping happens as usual, one row per group. Which columns are left in each row?
+query: |
+  SELECT count(*) AS orders
+  FROM orders
+  GROUP BY customer_id;
+choices:
+  - zh: 报错：分组列必须出现在 `SELECT` 里
+    en: "An error: a grouping column must appear in `SELECT`"
+    why:
+      zh: 规则只要求 `SELECT` 里的每一项在组内只有一个值，没有要求把分组列选出来。`count(*)` 符合规则，所以不报错。
+      en: The rule only says every item in `SELECT` must have one value per group. It does not require you to select the grouping column, and `count(*)` follows the rule, so there is no error.
+  - zh: 一行，值是 24
+    en: One row, 24
+    why:
+      zh: 那是没有 `GROUP BY` 的结果。这里有 `GROUP BY customer_id`，每位顾客一组，每组一行。
+      en: That is the result without `GROUP BY`. Here `GROUP BY customer_id` makes one group per customer and one row per group.
+  - zh: 10 行，每位下过单的顾客一个订单数，但看不出是哪位顾客的
+    en: Ten rows, one order count per customer who has ordered, with no way to tell whose is whose
+    why:
+      zh: 对。分组照常进行，10 位顾客 10 组；只是 `SELECT` 里没有 `customer_id`，结果里只剩数字。
+      en: Right. The grouping happens as usual, 10 customers and so 10 groups; `customer_id` is simply not selected, so only the numbers are left.
+  - zh: 24 行，每行都是 1
+    en: Twenty-four rows, each 1
+    why:
+      zh: "`GROUP BY` 会把同一位顾客的订单合成一行。只有每笔订单各成一组时，结果才会是 24 个 1。"
+      en: "`GROUP BY` merges each customer's orders into one row. Only if every order were its own group would you get 24 ones."
+answer: 2
+explain:
+  zh: "`GROUP BY customer_id` 照常把 24 笔订单分成 10 组，每组输出一行。`SELECT` 只有 `count(*)`，它在每组里只有一个值，所以查询合法。不选分组列不会出错，但结果没法读：要知道每个数属于谁，就把 `customer_id` 也写进 `SELECT`。"
+  en: "`GROUP BY customer_id` still splits the 24 orders into 10 groups, one output row each. `SELECT` has only `count(*)`, which has one value per group, so the query is legal. Leaving out the grouping column is not an error, but the result is unreadable: to see whose count is whose, select `customer_id` too."

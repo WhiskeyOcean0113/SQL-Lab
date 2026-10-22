@@ -1,0 +1,37 @@
+kind: predict
+difficulty: 1
+lesson_ref: aggregate-functions/core
+objective: aggregate-functions/filter-then-aggregate
+prompt:
+  zh: shop 只有一位巴西顾客，他在 2024-01-09 注册。不要运行，先判断这条查询返回什么。
+  en: shop has one customer from Brazil, who joined on 2024-01-09. Without running it, decide what this query returns.
+query: |
+  SELECT count(*) AS customers, max(joined_on) AS latest
+  FROM customers
+  WHERE country = 'Brazil' AND joined_on < '2024-01-01';
+choices:
+  - zh: 不返回任何行
+    en: No rows at all
+    why:
+      zh: "`WHERE` 确实一行都没留下，但没有 `GROUP BY` 的聚合查询总会交出一行汇总结果，哪怕汇总的是零行。"
+      en: "`WHERE` does leave no rows, but an aggregate query without `GROUP BY` always hands back one summary row, even over zero rows."
+  - zh: 一行：`customers` 是 0，`latest` 是 NULL
+    en: "One row: `customers` is 0 and `latest` is NULL"
+    why:
+      zh: 对。零行进去，一行出来：数到 0 行；没有日期可比，所以没有最大值。
+      en: "Right. Zero rows in, one row out: zero rows were counted, and with no date to compare there is no maximum."
+  - zh: 一行：`customers` 是 1，`latest` 是 2024-01-09
+    en: "One row: `customers` is 1 and `latest` is 2024-01-09"
+    why:
+      zh: 这是没有 `WHERE` 时巴西那一位的数据。聚合汇总的是 `WHERE` 留下的行，而 2024-01-09 不早于 2024-01-01。
+      en: That would be the Brazilian customer with no date condition. Aggregates summarise the rows `WHERE` keeps, and 2024-01-09 is not before 2024-01-01.
+  - zh: 报错：没有行可以汇总
+    en: "An error: there is nothing to summarise"
+    why:
+      zh: 汇总零行不是错误。“有几行”有明确的答案：0。
+      en: Summarising zero rows is not an error. "How many rows?" has a clear answer, 0.
+answer: 1
+explain:
+  zh: 先 `WHERE`，后聚合。条件去掉了唯一的巴西顾客，`count(*)` 数到 0；`max` 没有值可比，返回 NULL，而不是 0 或某个日期。不管剩下几行，这样的查询都只返回一行。
+  en: "`WHERE` runs first, then the aggregates. The condition removes the only Brazilian customer, so `count(*)` counts 0; `max` has no value to compare and returns NULL, not 0 or some date. However many rows are left, such a query returns one row."
+verify: { rows: 1 }

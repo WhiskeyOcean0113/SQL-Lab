@@ -1,0 +1,95 @@
+kind: write
+difficulty: 3
+lesson_ref: aggregates-null/core
+prompt:
+  zh: |
+    回头客：已取消的订单不算，找出至少下过两笔订单的顾客。每位返回一行，列依次为：
+
+    - `customer_id`
+    - `orders`：他没有取消的订单数
+    - `unshipped`：其中还没有发货的订单数（`shipped_at` 为空）
+    - `days_active`：从他第一笔订单的日期到最近一笔订单的日期，相隔多少天
+
+    活跃时间最长的排在前面；相同时按 `customer_id` 从小到大排。
+  en: |
+    Repeat customers: not counting cancelled orders, find the customers who have placed at least two orders. Return one row for each, with these columns in order:
+
+    - `customer_id`
+    - `orders`: their orders that were not cancelled
+    - `unshipped`: how many of those have not shipped yet (no `shipped_at`)
+    - `days_active`: the number of days from the date of their first order to the date of their latest one
+
+    Longest active first; on a tie, by `customer_id`, lowest first.
+hints:
+  - zh: 有三个条件：不算取消的订单、至少两笔、还没发货。各自说的是一行订单、一位顾客的全部订单，还是只说某一列要数什么？
+    en: "There are three conditions: not cancelled, at least two orders, not shipped yet. Is each about one order row, about all of a customer's orders, or only about what one column counts?"
+  - zh: 取消的订单要在分组前去掉；“至少两笔”在分组后判断；“还没发货”只用于 `unshipped` 这一列。天数是两个日期相减，可以先把时间戳转成日期。
+    en: "Remove cancelled orders before grouping; test \"at least two\" after it; use \"not shipped yet\" only for the `unshipped` column. The days are one date minus another, so cast the timestamps to dates first."
+explain:
+  zh: "`WHERE status <> 'cancelled'` 在分组前去掉取消的订单，于是 `orders`、“至少两笔”和天数都不受它们影响：顾客 4 只剩一笔，不在结果里；顾客 3 是 2 笔而不是 3 笔。`HAVING count(*) >= 2` 判断整位顾客。`count(*) FILTER (WHERE shipped_at IS NULL)` 只数未发货的，写成 `count(shipped_at IS NULL)` 会数到每一行，因为比较结果是 true 或 false，不是 NULL。`max(ordered_at)::date - min(ordered_at)::date` 用两个聚合结果算出天数。"
+  en: "`WHERE status <> 'cancelled'` removes cancelled orders before grouping, so `orders`, \"at least two\" and the days ignore them: customer 4 has one order left and drops out, and customer 3 has 2 orders, not 3. `HAVING count(*) >= 2` tests the whole customer. `count(*) FILTER (WHERE shipped_at IS NULL)` counts only the unshipped ones; `count(shipped_at IS NULL)` would count every row, since the comparison gives true or false, not NULL. `max(ordered_at)::date - min(ordered_at)::date` works out the days from two aggregates."
+solution: |
+  SELECT customer_id,
+         count(*) AS orders,
+         count(*) FILTER (WHERE shipped_at IS NULL) AS unshipped,
+         max(ordered_at)::date - min(ordered_at)::date AS days_active
+  FROM orders
+  WHERE status <> 'cancelled'
+  GROUP BY customer_id
+  HAVING count(*) >= 2
+  ORDER BY days_active DESC, customer_id;
+traps:
+  - sql: |
+      SELECT customer_id,
+             count(*) AS orders,
+             count(*) FILTER (WHERE shipped_at IS NULL) AS unshipped,
+             max(ordered_at)::date - min(ordered_at)::date AS days_active
+      FROM orders
+      GROUP BY customer_id
+      HAVING count(*) >= 2
+      ORDER BY days_active DESC, customer_id;
+    say:
+      zh: 取消的订单也被数进去了：顾客 4 只有一笔有效订单却出现了，顾客 3 显示 3 笔。“不算取消的”限定的是哪些行参与计数，要在分组之前去掉。
+      en: "Cancelled orders are counted too: customer 4 appears with only one real order, and customer 3 shows 3. \"Not counting cancelled\" limits which rows are counted, so remove them before grouping."
+  - sql: |
+      SELECT customer_id,
+             count(*) AS orders,
+             count(shipped_at IS NULL) AS unshipped,
+             max(ordered_at)::date - min(ordered_at)::date AS days_active
+      FROM orders
+      WHERE status <> 'cancelled'
+      GROUP BY customer_id
+      HAVING count(*) >= 2
+      ORDER BY days_active DESC, customer_id;
+    say:
+      zh: "`unshipped` 和 `orders` 一样大。`shipped_at IS NULL` 得到 true 或 false，`count` 两种都数。把条件放进 `FILTER`，只数满足它的行。"
+      en: "`unshipped` equals `orders`. `shipped_at IS NULL` gives true or false, and `count` counts both. Put the condition in a `FILTER` to count only the rows that meet it."
+  - sql: |
+      SELECT customer_id,
+             count(*) AS orders,
+             count(*) AS unshipped,
+             max(ordered_at)::date - min(ordered_at)::date AS days_active
+      FROM orders
+      WHERE status <> 'cancelled' AND shipped_at IS NULL
+      GROUP BY customer_id
+      HAVING count(*) >= 2
+      ORDER BY days_active DESC, customer_id;
+    say:
+      zh: 一行都没有了。`WHERE shipped_at IS NULL` 在分组前去掉了所有已发货的订单，`orders` 和“至少两笔”也只算剩下的那些。“还没发货”只该影响 `unshipped` 这一列。
+      en: "No rows at all. `WHERE shipped_at IS NULL` removed every shipped order before grouping, so `orders` and \"at least two\" count only what is left. \"Not shipped yet\" should affect `unshipped` alone."
+  - sql: |
+      SELECT customer_id,
+             count(*) AS orders,
+             count(*) FILTER (WHERE shipped_at IS NULL) AS unshipped,
+             max(ordered_at)::date - min(ordered_at)::date AS days_active
+      FROM orders
+      WHERE status <> 'cancelled'
+      GROUP BY customer_id
+      HAVING count(*) >= 2
+      ORDER BY days_active, customer_id;
+    say:
+      zh: 顺序反了：这是活跃时间最短的在前。要最长的在前，给 `days_active` 加上 `DESC`。
+      en: "The order is reversed: the shortest active time comes first. For the longest first, add `DESC` to `days_active`."
+check:
+  order_matters: true
+  column_names: true

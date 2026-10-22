@@ -1,0 +1,34 @@
+kind: predict
+difficulty: 1
+lesson_ref: aggregates-null/core
+objective: aggregates-null/null-inputs
+prompt:
+  zh: 加拿大和日本各有 2 位顾客，每个国家都有一位没有留邮箱（`email` 是 NULL）。不要运行，先判断这条查询返回哪三个数。
+  en: Canada and Japan have 2 customers each, and in each country one of them left no email (`email` is NULL). Without running it, decide which three numbers this query returns.
+query: |
+  SELECT count(*) AS customers,
+         count(email) AS with_email,
+         count(*) - count(email) AS without_email
+  FROM customers
+  WHERE country IN ('Canada', 'Japan');
+choices:
+  - text: 4, 4, 0
+    why:
+      zh: "`count(*)` 数行，是 4；但 `count(email)` 只数不是 NULL 的值，两个 NULL 不算。"
+      en: "`count(*)` counts rows, so 4; but `count(email)` counts only values that are not NULL, and the two NULLs do not count."
+  - text: 4, 2, 2
+    why:
+      zh: 对。4 行，其中 2 个邮箱有值，相减得 2 位没有邮箱的顾客。
+      en: Right. Four rows, two of them with an email, and the difference is the 2 customers without one.
+  - text: 2, 2, 0
+    why:
+      zh: "`count(*)` 数的是行，不管哪一列是不是 NULL，所以四位顾客都算。"
+      en: "`count(*)` counts rows, whatever their columns hold, so all four customers count."
+  - text: 4, 2, NULL
+    why:
+      zh: "`count` 从不返回 NULL，两个 `count` 都是普通的数字，相减得 2。"
+      en: "`count` never returns NULL; both counts are ordinary numbers, and their difference is 2."
+answer: 1
+explain:
+  zh: "`count(*)` 数{{term:row}}，`count(email)` 数 `email` 不是 NULL 的行。两者之差就是邮箱缺失的行数。要问“有多少位顾客”就用 `count(*)`，要问“有多少人留了邮箱”才用 `count(email)`。"
+  en: "`count(*)` counts {{term:row|rows}}; `count(email)` counts the rows whose `email` is not NULL. The difference is the number of rows missing an email. For \"how many customers\" use `count(*)`; use `count(email)` only for \"how many left an email\"."

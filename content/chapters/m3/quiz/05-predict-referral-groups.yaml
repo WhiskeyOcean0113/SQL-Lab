@@ -1,0 +1,34 @@
+kind: predict
+difficulty: 2
+lesson_ref: group-by/deeper
+objective: group-by/form-groups
+prompt:
+  zh: shop 有 12 位顾客。其中 4 位没有推荐人（`referred_by` 是 NULL），其余 8 位由顾客 1、2、3、4、5 中的某一位推荐。不要运行，先判断这条查询返回几行。
+  en: shop has 12 customers. Four of them have no referrer (`referred_by` is NULL); each of the other 8 was referred by one of customers 1, 2, 3, 4 and 5. Without running it, decide how many rows this query returns.
+query: |
+  SELECT referred_by, count(*) AS customers
+  FROM customers
+  GROUP BY referred_by
+  ORDER BY referred_by;
+choices:
+  - text: '5'
+    why:
+      zh: 这是只算推荐人的组数。`GROUP BY` 不会丢掉 NULL：4 位没有推荐人的顾客也组成一组。
+      en: That counts only the referrers. `GROUP BY` does not drop NULL; the 4 customers without a referrer form a group too.
+  - text: '6'
+    why:
+      zh: 对。5 个推荐人各成一组，NULL 再成一组，`customers` 是 4。
+      en: Right. Each of the 5 referrers is a group, and NULL is one more, with `customers` 4.
+  - text: '9'
+    why:
+      zh: 这是把每个 NULL 各算一组。分组时，所有 NULL 被当作同一个值，进同一组。
+      en: That would make each NULL a group of its own. When grouping, all NULLs count as one value and share one group.
+  - text: '12'
+    why:
+      zh: 每位顾客各占一行是不分组时的样子。值相同的行会合成一行。
+      en: One row per customer is what you get without grouping. Rows with the same value collapse into one.
+answer: 1
+explain:
+  zh: "`GROUP BY referred_by` 把 `referred_by` 相同的{{term:row}}放进同一{{term:group|组}}。值 1 到 5 给出 5 组；虽然 `NULL = NULL` 不是 true，但分组时所有 NULL 进同一组，所以一共 6 行，NULL 那一行的 `customers` 是 4。"
+  en: "`GROUP BY referred_by` puts {{term:row|rows}} with the same `referred_by` in one {{term:group}}. The values 1 to 5 give 5 groups. Although `NULL = NULL` is not true, grouping puts every NULL in the same group, so there are 6 rows, and the NULL row has `customers` 4."
+verify: { rows: 6 }

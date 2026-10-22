@@ -1,0 +1,32 @@
+kind: write
+difficulty: 2
+lesson_ref: group-by/core
+objective: group-by/choose-grain
+prompt:
+  zh: |
+    采购部想知道每种商品卖得怎么样。对每种卖出过的商品返回一行，列依次为：
+
+    - `product_id`
+    - `orders`：有几笔订单买了它
+    - `units`：一共卖出多少件
+
+    卖出件数多的排在前面；件数相同时按 `product_id` 从小到大排。（`order_items` 的一行是某笔订单里的一种商品，同一笔订单不会有两行是同一种商品。）
+  en: |
+    Purchasing wants to know how each product sells. Return one row for every product that has been sold, with these columns in order:
+
+    - `product_id`
+    - `orders`: how many orders bought it
+    - `units`: how many units were sold in total
+
+    Most units first; on a tie, by `product_id`, lowest first. (A row of `order_items` is one product in one order, and no order has two rows for the same product.)
+explain:
+  zh: "问题问的是“每种商品”，所以结果的一行是一种商品，{{term:grouping-column}}只有 `product_id`。每组里的一行是一笔订单，`count(*)` 就是订单数，`sum(quantity)` 是件数。多加一个 `order_id` 进 `GROUP BY`，每组就成了一行订单明细，`orders` 全变成 1。"
+  en: "The question asks about each product, so one result row is one product and the only {{term:grouping-column}} is `product_id`. Each row in a group is one order, so `count(*)` is the number of orders and `sum(quantity)` the units. Adding `order_id` to `GROUP BY` would make every group a single order line, and `orders` would be 1 throughout."
+solution: |
+  SELECT product_id, count(*) AS orders, sum(quantity) AS units
+  FROM order_items
+  GROUP BY product_id
+  ORDER BY units DESC, product_id;
+check:
+  order_matters: true
+  column_names: true

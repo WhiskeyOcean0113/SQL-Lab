@@ -1,0 +1,37 @@
+kind: predict
+difficulty: 2
+lesson_ref: aggregates-null/core
+objective: aggregates-null/empty-input
+prompt:
+  zh: shop 只有一位爱尔兰顾客 Liam O'Brien，他没有留城市（`city` 是 NULL）。不要运行，先判断这条查询结果里 Ireland 那一行是什么样子。
+  en: shop's only Irish customer, Liam O'Brien, gave no city (`city` is NULL). Without running it, decide what the Ireland row of this query's result looks like.
+query: |
+  SELECT country, count(city) AS cities_on_record, min(city) AS first_city
+  FROM customers
+  GROUP BY country
+  ORDER BY country;
+choices:
+  - zh: 没有 Ireland 这一行
+    en: There is no Ireland row
+    why:
+      zh: Liam 这一行还在，Ireland 照样成一组。NULL 只是被聚合函数跳过，并不会让一组消失。
+      en: Liam's row is still there, so Ireland is still a group. Aggregates skip the NULL; that does not make the group disappear.
+  - zh: "`cities_on_record` 是 0，`first_city` 是 NULL"
+    en: "`cities_on_record` is 0 and `first_city` is NULL"
+    why:
+      zh: 对。这一组只有一个 NULL：`count` 没有值可数，得 0；`min` 没有值可比，得 NULL。
+      en: Right. The group holds only a NULL. `count` has nothing to count, so 0; `min` has nothing to compare, so NULL.
+  - zh: 两列都是 NULL
+    en: Both columns are NULL
+    why:
+      zh: "`count` 从不返回 NULL：一个值都没数到就是 0。"
+      en: "`count` never returns NULL: counting no values gives 0."
+  - zh: "`cities_on_record` 是 1，`first_city` 是 NULL"
+    en: "`cities_on_record` is 1 and `first_city` is NULL"
+    why:
+      zh: "1 是 `count(*)` 的结果，它数行。`count(city)` 只数不是 NULL 的值。"
+      en: "1 is what `count(*)` would give, since it counts rows. `count(city)` counts only values that are not NULL."
+answer: 1
+explain:
+  zh: 聚合函数跳过 NULL。一组里全是 NULL 时，它们面对的就是“没有输入”：`count` 返回 0，`sum`、`avg`、`min`、`max` 返回 NULL。若想让 `sum` 之类在这种时候显示 0，要用 `COALESCE(…, 0)` 包起来。
+  en: "Aggregates skip NULL. When a group holds only NULLs, they have no input at all: `count` returns 0, while `sum`, `avg`, `min` and `max` return NULL. To show 0 from `sum` and the like in that case, wrap it in `COALESCE(…, 0)`."

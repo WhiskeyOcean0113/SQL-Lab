@@ -1,7 +1,18 @@
 title:   { zh: 聚合与 NULL, en: Aggregates and NULL }
 summary:
-  zh: 弄清楚聚合函数怎样对待 NULL，以及没有行可汇总时会得到什么，并用 FILTER 做条件计数。
-  en: Know how aggregates treat NULL and what they return when there is nothing to summarise, and count conditionally with FILTER.
+  zh: 弄清楚聚合函数看得到哪些值、没有值可汇总时返回什么，并用 FILTER 在同一行里做条件计数。
+  en: Know which values an aggregate sees and what it returns when there is nothing to summarise, and count conditionally with FILTER in the same row.
+template: 2
+objectives:
+  - id: null-inputs
+    zh: "能预测部分输入为 NULL 时 count(*)、count(x)、sum 和 avg 各返回什么，并按问题写出该用的 count。"
+    en: "Predict what count(*), count(x), sum and avg return when some inputs are NULL, and write the count a question asks for."
+  - id: empty-input
+    zh: "能预测没有输入或输入全是 NULL 时聚合返回什么，并在“没有”就是 0 时用 COALESCE 写出 0。"
+    en: "Predict what an aggregate returns when it has no input or only NULLs, and write COALESCE to show 0 where none means zero."
+  - id: filter-clause
+    zh: "能写出带 FILTER 的条件聚合，并解释它和 WHERE 筛掉的行有什么不同。"
+    en: "Write conditional aggregates with FILTER, and explain how the rows it leaves out differ from those WHERE removes."
 dataset: shop
 prereqs: [having-vs-where]
 introduces: [FILTER]

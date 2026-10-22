@@ -1,0 +1,17 @@
+kind: write
+difficulty: 2
+lesson_ref: having-vs-where/core
+objective: having-vs-where/having-aggregate
+prompt:
+  zh: 市场部只关心至少有 2 位顾客的国家。对每个这样的国家返回一行，列依次为 `country` 和该国第一位顾客的注册日期 `first_joined`。行的顺序不限。
+  en: Marketing only cares about countries with at least 2 customers. Return one row for each such country, with the columns `country` and the date its first customer joined, `first_joined`, in that order. The rows may come in any order.
+explain:
+  zh: "“至少 2 位顾客”说的是整个国家这一{{term:group|组}}，要等分组之后才知道，所以写在 `HAVING count(*) >= 2`。这个 `count(*)` 不必出现在 SELECT 里。结果是 China、Canada 和 Japan。把它写进 `WHERE` 会报错：`WHERE` 一次只看一行，那时还没有组可数。"
+  en: "\"At least 2 customers\" is about a whole country, a {{term:group}}, and is known only after grouping, so it goes in `HAVING count(*) >= 2`. That `count(*)` does not have to appear in SELECT. The result is China, Canada and Japan. In `WHERE` it would fail: `WHERE` looks at one row at a time, before there are any groups to count."
+solution: |
+  SELECT country, min(joined_on) AS first_joined
+  FROM customers
+  GROUP BY country
+  HAVING count(*) >= 2;
+check:
+  column_names: true

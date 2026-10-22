@@ -1,7 +1,22 @@
 title:   { zh: GROUP BY, en: GROUP BY }
 summary:
-  zh: 把行按某些列分组，每组汇总出一行，并弄清楚分组之后 SELECT 里能放什么。
-  en: Split rows into groups by some columns, get one summary row per group, and know what SELECT may contain afterwards.
+  zh: 把行按一列或多列分成组，每组汇总成一行；先想清楚结果的每一行代表什么，再决定按什么分组。
+  en: Split rows into groups by one or more columns and summarise each group as one row, deciding first what each result row stands for.
+template: 2
+objectives:
+  - id: form-groups
+    zh: "能预测 GROUP BY 会把哪些{{term:row}}分进同一{{term:group|组}}，以及每组输出的那一行是什么值。"
+    en: "Predict which {{term:row|rows}} GROUP BY puts in the same {{term:group}}, and what each group's output row shows."
+  - id: one-value
+    zh: "能写出每一项在组内都只有一个值的{{term:select-list}}，并修好违反这条规则的查询。"
+    en: "Write a {{term:select-list}} in which every item has one value per {{term:group}}, and fix a query that breaks this rule."
+  - id: choose-grain
+    zh: "能根据问题选出{{term:grouping-column}}，让结果的每一行正好代表问题问的那种东西。"
+    en: "Choose the {{term:grouping-column|grouping columns}} for a question so that each result row stands for exactly the thing it asks about."
+  - id: group-expression
+    zh: "能写出按{{term:expression}}分组的查询，比如按年份或价格档，并让 SELECT 里用的是同一个表达式。"
+    en: "Write a query that groups by an {{term:expression}}, such as a year or a price band, with the same expression in SELECT."
 dataset: shop
 prereqs: [aggregate-functions]
 introduces: [GROUP, string_agg(), ROLLUP]
+reference: [ROLLUP]

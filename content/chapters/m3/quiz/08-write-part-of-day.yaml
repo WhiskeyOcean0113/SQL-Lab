@@ -1,0 +1,32 @@
+kind: write
+difficulty: 3
+lesson_ref: group-by/variants
+objective: group-by/group-expression
+prompt:
+  zh: |
+    运营想知道顾客一天里什么时候下单。按下单时间把订单分成三段：12:00 之前是 `'morning'`，12:00 起到 18:00 之前是 `'afternoon'`，18:00 及以后是 `'evening'`，日期不重要。
+
+    每段返回一行，列依次为 `part_of_day`、该段的订单数 `orders`、在该段下过单的不同顾客数 `customers`，订单多的段排在前面。
+  en: |
+    Operations wants to know when in the day customers order. Split the orders by the time they were placed: before 12:00 is `'morning'`, from 12:00 up to but not including 18:00 is `'afternoon'`, and 18:00 or later is `'evening'`; the date does not matter.
+
+    Return one row per part of the day with the columns `part_of_day`, its number of orders `orders`, and the number of different customers who ordered in it, `customers`, in that order, busiest part first.
+explain:
+  zh: "`extract(hour FROM ordered_at)` 取出小时，`CASE` 把它变成段名。`GROUP BY` 用的是同一个 `CASE` {{term:expression}}，所以每段正好一行：morning 11 笔、afternoon 7 笔、evening 6 笔。只写 `GROUP BY ordered_at`，每个时间点各成一组，段名会重复出现。`count(DISTINCT customer_id)` 数的是不同的顾客，`count(customer_id)` 只会再数一遍订单。"
+  en: "`extract(hour FROM ordered_at)` takes the hour, and `CASE` turns it into a part of the day. `GROUP BY` uses the same `CASE` {{term:expression}}, so each part is exactly one row: morning 11 orders, afternoon 7, evening 6. `GROUP BY ordered_at` alone would make every timestamp its own group, with the part names repeating. `count(DISTINCT customer_id)` counts different customers; `count(customer_id)` would only count the orders again."
+solution: |
+  SELECT CASE WHEN extract(hour FROM ordered_at) < 12 THEN 'morning'
+              WHEN extract(hour FROM ordered_at) < 18 THEN 'afternoon'
+              ELSE 'evening'
+         END AS part_of_day,
+         count(*) AS orders,
+         count(DISTINCT customer_id) AS customers
+  FROM orders
+  GROUP BY CASE WHEN extract(hour FROM ordered_at) < 12 THEN 'morning'
+                WHEN extract(hour FROM ordered_at) < 18 THEN 'afternoon'
+                ELSE 'evening'
+           END
+  ORDER BY orders DESC;
+check:
+  order_matters: true
+  column_names: true

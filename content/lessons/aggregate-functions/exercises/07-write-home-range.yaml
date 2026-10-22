@@ -1,0 +1,50 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+objective: pick-aggregate
+prompt:
+  zh: |
+    家居品类（`category_id = 3`）的采购想了解手上的货：最便宜的商品卖多少钱？最贵的呢？平均价格是多少？是不是每件商品都还有至少 10 件库存？
+
+    返回一行，列名依次为 `cheapest`、`dearest`、`average`（四舍五入到两位小数）、`all_stocked`。
+  en: |
+    The buyer for the home range (`category_id = 3`) wants a picture of it. What does the cheapest product cost, and the dearest? What is the average price? Does every product still have at least 10 units in stock?
+
+    Return one row with the columns `cheapest`, `dearest`, `average` (rounded to two decimal places) and `all_stocked`, in that order.
+hints:
+  - zh: 四个问题分开想：哪个找最小值，哪个找最大值，哪个求平均，哪个问“是不是每一件都”？
+    en: "Take the four questions one at a time: which finds the smallest value, which the largest, which averages, and which asks \"is it true of every product\"?"
+  - zh: 真假的汇总有两个函数，一个要求至少一行为 true，一个要求每一行都为 true。像“库存至少 10 件”这样的条件，就是它们的参数。
+    en: "Two functions summarise true and false: one needs at least one true row, the other needs every row true. A condition such as \"at least 10 units\" is their argument."
+solution: |
+  SELECT min(price) AS cheapest,
+         max(price) AS dearest,
+         round(avg(price), 2) AS average,
+         bool_and(stock >= 10) AS all_stocked
+  FROM products
+  WHERE category_id = 3;
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT min(price) AS cheapest,
+             max(price) AS dearest,
+             round(avg(price), 2) AS average,
+             bool_or(stock >= 10) AS all_stocked
+      FROM products
+      WHERE category_id = 3;
+    say:
+      zh: "`all_stocked` 问的是“是不是每一件都”有足够库存。`bool_or` 只要有一件满足就是 true，回答的是“有没有哪一件”。"
+      en: "`all_stocked` asks whether every product is well stocked. `bool_or` is true as soon as one product is, which answers whether any product is."
+  - sql: |
+      SELECT min(price) AS cheapest,
+             max(price) AS dearest,
+             avg(price) AS average,
+             bool_and(stock >= 10) AS all_stocked
+      FROM products
+      WHERE category_id = 3;
+    say:
+      zh: "`avg` 返回的 `numeric` 带着一长串小数。题目要两位小数：把平均值交给 `round`。"
+      en: "`avg` returns a `numeric` with a long tail of decimals. The task wants two places: pass the average to `round`."
+explain:
+  zh: "`WHERE category_id = 3` 先留下 3 件家居商品：Ceramic Mug、Desk Lamp 和 Linen Throw。`min(price)` 得 12.50，`max(price)` 得 65.00，`round(avg(price), 2)` 把 41.8333… 变成 41.83。Linen Throw 只剩 7 件，所以 `bool_and(stock >= 10)` 是 false。常见的错法是把“是不是每一件都”写成 `bool_or`：那只问有没有一件库存充足，这里会是 true。"
+  en: "`WHERE category_id = 3` keeps the 3 home products: Ceramic Mug, Desk Lamp and Linen Throw. `min(price)` gives 12.50, `max(price)` 65.00, and `round(avg(price), 2)` turns 41.8333… into 41.83. Linen Throw is down to 7 units, so `bool_and(stock >= 10)` is false. A common slip is writing \"is every\" as `bool_or`, which only asks whether some product is well stocked, and here would be true."

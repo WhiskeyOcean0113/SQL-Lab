@@ -1,0 +1,34 @@
+kind: write
+difficulty: 2
+lesson_ref: group-by/variants
+objective: group-by/one-value
+prompt:
+  zh: |
+    客服想一眼看到每位顾客的订单经历。对每位下过单的顾客返回一行：
+
+    - `customer_id`
+    - `orders`：他下了几笔订单
+    - `history`：这些订单的 `status`，按下单时间从早到晚排列，用逗号加空格（`', '`）连成一个字符串，例如 `delivered, shipped, pending`
+
+    按 `customer_id` 从小到大排序。
+  en: |
+    Customer service wants each customer's order history at a glance. Return one row for every customer who has ordered:
+
+    - `customer_id`
+    - `orders`: how many orders they placed
+    - `history`: the `status` of those orders from the oldest order to the newest, joined into one string with a comma and a space (`', '`), such as `delivered, shipped, pending`
+
+    Sort by `customer_id`, lowest first.
+explain:
+  zh: "结果的每一行代表一位顾客，所以 `GROUP BY customer_id`。`status` 在一组里有好几个值，不能直接放进{{term:select-list}}；`string_agg(status, ', ' ORDER BY ordered_at)` 把它们按时间连成一个值。为了消掉报错而把 `status` 加进 `GROUP BY`，查询能运行，但每组变成了“一位顾客的一种状态”，顾客 1 会出现三次。"
+  en: "Each result row stands for one customer, so `GROUP BY customer_id`. `status` has several values in a group and cannot go into the {{term:select-list}} as it is; `string_agg(status, ', ' ORDER BY ordered_at)` joins them, in time order, into one value. Adding `status` to `GROUP BY` to silence the error makes the query run, but a group becomes one status of one customer, and customer 1 appears three times."
+solution: |
+  SELECT customer_id,
+         count(*) AS orders,
+         string_agg(status, ', ' ORDER BY ordered_at) AS history
+  FROM orders
+  GROUP BY customer_id
+  ORDER BY customer_id;
+check:
+  order_matters: true
+  column_names: true

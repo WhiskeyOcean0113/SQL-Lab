@@ -1,0 +1,51 @@
+kind: predict
+difficulty: 2
+lesson_ref: aggregate-functions/mistakes
+objective: aggregate-functions/one-row-rule
+prompt:
+  zh: |
+    随题给出的查询里只有 `max(ordered_at)`，它能运行，返回最近一笔订单的下单时间。有人想顺便看看这笔订单是哪位顾客下的，在前面加上 `customer_id`，写成了：
+
+    ```sql
+    SELECT customer_id, max(ordered_at) AS last_order
+    FROM orders;
+    ```
+
+    结果报错：`column "orders.customer_id" must appear in the GROUP BY clause or be used in an aggregate function`。哪一种解释是对的？
+  en: |
+    The query given with this question has only `max(ordered_at)`; it runs and returns the time of the most recent order. To see which customer placed that order, someone added `customer_id` in front:
+
+    ```sql
+    SELECT customer_id, max(ordered_at) AS last_order
+    FROM orders;
+    ```
+
+    It fails with `column "orders.customer_id" must appear in the GROUP BY clause or be used in an aggregate function`. Which explanation is right?
+query: |
+  SELECT max(ordered_at) AS last_order
+  FROM orders;
+choices:
+  - zh: "`max(ordered_at)` 把 24 行汇总成一个值，而 `customer_id` 仍有 24 个值，一行放不下；`max` 也不会把它取到值的那一行带出来"
+    en: "`max(ordered_at)` collapses 24 rows into one value while `customer_id` still has 24 values, which do not fit in one row; and `max` does not bring along the row its value came from"
+    why:
+      zh: 对。聚合之后结果只有一行，旁边的每一项也必须只有一个值。要找取到最大值的那一行，不用聚合：按 `ordered_at` 从晚到早排序，取第一行。
+      en: "Right. After aggregating there is one result row, so every item beside the aggregate needs one value too. To find the row holding the largest value, do not aggregate: sort by `ordered_at`, latest first, and take the first row."
+  - zh: "`max` 只能用于数字，不能用于时间戳"
+    en: "`max` works only on numbers, not on timestamps"
+    why:
+      zh: "`max` 可以用于任何能比较大小的值，包括日期、时间戳和文本。随题给出的那条只有 `max(ordered_at)` 的查询就能运行。"
+      en: "`max` works on any value that can be compared, dates, timestamps and text included. The query given with this question, with `max(ordered_at)` alone, runs fine."
+  - zh: 普通的列必须写在聚合函数后面
+    en: Plain columns must come after the aggregate in the SELECT list
+    why:
+      zh: 顺序无关。把两项对调，报的是同一个错误。
+      en: The order does not matter. Swapping the two items gives the same error.
+  - zh: 没有 `WHERE` 时，聚合函数不知道该汇总哪些行
+    en: Without `WHERE`, the aggregate does not know which rows to summarise
+    why:
+      zh: 没有 `WHERE` 时，聚合汇总全部的行，这完全合法。问题出在 `customer_id` 上。
+      en: Without `WHERE`, an aggregate summarises every row, which is perfectly legal. The problem is `customer_id`.
+answer: 0
+explain:
+  zh: "聚合函数把很多{{term:row}}变成一个值，结果因此只有一行。`customer_id` 没有被聚合，它在 24 行里有 24 个值，数据库不会替你挑一个。想要“取到最大值的那一行”，应该写 `SELECT customer_id, ordered_at FROM orders ORDER BY ordered_at DESC LIMIT 1`：排序后取第一行，整行的值都还在。"
+  en: "An aggregate turns many {{term:row|rows}} into one value, so the result has one row. `customer_id` is not aggregated and has 24 values in 24 rows; the database will not pick one for you. For the row that holds the largest value, write `SELECT customer_id, ordered_at FROM orders ORDER BY ordered_at DESC LIMIT 1`: sort, take the first row, and the whole row is still there."

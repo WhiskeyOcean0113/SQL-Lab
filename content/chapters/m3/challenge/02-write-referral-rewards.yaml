@@ -1,0 +1,82 @@
+kind: write
+difficulty: 2
+lesson_ref: group-by/deeper
+prompt:
+  zh: |
+    推荐奖励：推荐了至少两位新顾客的顾客可以拿奖励。对每位这样的推荐人返回一行，列依次为：
+
+    - `referrer`：推荐人的顾客 id
+    - `referred`：他推荐来的顾客数
+    - `with_email`：其中留了邮箱、能收到通知的人数
+    - `first_joined`：其中最早一位的注册日期
+
+    按 `referrer` 从小到大排序。
+  en: |
+    Referral rewards: customers who brought in at least two new customers earn a reward. Return one row for each such referrer, with these columns in order:
+
+    - `referrer`: the referrer's customer id
+    - `referred`: how many customers they referred
+    - `with_email`: how many of those left an email address and can be notified
+    - `first_joined`: the date the first of those joined
+
+    Sort by `referrer`, lowest first.
+hints:
+  - zh: 结果的每一行代表一位推荐人，`customers` 里哪一列能说明“谁推荐了这位顾客”？没有推荐人的顾客分组后会怎样？
+    en: "Each result row stands for one referrer. Which column of `customers` says who referred a customer? And what happens to the customers without a referrer when you group?"
+  - zh: 按 `referred_by` 分组时，所有 NULL 会进同一组，要在分组前去掉它们。“留了邮箱”只影响一列的计数，不能拿来去掉行。
+    en: "Grouping by `referred_by` puts every NULL in one group, so remove them before grouping. \"Left an email\" affects one column's count only, so it must not remove rows."
+explain:
+  zh: "每位被推荐的顾客那一行写着推荐人，所以按 `referred_by` 分组，每组就是一位推荐人推荐来的人。`WHERE referred_by IS NOT NULL` 去掉没有推荐人的 4 位，否则他们会成为 NULL 一组，而且正好满足“至少两位”。`count(*)` 数推荐来的人，`count(email)` 只数有邮箱的，所以推荐人 2 是 2 和 1。`HAVING count(*) >= 2` 判断整组，留下推荐人 1、2、4。"
+  en: "Each referred customer's row names the referrer, so grouping by `referred_by` makes each group the customers one referrer brought in. `WHERE referred_by IS NOT NULL` removes the 4 customers without a referrer; otherwise they would form a NULL group that happens to meet \"at least two\". `count(*)` counts the referred customers and `count(email)` only those with an email, so referrer 2 shows 2 and 1. `HAVING count(*) >= 2` tests the whole group and keeps referrers 1, 2 and 4."
+solution: |
+  SELECT referred_by AS referrer,
+         count(*) AS referred,
+         count(email) AS with_email,
+         min(joined_on) AS first_joined
+  FROM customers
+  WHERE referred_by IS NOT NULL
+  GROUP BY referred_by
+  HAVING count(*) >= 2
+  ORDER BY referrer;
+traps:
+  - sql: |
+      SELECT referred_by AS referrer,
+             count(*) AS referred,
+             count(email) AS with_email,
+             min(joined_on) AS first_joined
+      FROM customers
+      GROUP BY referred_by
+      HAVING count(*) >= 2
+      ORDER BY referrer;
+    say:
+      zh: 最后多了一行 `referrer` 为 NULL 的：没有推荐人的 4 位顾客被 `GROUP BY` 分成了一组，又刚好满足“至少两位”。分组之前先去掉他们。
+      en: "There is an extra last row whose `referrer` is NULL: `GROUP BY` put the 4 customers without a referrer in one group, and it happens to meet \"at least two\". Remove them before grouping."
+  - sql: |
+      SELECT referred_by AS referrer,
+             count(*) AS referred,
+             count(*) AS with_email,
+             min(joined_on) AS first_joined
+      FROM customers
+      WHERE referred_by IS NOT NULL
+      GROUP BY referred_by
+      HAVING count(*) >= 2
+      ORDER BY referrer;
+    say:
+      zh: "`with_email` 和 `referred` 总是一样大，可推荐人 2 推荐来的顾客里有一位没有邮箱。`count(*)` 数行；只数有值的，要数那一列。"
+      en: "`with_email` always equals `referred`, yet one of referrer 2's customers has no email. `count(*)` counts rows; to count only the values present, count that column."
+  - sql: |
+      SELECT referred_by AS referrer,
+             count(*) AS referred,
+             count(email) AS with_email,
+             min(joined_on) AS first_joined
+      FROM customers
+      WHERE referred_by IS NOT NULL AND email IS NOT NULL
+      GROUP BY referred_by
+      HAVING count(*) >= 2
+      ORDER BY referrer;
+    say:
+      zh: 推荐人 2 不见了。`WHERE email IS NOT NULL` 在分组前去掉了没有邮箱的顾客，于是 `referred` 和“至少两位”都只算有邮箱的人。邮箱只该影响 `with_email` 这一列。
+      en: "Referrer 2 is gone. `WHERE email IS NOT NULL` removed the customers without an email before grouping, so `referred` and \"at least two\" count only those with one. The email should affect `with_email` alone."
+check:
+  order_matters: true
+  column_names: true

@@ -1,0 +1,38 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+objective: one-value
+prompt:
+  zh: |
+    每个分类一行，列依次为 `category_id`、商品数 `products`，以及这个分类所有商品的名字 `names`：按名字的字母顺序，用逗号加一个空格（`', '`）连成一个字符串。没有分类的商品也算一组。行的顺序不限。
+  en: |
+    One row per category, with the columns `category_id`, the number of products `products`, and `names`: the names of all the category's products in alphabetical order, joined into one string with a comma and a space (`', '`). Products without a category count as a group too. The rows may come in any order.
+hints:
+  - zh: "`name` 在一个分类里有好几个值，怎样才能让它在每组里只剩一个值？"
+    en: "`name` has several values in a category. How can it become one value per group?"
+  - zh: 有一个聚合函数专门把组里的文字连起来，它的括号里可以写组内的排序。
+    en: One aggregate function joins a group's text, and its parentheses can say how to order the pieces.
+solution: |
+  SELECT category_id, count(*) AS products, string_agg(name, ', ' ORDER BY name) AS names
+  FROM products
+  GROUP BY category_id;
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT category_id, count(*) AS products, name AS names
+      FROM products
+      GROUP BY category_id, name;
+    say:
+      zh: 把 `name` 加进 `GROUP BY` 能让查询运行，但每组成了一件商品：16 行，每行 `products` 都是 1。要每个分类一行，就按分类分组，再用聚合把名字合成一个值。
+      en: Adding `name` to `GROUP BY` makes the query run, but every group is now one product, 16 rows each with `products` 1. For one row per category, group by the category and turn the names into one value with an aggregate.
+  - sql: |
+      SELECT category_id, count(*) AS products, string_agg(name, ', ' ORDER BY name) AS names
+      FROM products
+      WHERE category_id IS NOT NULL
+      GROUP BY category_id;
+    say:
+      zh: 没有分类的 Gift Card 被 `WHERE` 筛掉了。题目要它也算一组，而 NULL 本来就会自成一组，不需要这个条件。
+      en: The Gift Card, which has no category, was filtered out by `WHERE`. The task counts it as a group, and NULL forms a group of its own anyway, so the condition is not needed.
+explain:
+  zh: "`GROUP BY category_id` 让每个分类一组，Gift Card 的 NULL 也自成一组。`count(*)` 数商品；`string_agg(name, ', ' ORDER BY name)` 把组里的名字按字母顺序连成一个字符串，于是 `name` 在每组里只剩一个值，符合规则。容易想到的错误写法是把 `name` 加进 `GROUP BY`：报错消失了，粒度却从每个分类变成了每件商品。"
+  en: "`GROUP BY category_id` makes one group per category, and the Gift Card's NULL gets a group too. `count(*)` counts the products, and `string_agg(name, ', ' ORDER BY name)` joins the group's names alphabetically into one string, so the names become one value per group and the rule holds. The tempting wrong version adds `name` to `GROUP BY`: the error disappears, but the grain changes from categories to single products."

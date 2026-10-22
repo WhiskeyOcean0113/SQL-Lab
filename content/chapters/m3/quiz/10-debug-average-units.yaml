@@ -1,0 +1,22 @@
+kind: debug
+difficulty: 2
+lesson_ref: having-vs-where/mistakes
+objective: having-vs-where/where-or-having
+prompt:
+  zh: 这条查询想列出平均每行订单明细买了不止 1 件的商品，列为 `product_id` 和该商品每行的平均件数 `avg_units`（保留两位小数）。它能运行，但有些商品的平均值算错了。修好它。
+  en: This query should list the products whose order lines buy more than 1 unit on average, with the columns `product_id` and that average per line, `avg_units`, rounded to two decimal places. It runs, but some of the averages are wrong. Fix it.
+starter: |
+  SELECT product_id, round(avg(quantity), 2) AS avg_units
+  FROM order_items
+  WHERE quantity > 1
+  GROUP BY product_id;
+solution: |
+  SELECT product_id, round(avg(quantity), 2) AS avg_units
+  FROM order_items
+  GROUP BY product_id
+  HAVING avg(quantity) > 1;
+check:
+  column_names: true
+explain:
+  zh: "“平均不止 1 件”说的是一种商品的全部明细，是{{term:group|组}}的条件，应写在 `HAVING avg(quantity) > 1`。原来的 `WHERE quantity > 1` 在分组前就去掉了只买 1 件的明细，平均值只算剩下的那些：商品 3 的四行是 2、1、1、1 件，应得 1.25，原查询却得 2.00。"
+  en: "\"More than 1 unit on average\" is about all of a product's lines, so it is a {{term:group}} condition: `HAVING avg(quantity) > 1`. The original `WHERE quantity > 1` removes the single-unit lines before grouping, so the average covers only the lines that are left: product 3's four lines buy 2, 1, 1 and 1 units and should average 1.25, but the original query gives 2.00."

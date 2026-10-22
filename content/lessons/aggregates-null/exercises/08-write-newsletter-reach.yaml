@@ -1,0 +1,41 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+objective: null-inputs
+prompt:
+  zh: shop 准备发一份邮件简报，想先按国家看看能覆盖多少人。每个国家一行，依次给出：国家、顾客人数、其中留了邮箱的人数，以及他们分布在几个不同的城市（没有登记的城市不算）。按国家排序。
+  en: Shop is planning an email newsletter and first wants to see its reach in each country. One row per country, giving in this order the country, the number of customers, how many of them left an email address, and how many different cities they live in (a city that is not on record does not count). Sort by country.
+hints:
+  - zh: 同一组顾客，三个不同的问题：有几行？有几个已知的值？有几个不同的已知值？
+    en: "Three different questions about the same group: how many rows, how many known values, how many different known values?"
+  - zh: 三种 `count` 各回答一个：`count(*)`、`count(x)`、`count(DISTINCT x)`。
+    en: "Each of the three forms of `count` answers one: `count(*)`, `count(x)`, `count(DISTINCT x)`."
+solution: |
+  SELECT country,
+         count(*) AS customers,
+         count(email) AS reachable,
+         count(DISTINCT city) AS cities
+  FROM customers
+  GROUP BY country
+  ORDER BY country;
+check: { order_matters: true }
+traps:
+  - sql: |
+      SELECT country, count(*) AS customers, count(email) AS reachable, count(city) AS cities
+      FROM customers
+      GROUP BY country
+      ORDER BY country;
+    say:
+      zh: 城市那一列数多了。`count(city)` 数的是城市已知的顾客，China 的两位 Shanghai 顾客被算成了两个城市。题目问的是有几个不同的城市。
+      en: The city column is too high. `count(city)` counts customers with a known city, so China's two Shanghai customers make two cities. The task asks how many different cities there are.
+  - sql: |
+      SELECT country, count(*) AS customers, count(email IS NOT NULL) AS reachable, count(DISTINCT city) AS cities
+      FROM customers
+      GROUP BY country
+      ORDER BY country;
+    say:
+      zh: 留了邮箱的人数和顾客人数一样了。`email IS NOT NULL` 的结果是 true 或 false，从不是 NULL，所以每一行都被数了进去。直接数 `email` 这一列的值。
+      en: The email count equals the customer count. `email IS NOT NULL` is true or false, never NULL, so every row is counted. Count the values of the `email` column itself.
+explain:
+  zh: "`GROUP BY country` 让每个国家一组，`ORDER BY country` 排序。三列是三种 `count`：`count(*)` 数这一组的行，也就是顾客人数；`count(email)` 只数邮箱已知的顾客，Canada 和 Japan 各少一位；`count(DISTINCT city)` 在已知的城市里去重，所以 China 是 2，Brazil 和 Ireland 是 0。一种看似合理的错误是用 `count(city)` 数城市：它数的是“城市已知的人”，不是“城市”。"
+  en: "`GROUP BY country` makes one group per country and `ORDER BY country` sorts. The three columns are the three forms of `count`: `count(*)` counts the group's rows, which is the customers; `count(email)` counts only customers with a known email, one fewer each in Canada and Japan; `count(DISTINCT city)` removes duplicates among the known cities, so China has 2, and Brazil and Ireland 0. A plausible wrong answer counts cities with `count(city)`, which counts people with a known city, not cities."

@@ -1,7 +1,21 @@
 title:   { zh: "{{term:aggregate-function}}", en: "{{Term:aggregate-function|Aggregate functions}}" }
 summary:
-  zh: 用 count、sum、avg、min、max 把很多行汇总成一个值，并知道汇总之后哪些列还能选。
-  en: Collapse many rows into one value with count, sum, avg, min and max, and know which columns you can still select afterwards.
+  zh: 用 count、sum、avg、min、max 把很多行汇总成一行，并知道汇总之后哪些列还能选。
+  en: Collapse many rows into one with count, sum, avg, min and max, and know which columns you can still select afterwards.
 dataset: shop
 prereqs: [arithmetic, null-logic]
+template: 2
+objectives:
+  - id: pick-aggregate
+    zh: "能写出用对{{term:aggregate-function}}回答问题的查询：数行、数不同的值、求和、求平均，或找最小、最大值。"
+    en: "Write a query that answers a question with the right {{term:aggregate-function}}, whether it counts rows, counts distinct values, adds up, averages or finds an extreme."
+  - id: filter-then-aggregate
+    zh: "能预测 `WHERE` 先选出{{term:row}}、再汇总时返回的那一行，包括一行都没留下的情况，并写出这样的查询。"
+    en: "Predict the one {{term:row}} an aggregate query returns after `WHERE` has chosen the rows, including when no row is left, and write such a query."
+  - id: aggregate-expressions
+    zh: "能写出对{{term:expression}}求聚合、再用聚合结果继续计算的查询，并预测两种写法的结果是否相同。"
+    en: "Write a query that aggregates an {{term:expression}} and calculates with aggregate results, and predict whether two such forms give the same value."
+  - id: one-row-rule
+    zh: "能解释为什么聚合之后不能再选普通的{{term:column}}，并改用排序找出取到最大或最小值的那一行。"
+    en: "Explain why a plain {{term:column}} cannot sit next to an aggregate, and find the row holding the largest or smallest value by sorting instead."
 introduces: [count(), sum(), avg(), min(), max(), bool_or(), bool_and()]

@@ -1,0 +1,42 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+objective: one-row-rule
+prompt:
+  zh: 下面这条查询想找出 2023 年上市的商品里最便宜的那一件，列依次为商品名和价格。它报错了。修好它。
+  en: This query should find the cheapest of the products launched in 2023, with its name and price as the columns. It fails. Fix it.
+hints:
+  - zh: 读报错：是哪一列出了问题？`min(price)` 交出几个值，`name` 又有几个值？
+    en: "Read the error: which column is the problem? How many values does `min(price)` hand back, and how many does `name` have?"
+  - zh: 找“取到最小值的那一行”不需要聚合。把行按价格从低到高排好，只留第一行。
+    en: Finding the row that holds the smallest value needs no aggregate. Sort the rows from cheapest up and keep only the first.
+starter: |
+  SELECT name, min(price)
+  FROM products
+  WHERE launched_on >= '2023-01-01' AND launched_on < '2024-01-01';
+solution: |
+  SELECT name, price
+  FROM products
+  WHERE launched_on >= '2023-01-01' AND launched_on < '2024-01-01'
+  ORDER BY price
+  LIMIT 1;
+traps:
+  - sql: |
+      SELECT min(price)
+      FROM products
+      WHERE launched_on >= '2023-01-01' AND launched_on < '2024-01-01';
+    say:
+      zh: 价格找对了，商品名却丢了。`min` 只交出一个值，不记得它来自哪一行；要让名字和价格一起出来，就别聚合，改为排序后取第一行。
+      en: The price is right, but the name is gone. `min` hands back one value and forgets which row it came from; to get the name and the price together, do not aggregate at all, but sort and take the first row.
+  - sql: |
+      SELECT name, price
+      FROM products
+      WHERE launched_on >= '2023-01-01' AND launched_on < '2024-01-01'
+      ORDER BY price DESC
+      LIMIT 1;
+    say:
+      zh: 这是最贵的一件：`DESC` 把价格最高的排在最前。最便宜的要从低到高排。
+      en: That is the dearest one, because `DESC` puts the highest price first. The cheapest needs the lowest first.
+explain:
+  zh: "`WHERE` 先留下 2023 年上市的 8 件商品；`ORDER BY price` 把它们从便宜到贵排好；`LIMIT 1` 只取第一行：Trail Water Bottle，22 美元。没有聚合，`name` 和 `price` 就来自同一行。一种看似可行的改法是删掉 `name`、只留 `min(price)`：不再报错，价格也对，却不知道是哪件商品。"
+  en: "`WHERE` keeps the 8 products launched in 2023, `ORDER BY price` sorts them from cheapest up, and `LIMIT 1` keeps the first: Trail Water Bottle at 22 dollars. With no aggregate, `name` and `price` come from the same row. A fix that looks plausible is to drop `name` and keep `min(price)`: the error goes and the price is right, but you no longer know which product it is."

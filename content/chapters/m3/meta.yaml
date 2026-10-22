@@ -1,0 +1,14 @@
+# Chapter 3 (aggregation): a quiz with one item per objective of the four
+# template-2 lessons, and four challenges that combine them with earlier SQL.
+quiz_intro:
+  zh: |
+    十四道题，每道对应本章的一个学习目标。最好在读本章之前先做一次，学完之后再做一次，隔一周再做更好，两次的差别就是你学到的东西。
+
+    做题途中不会告诉你对错，全部做完后才评分。
+  en: |
+    Fourteen questions, one for each objective of this chapter. Take it once before you read the chapter and again after it, ideally a week later: the difference between the two is what you have learned.
+
+    Nothing is marked while you work; the score comes at the end.
+challenge_intro:
+  zh: 四道综合题，每道都要把本章的几篇讲解和前面学过的 SQL 结合起来用。题目是业务上的问题，先想清楚结果的每一行代表什么，再动手写。
+  en: Four problems, each combining several lessons of this chapter with SQL from earlier ones. They are business questions; decide what each result row stands for before you write.

@@ -1,0 +1,37 @@
+kind: write
+difficulty: 2
+lesson_ref: aggregates-null/core
+objective: aggregates-null/filter-clause
+prompt:
+  zh: |
+    市场部想按国家看顾客的来源。每个国家返回一行，列依次为：
+
+    - `country`
+    - `customers`：该国的顾客数
+    - `referred`：其中由别的顾客推荐来的人数（`referred_by` 不是 NULL）
+    - `since_2024`：其中 2024 年或以后注册的人数
+
+    每个国家都要出现，哪怕后两列是 0。按 `country` 的字母顺序排序。
+  en: |
+    Marketing wants to see where customers come from, by country. Return one row per country, with these columns in order:
+
+    - `country`
+    - `customers`: the number of customers in that country
+    - `referred`: how many of them were referred by another customer (`referred_by` is not NULL)
+    - `since_2024`: how many of them joined in 2024 or later
+
+    Every country must appear, even when the last two columns are 0. Sort by `country`, alphabetically.
+explain:
+  zh: "`customers` 要数该国全部的行，所以不能用 `WHERE` 去掉任何一行：那样 `customers` 会变小，没有符合条件顾客的国家也会整行消失。`FILTER` 只对它所跟的那个聚合筛选：`count(*) FILTER (WHERE joined_on >= '2024-01-01')` 只数 2024 年起注册的，其他列照样看到全部的行。`referred` 也可以写成 `count(referred_by)`，结果相同。"
+  en: "`customers` must count every row of the country, so `WHERE` may not remove any: `customers` would shrink, and countries with no matching customer would vanish altogether. `FILTER` filters only the aggregate it is attached to: `count(*) FILTER (WHERE joined_on >= '2024-01-01')` counts only those who joined from 2024 on, while the other columns still see every row. `referred` can also be written as `count(referred_by)`, with the same result."
+solution: |
+  SELECT country,
+         count(*) AS customers,
+         count(*) FILTER (WHERE referred_by IS NOT NULL) AS referred,
+         count(*) FILTER (WHERE joined_on >= '2024-01-01') AS since_2024
+  FROM customers
+  GROUP BY country
+  ORDER BY country;
+check:
+  order_matters: true
+  column_names: true

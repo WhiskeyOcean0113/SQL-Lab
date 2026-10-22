@@ -315,7 +315,21 @@ describe('chapter sets', () => {
   it('needs 6–12 quiz items', async () => {
     const dir = fixtureWith({ [quizFile('03-write-sorted')]: null })
     expect((await validate(dir)).problems).toEqual(['chapter m1: the quiz has 5 items; it needs 6–12'])
+    const long = fixtureWith({})
+    for (let i = 7; i <= 13; i++) cpSync(join(long, quizFile('01-write-columns')), join(long, quizFile(`${i}-write-columns`)))
+    expect((await validate(long)).problems).toEqual(['chapter m1: the quiz has 13 items; it needs 6–12'])
   }, 30_000)
+
+  it('allows one quiz item per objective when a chapter has more than 12', async () => {
+    // basics gets 10 more objectives: 13 in the chapter, so 13 items are fine and 14 are not.
+    const extra = Array.from({ length: 10 }, (_, i) => `  - { id: extra-${i}, zh: 能写出查询。, en: Write a query. }\n`).join('')
+    const dir = fixtureWith({ 'lessons/basics/meta.yaml': t => t.replace('dataset: tiny', `${extra}dataset: tiny`) })
+    const size = async () => (await validate(dir)).problems.filter(p => p.startsWith('chapter m1: the quiz has'))
+    for (let i = 7; i <= 13; i++) cpSync(join(dir, quizFile('01-write-columns')), join(dir, quizFile(`${i}-write-columns`)))
+    expect(await size()).toEqual([])
+    cpSync(join(dir, quizFile('01-write-columns')), join(dir, quizFile('14-write-columns')))
+    expect(await size()).toEqual(['chapter m1: the quiz has 14 items; it needs 6–13'])
+  }, 60_000)
 
   it('allows words up to the chapter\'s last lesson and nothing from a later chapter', async () => {
     // Move `filtering` (IS, NULL, NOT, DESC) into a chapter of its own, after m1.

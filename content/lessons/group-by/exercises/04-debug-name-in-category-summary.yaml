@@ -1,0 +1,32 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+objective: one-value
+prompt:
+  zh: 这条查询想给每个分类一行，列依次为 `category_id`、商品数 `products` 和最高价 `top_price`；没有分类的商品也算一组。它报错了。修好它，结果仍然要每个分类一行。
+  en: This query should give one row per category, with the columns `category_id`, the number of products `products` and the highest price `top_price`; products without a category count as a group too. It fails. Fix it so that the result is still one row per category.
+hints:
+  - zh: 读一读报错，它说的是哪一列？题目要的三列里有它吗？
+    en: Read the error. Which column is it about, and is that column one of the three the task asks for?
+  - zh: 照报错的提示把这一列加进 `GROUP BY` 也不报错了，但那样每组就成了一件商品。
+    en: Adding that column to `GROUP BY`, as the error suggests, also stops the error, but then every group is a single product.
+starter: |
+  SELECT category_id, name, count(*) AS products, max(price) AS top_price
+  FROM products
+  GROUP BY category_id;
+solution: |
+  SELECT category_id, count(*) AS products, max(price) AS top_price
+  FROM products
+  GROUP BY category_id;
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT category_id, name, count(*) AS products, max(price) AS top_price
+      FROM products
+      GROUP BY category_id, name;
+    say:
+      zh: 报错消失了，可每组现在是“一个分类里的一件商品”：16 行，每行 `products` 都是 1。题目要每个分类一行，`name` 不属于这个粒度，应该从 `SELECT` 里删掉，而不是加进 `GROUP BY`。
+      en: "The error is gone, but each group is now one product within a category: 16 rows, each with `products` 1. The task wants one row per category, and `name` does not belong to that grain: remove it from `SELECT` instead of adding it to `GROUP BY`."
+explain:
+  zh: "`GROUP BY category_id` 让每个分类一组；`count(*)` 和 `max(price)` 是聚合，每组一个值；`category_id` 是分组列。`name` 在一个分类里有好几个值，题目也不需要它，删掉就好。常见的错误修法是把 `name` 加进 `GROUP BY`：查询能跑，但粒度变成了每件商品一行。"
+  en: "`GROUP BY category_id` makes one group per category; `count(*)` and `max(price)` are aggregates with one value per group, and `category_id` is the grouping column. `name` has several values within a category and the task does not ask for it, so it goes. The tempting wrong fix is to add `name` to `GROUP BY`: the query runs, but the grain becomes one row per product."

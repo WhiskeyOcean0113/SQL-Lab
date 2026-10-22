@@ -276,7 +276,8 @@ challenge_intro: { zh: …, en: … }
 - They may use every word introduced up to and including the chapter's last
   lesson, and nothing later; validate runs the same checks as for lesson
   exercises (solutions, traps, debug starters, `verify`).
-- **Quiz**: 6–12 items. Each names the objective it measures, of a lesson in
+- **Quiz**: 6–12 items, or up to one per objective when the chapter's
+  template-2 lessons have more than 12 objectives. Each names the objective it measures, of a lesson in
   this chapter, and together they measure every objective of every template-2
   lesson in the chapter. Hints and traps are optional, since a sitting shows
   none. Write items that are isomorphic to the lessons' exercises, not copies.

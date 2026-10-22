@@ -1,0 +1,94 @@
+kind: write
+difficulty: 3
+lesson_ref: having-vs-where/core
+prompt:
+  zh: |
+    年底盘点。没有分类的那件商品是礼品卡，不是货架上的库存，不算在内。其余每个分类返回一行，列依次为：
+
+    - `category_id`
+    - `products`：该分类的商品数
+    - `sold_out`：其中库存为 0 的商品数
+    - `stock_value`：该分类库存的总价值，即每件商品的价格乘以库存再相加
+
+    只列出库存总价值至少 2500 美元的分类，价值最高的排在前面。
+  en: |
+    Year-end stocktake. The product without a category is a gift card, not stock on a shelf, so leave it out. For each remaining category, return one row with these columns in order:
+
+    - `category_id`
+    - `products`: the category's number of products
+    - `sold_out`: how many of them have a stock of 0
+    - `stock_value`: what the category's stock is worth, each product's price times its stock, added up
+
+    List only the categories whose stock is worth at least 2,500 dollars, most valuable first.
+hints:
+  - zh: 先把每个条件归类：哪个说的是一件商品，哪个说的是整个分类？只对某一列成立的条件又该放在哪里？
+    en: "Sort the conditions first: which is about one product, and which about a whole category? And where does a condition go that applies to one column only?"
+  - zh: 去掉礼品卡是行的条件，在分组之前；“至少 2500 美元”是组的条件，用聚合来写；“库存为 0”只影响 `sold_out` 这一列，不能去掉其他商品。
+    en: "Dropping the gift card is a row condition, applied before grouping; \"at least 2,500 dollars\" is a group condition, written with an aggregate; \"a stock of 0\" affects only `sold_out` and must not remove the other products."
+explain:
+  zh: "`WHERE category_id IS NOT NULL` 在分组前去掉礼品卡，否则它的 49950 美元会让无分类那组排在第一。`GROUP BY category_id` 让每个分类一行。`count(*) FILTER (WHERE stock = 0)` 只在这一列里数售罄的商品，`products` 仍数全部。`sum(price * stock)` 先逐行相乘再相加；`sum(price) * sum(stock)` 是另一个数，大得多。`HAVING sum(price * stock) >= 2500` 说的是整个分类，留下分类 2、3、1；`ORDER BY stock_value DESC` 让价值最高的在前。"
+  en: "`WHERE category_id IS NOT NULL` drops the gift card before grouping; otherwise its 49,950 dollars would put the group without a category first. `GROUP BY category_id` gives one row per category. `count(*) FILTER (WHERE stock = 0)` counts sold-out products in that column only, while `products` still counts them all. `sum(price * stock)` multiplies row by row and then adds; `sum(price) * sum(stock)` is another, much larger number. `HAVING sum(price * stock) >= 2500` is about the whole category and keeps categories 2, 3 and 1; `ORDER BY stock_value DESC` puts the most valuable first."
+solution: |
+  SELECT category_id,
+         count(*) AS products,
+         count(*) FILTER (WHERE stock = 0) AS sold_out,
+         sum(price * stock) AS stock_value
+  FROM products
+  WHERE category_id IS NOT NULL
+  GROUP BY category_id
+  HAVING sum(price * stock) >= 2500
+  ORDER BY stock_value DESC;
+traps:
+  - sql: |
+      SELECT category_id,
+             count(*) AS products,
+             count(*) FILTER (WHERE stock = 0) AS sold_out,
+             sum(price * stock) AS stock_value
+      FROM products
+      WHERE category_id IS NOT NULL AND price * stock >= 2500
+      GROUP BY category_id
+      ORDER BY stock_value DESC;
+    say:
+      zh: "在 `WHERE` 里，`price * stock >= 2500` 检查的是每一件商品，而没有一件商品的库存值到 2500 美元。“至少 2500 美元”说的是整个分类的总和，要在分组之后用聚合判断。"
+      en: "In `WHERE`, `price * stock >= 2500` tests each product, and no single product's stock is worth 2,500 dollars. \"At least 2,500 dollars\" is about a category's total, so test it with an aggregate after grouping."
+  - sql: |
+      SELECT category_id,
+             count(*) AS products,
+             count(*) FILTER (WHERE stock = 0) AS sold_out,
+             sum(price * stock) AS stock_value
+      FROM products
+      GROUP BY category_id
+      HAVING sum(price * stock) >= 2500
+      ORDER BY stock_value DESC;
+    say:
+      zh: 第一行的 `category_id` 是 NULL：礼品卡还在。它没有分类，`GROUP BY` 给它单独成了一组。分组之前先去掉它。
+      en: "The first row's `category_id` is NULL: the gift card is still there. It has no category, so `GROUP BY` gave it a group of its own. Remove it before grouping."
+  - sql: |
+      SELECT category_id,
+             count(*) AS products,
+             count(stock = 0) AS sold_out,
+             sum(price * stock) AS stock_value
+      FROM products
+      WHERE category_id IS NOT NULL
+      GROUP BY category_id
+      HAVING sum(price * stock) >= 2500
+      ORDER BY stock_value DESC;
+    say:
+      zh: "`sold_out` 和 `products` 一样大。`stock = 0` 得到 true 或 false，从不是 NULL，而 `count` 两种都数。只想数满足条件的行，要把条件放进 `FILTER`。"
+      en: "`sold_out` equals `products`. `stock = 0` gives true or false, never NULL, and `count` counts both. To count only the rows that meet the condition, put the condition in a `FILTER`."
+  - sql: |
+      SELECT category_id,
+             count(*) AS products,
+             count(*) FILTER (WHERE stock = 0) AS sold_out,
+             sum(price) * sum(stock) AS stock_value
+      FROM products
+      WHERE category_id IS NOT NULL
+      GROUP BY category_id
+      HAVING sum(price) * sum(stock) >= 2500
+      ORDER BY stock_value DESC;
+    say:
+      zh: "`sum(price) * sum(stock)` 把每件商品的价格乘上了所有商品的库存。先在每一行上算出价格乘库存，再相加。"
+      en: "`sum(price) * sum(stock)` multiplies every product's price by every product's stock. Work out price times stock on each row first, then add."
+check:
+  order_matters: true
+  column_names: true

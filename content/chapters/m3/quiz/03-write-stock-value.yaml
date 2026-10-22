@@ -1,0 +1,29 @@
+kind: write
+difficulty: 3
+lesson_ref: aggregate-functions/variants
+objective: aggregate-functions/aggregate-expressions
+prompt:
+  zh: |
+    仓库想知道图书（`category_id = 1`）的库存值多少钱。
+
+    - `stock_value`：每件商品的价格乘以库存，再全部加起来；
+    - `avg_unit_price`：库存里平均一件的价格，即 `stock_value` 除以库存的总件数，保留两位小数。
+
+    返回一行，列依次为 `stock_value` 和 `avg_unit_price`。
+  en: |
+    The warehouse wants to know what the book stock (`category_id = 1`) is worth.
+
+    - `stock_value`: each product's price times its stock, added up;
+    - `avg_unit_price`: the average price of one unit in stock, that is `stock_value` divided by the total number of units, rounded to two decimal places.
+
+    Return one row with the columns `stock_value` and `avg_unit_price`, in that order.
+explain:
+  zh: "`sum(price * stock)` 先在每一{{term:row}}上算出这件商品库存的价值，再相加，得 2515.60。`sum(stock)` 是总件数 77，两个聚合结果相除再 `round(…, 2)` 得 32.67。看似可以的 `avg(price)` 得 39.16：它让每种商品各算一次，不管库存有多少件，而库存 40 本的便宜书拉低了每件的平均价。"
+  en: "`sum(price * stock)` works out each product's stock value on its own {{term:row}} and then adds them up: 2515.60. `sum(stock)` is the 77 units in total, and dividing one aggregate by the other and rounding with `round(…, 2)` gives 32.67. The tempting `avg(price)` gives 39.16: it counts each product once, however many units it has, while the 40 copies of the cheap book pull the price per unit down."
+solution: |
+  SELECT sum(price * stock) AS stock_value,
+         round(sum(price * stock) / sum(stock), 2) AS avg_unit_price
+  FROM products
+  WHERE category_id = 1;
+check:
+  column_names: true

@@ -1,0 +1,41 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+objective: filter-then-aggregate
+prompt:
+  zh: shop 里最贵的商品卖 399 美元。先预测这条查询返回什么，再运行验证。
+  en: The dearest product in shop costs 399 dollars. Predict what this query returns, then run it to check.
+hints:
+  - zh: 先数一数有几行能通过 `WHERE`。再想：聚合查询返回几行，和进来几行有没有关系？
+    en: First count how many rows get through `WHERE`. Then ask whether the number of rows an aggregate query returns depends on how many went in.
+  - zh: 一个函数数行，一个函数找最大值。零行时，“数到几行”有答案；“最大的是哪个”呢？
+    en: One function counts rows and the other finds the largest value. With zero rows, "how many rows" has an answer. Does "which is largest"?
+query: |
+  SELECT count(*) AS products, max(price) AS top_price
+  FROM products
+  WHERE price > 400;
+choices:
+  - zh: 不返回任何行
+    en: No rows at all
+    why:
+      zh: "`WHERE` 确实一行都没留下，但聚合查询总是交出一行汇总结果，哪怕汇总的是零行。"
+      en: "`WHERE` does leave no rows, but an aggregate query always hands back one summary row, even when it summarised none."
+  - zh: 一行：`products` 是 0，`top_price` 是 NULL
+    en: "One row: `products` is 0 and `top_price` is NULL"
+    why:
+      zh: 对。零行进去，一行出来：数到 0 行，所以是 0；没有价格可比，所以没有最大值。
+      en: "Right. Zero rows in, one row out: zero rows were counted, so 0; no price was there to compare, so no maximum."
+  - zh: 一行：`products` 是 0，`top_price` 也是 0
+    en: "One row: `products` is 0 and `top_price` is 0 too"
+    why:
+      zh: "`count` 是 0 没错，但 `max` 不会编出一个 0：0 的意思是“有一件商品卖 0 美元”。没有值可比时，`max` 返回 NULL。"
+      en: "`count` is 0, but `max` does not invent a 0, which would mean some product costs 0 dollars. With no values to compare, `max` returns NULL."
+  - zh: 报错：没有行可以汇总
+    en: "An error: there is nothing to summarise"
+    why:
+      zh: 汇总零行不是错误。“有几行”有一个明确的答案：0。
+      en: Summarising zero rows is not an error. "How many rows?" has a clear answer, 0.
+answer: 1
+explain:
+  zh: "`WHERE price > 400` 一行都没留下，查询仍然返回一行：`count(*)` 数到 0 行，得 0；`max(price)` 没有一个价格可比，得 NULL。以为“没有匹配就没有结果”，是把聚合查询当成了普通查询：普通查询一行进一行出，聚合查询不管进来多少行，都只出一行。"
+  en: "`WHERE price > 400` leaves no rows, and the query still returns one: `count(*)` counted zero rows and gives 0, while `max(price)` had no price to compare and gives NULL. Expecting no result when nothing matches treats an aggregate query like a plain one. A plain query is one row in, one row out; an aggregate query returns one row however many came in."

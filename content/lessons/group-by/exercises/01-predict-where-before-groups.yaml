@@ -1,0 +1,45 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+objective: form-groups
+prompt:
+  zh: |
+    Electronics（`category_id` 为 2）有 4 件商品，价格分别是 249、129、35 和 399 美元。先想一想再运行：下面这条查询的结果里，`category_id` 为 2 的那一行是什么样子？
+  en: |
+    Electronics (`category_id` 2) has 4 products, priced at 249, 129, 35 and 399 dollars. Think first, then run it: in this query's result, what does the row for `category_id` 2 look like?
+hints:
+  - zh: 在逻辑执行顺序里，`WHERE` 和 `GROUP BY` 谁先发生？
+    en: In the logical processing order, which happens first, `WHERE` or `GROUP BY`?
+  - zh: 先把价格不低于 50 的行划掉，再看剩下的行怎样分组。
+    en: Cross out the rows priced at 50 or more first, then see how the remaining rows group.
+query: |
+  SELECT category_id, count(*) AS products, max(price) AS top_price
+  FROM products
+  WHERE price < 50
+  GROUP BY category_id
+  ORDER BY category_id;
+choices:
+  - zh: products 是 4，top_price 是 399.00
+    en: products 4, top_price 399.00
+    why:
+      zh: 这是没有 `WHERE` 时的结果。`WHERE` 在分组之前运行，价格 249、129、399 的三行在分组前就被去掉了。
+      en: That is the result without `WHERE`. `WHERE` runs before grouping, so the rows priced 249, 129 and 399 are gone before any group is formed.
+  - zh: products 是 1，top_price 是 35.00
+    en: products 1, top_price 35.00
+    why:
+      zh: 对。只有 35 美元的 USB-C Hub 通过了 `WHERE`，这一组只有它一行，`count(*)` 是 1，`max(price)` 就是它的价格。
+      en: Right. Only the USB-C Hub at 35 dollars passes `WHERE`, so the group holds that one row; `count(*)` is 1 and `max(price)` is its price.
+  - zh: products 是 4，top_price 是 35.00
+    en: products 4, top_price 35.00
+    why:
+      zh: "`WHERE` 不只影响 `max`：被它去掉的行根本不进入分组，`count(*)` 也看不到它们。"
+      en: "`WHERE` does not only affect `max`: the rows it removes never enter a group, so `count(*)` does not see them either."
+  - zh: 没有 `category_id` 为 2 的行
+    en: There is no row for `category_id` 2
+    why:
+      zh: "`WHERE` 筛的是行，不是整组。这一组有一行留了下来，所以这一组仍然存在。"
+      en: "`WHERE` filters rows, not whole groups. One row of this category survives, so the group still exists."
+answer: 1
+explain:
+  zh: 逻辑顺序是 `FROM` → `WHERE` → `GROUP BY` → `SELECT`。`WHERE price < 50` 先逐行筛选，Electronics 只剩 USB-C Hub 一行；然后 `GROUP BY category_id` 才分组，这一组只有这一行，所以 `products` 是 1，`top_price` 是 35.00。
+  en: The logical order is `FROM` → `WHERE` → `GROUP BY` → `SELECT`. `WHERE price < 50` filters row by row first, leaving only the USB-C Hub from Electronics. Only then does `GROUP BY category_id` form groups, and this group has that one row, so `products` is 1 and `top_price` is 35.00.

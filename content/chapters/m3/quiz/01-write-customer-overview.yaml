@@ -1,0 +1,23 @@
+kind: write
+difficulty: 1
+lesson_ref: aggregate-functions/core
+objective: aggregate-functions/pick-aggregate
+prompt:
+  zh: |
+    市场部想要一个关于全部顾客的概况：一共有多少位顾客，他们来自多少个不同的国家，最早的一位是哪天注册的？
+
+    返回一行，列依次为 `customers`、`countries` 和 `first_joined`。
+  en: |
+    Marketing wants an overview of all customers: how many there are, how many different countries they come from, and on what day the first of them joined.
+
+    Return one row with the columns `customers`, `countries` and `first_joined`, in that order.
+explain:
+  zh: "`count(*)` 数{{term:row}}，一行就是一位顾客，得 12。`count(DISTINCT country)` 只数不同的国家，得 8；写成 `count(country)` 会得 12，因为它数的是有国家的行。`min(joined_on)` 找最早的日期。三个{{term:aggregate-function}}都汇总整张{{term:table}}，所以结果正好一行。"
+  en: "`count(*)` counts {{term:row|rows}}, and each row is one customer: 12. `count(DISTINCT country)` counts only different countries: 8; `count(country)` would give 12, since it counts the rows that have a country. `min(joined_on)` finds the earliest date. All three {{term:aggregate-function|aggregate functions}} summarise the whole {{term:table}}, so the result is exactly one row."
+solution: |
+  SELECT count(*) AS customers,
+         count(DISTINCT country) AS countries,
+         min(joined_on) AS first_joined
+  FROM customers;
+check:
+  column_names: true

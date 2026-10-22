@@ -1,0 +1,3 @@
+row: { en: row, zh: 行 }
+expression: { en: expression, zh: 表达式 }
+aggregate-function: { en: aggregate function, zh: 聚合函数 }

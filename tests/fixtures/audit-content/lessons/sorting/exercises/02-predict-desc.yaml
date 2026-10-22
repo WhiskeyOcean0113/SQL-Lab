@@ -1,0 +1,20 @@
+# Rule 12, with 01: both predicts ask for a row count.
+kind: predict
+difficulty: 1
+lesson_ref: core
+objective: sort-rows
+prompt:
+  zh: 先想一想再运行：降序排列会改变行数吗？这条查询返回几行？
+  en: "Think first, then run it: does a descending sort change the row count? How many rows come back?"
+hints:
+  - { zh: 排序会不会去掉行？, en: Does sorting remove rows? }
+query: |
+  SELECT name FROM items ORDER BY price DESC;
+choices:
+  - { text: '1', why: { zh: 排序不会合并行。, en: Sorting merges no rows. } }
+  - { text: '5', why: { zh: 对，五件商品都在。, en: Right, all five items are there. } }
+answer: 1
+verify: { rows: 5 }
+explain:
+  zh: 五行，只是顺序反过来。
+  en: Five rows, only in reverse order.

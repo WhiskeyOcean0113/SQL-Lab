@@ -1,0 +1,17 @@
+# Template 2, built to pass every audit rule.
+template: 2
+title: { zh: 分组, en: Grouping }
+summary:
+  zh: 把行分成组，每组算出一个值。
+  en: Put rows into groups and compute one value for each.
+dataset: tiny
+prereqs: [filtering]
+introduces: [GROUP, BY, count(), ROLLUP]
+reference: [ROLLUP]        # no exercise uses ROLLUP, and none has to
+objectives:
+  - id: count-per-group
+    zh: 能写出按一列分组、每组计数的查询。
+    en: Write a query that counts the rows in each group.
+  - id: null-group
+    zh: 能预测空值会不会自成一组。
+    en: Predict whether NULL forms a group of its own.

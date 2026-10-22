@@ -1,0 +1,20 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+objective: count-per-group
+prompt:
+  zh: 这条查询想数出每个分类的商品数，却报错了。改好它。
+  en: This query is meant to count the items in each category but fails. Fix it.
+hints:
+  - { zh: "报错说 `category` 必须出现在哪里？", en: "Where does the error say `category` must appear?" }
+starter: |
+  SELECT category, count(*) AS items FROM items;
+solution: |
+  SELECT category, count(*) AS items FROM items GROUP BY category;
+explain:
+  zh: 没有 `GROUP BY` 时整张表是一组，`category` 有好几个值，无法只输出一个。按 `category` 分组后，每组的分类只有一个。
+  en: Without `GROUP BY` the whole table is one group, and `category` has several values in it. Grouping by `category` leaves one per group.
+traps:
+  - sql: |
+      SELECT count(*) AS items FROM items;
+    say: { zh: 删掉 `category` 能消除报错，但就不再是“每个分类”了。, en: Dropping `category` removes the error, but no longer answers "per category". }

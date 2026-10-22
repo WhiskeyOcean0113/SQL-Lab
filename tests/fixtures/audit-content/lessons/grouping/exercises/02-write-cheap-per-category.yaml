@@ -1,0 +1,22 @@
+kind: write
+difficulty: 2
+lesson_ref: core
+objective: count-per-group
+prompt:
+  zh: 每个分类里有几件价格低于 50 的商品？列依次为 `category` 和 `cheap_items`。
+  en: How many items under 50 are there in each category? The columns are `category` and `cheap_items`.
+hints:
+  - { zh: 先筛行，再分组。, en: Filter first, then group. }
+  - { zh: "条件写在 `WHERE` 里，分组写在 `GROUP BY` 里。", en: "The condition goes in `WHERE`, the grouping in `GROUP BY`." }
+solution: |
+  SELECT category, count(*) AS cheap_items
+  FROM items
+  WHERE price < 50
+  GROUP BY category;
+explain:
+  zh: "`WHERE` 先去掉贵的商品，`GROUP BY category` 再把剩下的按分类分组，`count(*)` 数每组的行。如果不写 `WHERE`，数的就是全部商品。"
+  en: "`WHERE` removes the expensive items first, `GROUP BY category` groups the rest, and `count(*)` counts each group. Without `WHERE` it would count every item."
+traps:
+  - sql: |
+      SELECT category, count(*) AS cheap_items FROM items GROUP BY category;
+    say: { zh: 贵的商品没有被筛掉。, en: The expensive items were not filtered out. }

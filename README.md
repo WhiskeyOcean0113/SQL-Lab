@@ -54,6 +54,7 @@ Then open http://localhost:5173. Your progress is stored in your browser's Index
 | `npm run dev:fixture` | The same interface against a tiny two-lesson test course |
 | `npm test` | Tests for the SQL engine, grader, content pipeline and progress store |
 | `npm run validate` | Checks every content rule: both languages match, every example runs, every reference answer and answer key agrees with the data |
+| `npm run audit` | Reports how well the content teaches: exercises copied from lesson examples, hints that give answers away, SQL taught but never practised. `--strict` fails only on errors in lessons that use template 2 |
 | `npm run typecheck` | TypeScript type check |
 | `npm run build` | Validate, then build the static site into `dist/` |
 

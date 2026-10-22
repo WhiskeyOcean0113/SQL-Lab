@@ -1,0 +1,19 @@
+# The audit test course (tests/audit.test.ts). Each lesson is built to trigger
+# or to pass specific audit rules:
+#
+#   filtering  legacy, chapter 0: breaks many rules, so every finding is a warning
+#   grouping   template 2, chapter 1: passes every rule
+#   sorting    template 2, chapter 1: breaks nearly every rule
+#
+# It is not meant to pass validate: audit runs no lesson or exercise SQL, and
+# the template-2 fields here are ahead of buildContent.
+
+modules:
+  - id: m0
+    title: { zh: 起步, en: Getting started }
+    summary: { zh: 第一章。, en: The first chapter. }
+    lessons: [filtering]
+  - id: m1
+    title: { zh: 汇总与排序, en: Summaries and sorting }
+    summary: { zh: 第二章。, en: The second chapter. }
+    lessons: [grouping, sorting]

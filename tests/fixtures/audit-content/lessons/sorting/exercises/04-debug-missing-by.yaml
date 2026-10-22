@@ -1,0 +1,19 @@
+# Rule 2: the second level of `hints` spells out the fix.
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+objective: sort-rows
+prompt:
+  zh: 这条查询想按价格从低到高排列，却报错了。改好它。
+  en: This query is meant to sort by price, lowest first, but fails. Fix it.
+hints:
+  - { zh: 读一读报错指向哪个词。, en: Read which word the error points at. }
+  - { zh: "要写成 `ORDER BY price ASC`。", en: "It should read `ORDER BY price ASC`." }
+starter: |
+  SELECT name FROM items ORDER price ASC;
+solution: |
+  SELECT name FROM items ORDER BY price ASC;
+check: { order_matters: true }
+explain:
+  zh: 排序的子句是 `ORDER BY`，两个词都要写。
+  en: The sorting clause is `ORDER BY`, both words.

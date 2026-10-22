@@ -118,11 +118,15 @@ function diffTable(g: Grade, lang: Lang): Raw {
     </div>`
 }
 
-/** The body of a failed query verdict: what went wrong, then the evidence. */
-export function failureBody(g: Grade, learnerSql: string, lang: Lang): Raw {
+/**
+ * The body of a failed query verdict: what went wrong, then the evidence.
+ * `say` is the matched trap's explanation (rendered HTML), shown first.
+ */
+export function failureBody(g: Grade, learnerSql: string, lang: Lang, say?: string): Raw {
   if (g.error) return html`<div class="why">${errorBlock(g.error, learnerSql, lang)}</div>`
   const messages = g.issues.filter(i => i.code !== 'rows-differ' || g.issues.length === 1)
-  const why = html`<div class="why">${messages.map(i => html`<p>${raw(issueText(i, lang))}</p>`)}</div>`
+  const trap = say ? html`<div class="trap-say"><p class="trap-label">${raw(t(lang, 'answer.trap'))}</p>${raw(say)}</div>` : ''
+  const why = html`${trap}<div class="why">${messages.map(i => html`<p>${raw(issueText(i, lang))}</p>`)}</div>`
   if (!g.expected || !g.actual) return why
   const structural = g.issues.some(i => i.code === 'column-count' || i.code === 'column-order')
   if (structural || g.issues.some(i => i.code === 'order')) {

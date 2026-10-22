@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import type { CheckSpec } from '../../src/engine/types.ts'
-import { LANGS, type Bi, type Course, type Exercise, type Lang, type Lesson, type Module, type Term, type Titled } from '../../src/content/types.ts'
+import { LANGS, type Bi, type Choice, type Course, type Exercise, type Lang, type Lesson, type Module, type Objective, type Term, type Titled, type Trap } from '../../src/content/types.ts'
 import { renderInlineText, renderSections, renderSnippet, toPlainText, type RenderEnv } from './markdown.ts'
 
 // Reads content/ and produces the Course the browser loads. Structural
@@ -52,6 +52,35 @@ function titled(value: unknown, where: string, glossary: Map<string, Term>, prob
   return { title, titleHtml }
 }
 
+/** Inline Markdown with terms, e.g. a choice or an objective. */
+function inline(value: unknown, where: string, glossary: Map<string, Term>, problems: string[]): Bi {
+  const text = bi(value, where, problems)
+  const out = {} as Bi
+  for (const lang of LANGS) {
+    const env: RenderEnv = { lang, glossary, problems: [] }
+    out[lang] = renderInlineText(text[lang], env)
+    problems.push(...env.problems.map(p => `${where}.${lang}: ${p}`))
+  }
+  return out
+}
+
+const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/** meta.yaml `objectives`: `{ id, zh, en }` items, ids kebab-case and unique. */
+function objectivesOf(value: unknown, where: (s: string) => string, glossary: Map<string, Term>, problems: string[]): Objective[] {
+  if (value === undefined) return []
+  if (!Array.isArray(value)) { problems.push(where('objectives must be a list')); return [] }
+  const seen = new Set<string>()
+  return value.map((o, i) => {
+    const { id: rawId, ...text } = (o ?? {}) as Raw
+    const id = String(rawId ?? '')
+    if (!KEBAB.test(id)) problems.push(where(`objectives[${i}]: id "${id}" is not kebab-case`))
+    else if (seen.has(id)) problems.push(where(`objectives[${i}]: id "${id}" appears twice`))
+    seen.add(id)
+    return { id, text: inline(text, where(`objectives[${i}]`), glossary, problems) }
+  })
+}
+
 export function buildContent(root: string): BuildResult {
   const problems: string[] = []
 
@@ -93,6 +122,9 @@ export function buildContent(root: string): BuildResult {
       }
       const dataset = String(meta.dataset ?? '')
       if (!datasets[dataset]) problems.push(where(`unknown dataset "${dataset}"`))
+      if (meta.template !== undefined && meta.template !== 2) problems.push(where('template must be 2, or left out for a legacy lesson'))
+      const template = meta.template === 2 ? 2 : 1
+      const objectives = objectivesOf(meta.objectives, where, glossaryMap, problems)
 
       const body = {} as Lesson['body']
       sources[id] = {} as Record<Lang, string>
@@ -109,13 +141,16 @@ export function buildContent(root: string): BuildResult {
       const exDir = join(dir, 'exercises')
       const files = existsSync(exDir) ? readdirSync(exDir).filter(f => f.endsWith('.yaml')).sort() : []
       if (!files.length) problems.push(where('has no exercises'))
-      const exercises = files.map(f => buildExercise(id, basename(f, '.yaml'), readYaml(join(exDir, f)), glossaryMap, problems))
+      const exercises = files.map(f => buildExercise(id, template, basename(f, '.yaml'), readYaml(join(exDir, f)), glossaryMap, problems))
 
       lessons[id] = {
         id,
         module: mod.id,
         ...titled(meta.title, where('meta.title'), glossaryMap, problems),
+        template,
         summary: bi(meta.summary, where('meta.summary'), problems),
+        objectives,
+        reference: ((meta.reference as unknown[] | undefined) ?? []).map(String),
         dataset,
         prereqs: ((meta.prereqs as string[] | undefined) ?? []).map(String),
         body,
@@ -127,7 +162,7 @@ export function buildContent(root: string): BuildResult {
   return { course: { modules, lessons, path, glossary, datasets }, problems, sources, vocabulary }
 }
 
-function buildExercise(lesson: string, stem: string, raw: Raw, glossary: Map<string, Term>, problems: string[]): Exercise {
+function buildExercise(lesson: string, template: 1 | 2, stem: string, raw: Raw, glossary: Map<string, Term>, problems: string[]): Exercise {
   const id = `${lesson}/${stem}`
   const where = (s: string) => `exercise ${id}: ${s}`
   const snippet = (v: unknown, field: string): Bi => {
@@ -149,23 +184,52 @@ function buildExercise(lesson: string, stem: string, raw: Raw, glossary: Map<str
     lesson,
     difficulty: difficulty as 1 | 2 | 3,
     prompt: snippet(raw.prompt, 'prompt'),
-    hint: snippet(raw.hint, 'hint'),
+    hints: hintsOf(),
+    explain: raw.explain === undefined ? undefined : snippet(raw.explain, 'explain'),
+    objective: raw.objective === undefined ? undefined : String(raw.objective),
     lessonRef: String(raw.lesson_ref ?? ''),
   }
 
+  /** `hints` (1–2 levels); a legacy `hint` is one level. */
+  function hintsOf(): Bi[] {
+    if (raw.hint !== undefined && raw.hints !== undefined) problems.push(where('has both `hint` and `hints`; keep only `hints`'))
+    if (raw.hints === undefined) {
+      if (raw.hint === undefined) { problems.push(where('missing hints')); return [] }
+      if (template === 2) problems.push(where('template-2 lessons use `hints`, not `hint`'))
+      return [snippet(raw.hint, 'hint')]
+    }
+    if (!Array.isArray(raw.hints)) { problems.push(where('`hints` must be a list')); return [] }
+    if (raw.hints.length < 1 || raw.hints.length > 2) problems.push(where(`hints has ${raw.hints.length} levels; it needs 1 or 2`))
+    return raw.hints.map((h, i) => snippet(h, `hints[${i}]`))
+  }
+
   if (kind === 'predict') {
-    const choices = ((raw.choices as unknown[] | undefined) ?? []).map((c, i) => {
-      const text = bi(c, where(`choices[${i}]`), problems)
-      const out = {} as Bi
-      for (const lang of LANGS) out[lang] = renderInlineText(text[lang], { lang, glossary, problems })
-      return out
-    })
+    if (raw.traps !== undefined) problems.push(where('traps are for write, debug and parsons exercises'))
+    const choices = ((raw.choices as unknown[] | undefined) ?? []).map((c, i) => choiceOf(c, `choices[${i}]`))
     const answer = Number(raw.answer)
     if (choices.length < 2) problems.push(where('predict needs at least two choices'))
     if (!(answer >= 0 && answer < choices.length)) problems.push(where('answer must index into choices'))
     const verify = (raw.verify ?? {}) as Raw
     const verifyRows = verify.rows === undefined ? undefined : Number(verify.rows)
     return { ...base, kind, query: String(raw.query ?? '').trim(), choices, answer, explain: snippet(raw.explain, 'explain'), verifyRows }
+  }
+
+  /** A string, `{ zh, en }`, or either plus `why`: `{ text, why }`, `{ zh, en, why }`. */
+  function choiceOf(c: unknown, field: string): Choice {
+    let text = c
+    let why: unknown
+    if (c !== null && typeof c === 'object' && !Array.isArray(c)) {
+      const { why: w, text: t, ...rest } = c as Raw
+      why = w
+      if (t === undefined) text = rest
+      else {
+        text = typeof t === 'number' ? String(t) : t
+        if (Object.keys(rest).length) problems.push(where(`${field}: use either \`text\` or \`zh\` / \`en\`, not both`))
+      }
+    }
+    const out: Choice = inline(typeof text === 'number' ? String(text) : text, where(field), glossary, problems)
+    if (why !== undefined) out.why = snippet(why, `${field}.why`)
+    return out
   }
 
   if (!['write', 'debug', 'parsons'].includes(kind)) problems.push(where(`unknown kind "${kind}"`))
@@ -195,7 +259,18 @@ function buildExercise(lesson: string, stem: string, raw: Raw, glossary: Map<str
     pieces = seededShuffle([...lines, ...distractors], id)
   }
 
-  return { ...base, kind: kind as 'write' | 'debug' | 'parsons', starter, solution, check, pieces }
+  let traps: Trap[] = []
+  if (raw.traps !== undefined && !Array.isArray(raw.traps)) problems.push(where('`traps` must be a list'))
+  else if (raw.traps) {
+    traps = (raw.traps as unknown[]).map((tr, i) => {
+      const t = (tr ?? {}) as Raw
+      const sql = String(t.sql ?? '').trim()
+      if (!sql) problems.push(where(`traps[${i}]: missing sql`))
+      return { sql, say: snippet(t.say, `traps[${i}].say`) }
+    })
+  }
+
+  return { ...base, kind: kind as 'write' | 'debug' | 'parsons', starter, solution, check, pieces, traps }
 }
 
 /** Deterministic shuffle, so a Parsons problem looks the same on every build. */

@@ -192,11 +192,19 @@ One YAML file per exercise. Kinds, in the order a lesson should use them
 kind: write            # write | debug | parsons | predict
 difficulty: 2          # 1 easy, 2 medium, 3 hard
 lesson_ref: core       # the section to revisit when this goes wrong
+objective: group-rows  # the meta.yaml objective this exercise practises
 prompt: { zh: …, en: … }    # Markdown, terms allowed
-hint:   { zh: …, en: … }
+hints:                 # 1–2 levels, general → specific
+  - { zh: …, en: … }   # where to look; no code from the solution
+  - { zh: …, en: … }   # the principle; may show a small fragment
+explain: { zh: …, en: … }   # why the solution works, clause by clause, and one plausible wrong way
 solution: |            # one shared reference solution
   SELECT …
 starter: …             # optional; required for debug (the broken query)
+traps:                 # optional, write / debug / parsons: known wrong answers
+  - sql: |
+      SELECT …
+    say: { zh: …, en: … }   # what this query gets wrong and what to change; never the full solution
 check:                 # all optional
   order_matters: false # true only when the prompt asks for an order
   column_names: false  # true only when the prompt names the output columns
@@ -209,14 +217,36 @@ check:                 # all optional
                        # judged by behaviour, not by how they were written
 ```
 
+- **Objectives.** A template-2 lesson lists 2–5 in meta.yaml, as
+  `objectives: [{ id, zh, en }]`: ids kebab-case and unique, each text starting
+  with a measurable verb (能写出 / 能预测 / 能解释 / 能找出; Write / Predict /
+  Explain / Find), never “understand”. Optional `reference: [ROLLUP]` lists
+  words from `introduces` taught for recognition only.
+- **Template 2** (`template: 2` in meta.yaml): every exercise has `objective`,
+  `hints` and `explain`, every predict choice has `why`, and each objective has
+  at least two exercises, one of them `write`. Legacy lessons may omit all of
+  these and may keep a single `hint: { zh, en }` (one level); a file never has
+  both `hint` and `hints`. validate checks each field wherever it appears.
+- Hint ladder: Show hint opens level 1, More help the next; after the last,
+  once something has been submitted, Show answer shows `solution` and
+  `explain` and is recorded as a reveal (see State). After a correct answer the
+  verdict shows the solution next to the learner's SQL, then `explain`.
+- `traps`: when a submission is wrong and its result would pass with a trap as
+  the reference, the verdict shows that trap's `say` above the diff. Take them
+  from the lesson's `mistakes`. validate runs each one: it must run and must
+  not pass, and it warns when one gives the same result as an earlier trap,
+  whose `say` would always win.
 - `parsons`: the solution's lines become pieces; add `distractors: [ … ]`.
   Graded by running the assembled query, so any valid order passes.
-- `predict`: no `solution`; instead `query`, `choices` (list of strings or
-  `{ zh, en }`), `answer` (0-based index) and `explain`. When the question is
-  about how many rows come back, add `verify: { rows: N }` so validate checks
-  the answer key against the data. The page always has a Run button for the
-  query, so a prompt may say "run the query below"; one that wants a real
-  prediction says "think first, then run it".
+- `predict`: no `solution`; instead `query`, `choices`, `answer` (0-based
+  index) and `explain`. A choice is a string, `{ zh, en }`, or either plus
+  `why`: `{ text: '5', why: { zh, en } }`, `{ zh, en, why: { zh, en } }`.
+  After any answer the verdict shows the chosen `why`, then `explain`. When the
+  question is about how many rows come back, add `verify: { rows: N }` so
+  validate checks the answer key against the data. In template-2 lessons Run
+  stays locked until an answer is in, so the prompt asks for a prediction
+  ("think first, then run it"); legacy lessons keep Run open, so their prompts
+  may say "run the query below".
 - Prompts must state everything the grader checks: the columns, their order,
   whether rows must be sorted. If the prompt does not say it, do not check it.
 - At least four exercises per lesson, covering at least three kinds.
@@ -298,15 +328,25 @@ exercises depend on it, and validate will catch breakage.
   structured issues (`column-count`, `column-order`, `duplicates`,
   `row-explosion`, `order`, …) plus the indexes of missing and extra rows. The
   UI turns codes into localized messages; never put prose in the engine.
+- `PracticeDb.grade` takes the exercise's trap queries. Only for a wrong
+  answer, it runs each one with the same check and isolation and returns
+  `trap`: the index of the first whose result the learner's matches. The UI
+  looks up its `say`.
 
 ## State
 
 Schema in `src/state/schema.ts`. `attempts` records every submission verbatim
-(SQL, correctness, error, issues, language) and is the source of truth.
+(SQL, correctness, error, issues, language) and is the source of truth. A
+Show answer is an attempt with `revealed = true` and `is_correct = false`: the
+exercise enters the mistake bank and is solved only by a later correct
+submission; reveals do not count as submissions.
 `mistake_bank` is a VIEW: an exercise enters it on its first wrong answer and
 is mastered after `mastery_streak` (setting, default 2) correct answers in a
 row since its latest wrong one. `Progress.exportAll()` dumps everything as JSON
 for a future "analyse my mistakes" workflow, which is not designed yet.
+A schema change bumps `SCHEMA_VERSION` and adds a `MIGRATIONS` step, which
+`Progress.open` runs on an older database before `SCHEMA_SQL`, so a learner's
+history survives; append new view columns at the end (`CREATE OR REPLACE VIEW`).
 
 ## UI
 

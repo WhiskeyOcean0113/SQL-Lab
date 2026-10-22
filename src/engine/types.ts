@@ -90,6 +90,12 @@ export interface Grade {
   /** Indexes into actual.rows that the expected result lacks. */
   extra: number[]
   error?: SqlError
+  /**
+   * Set only on a wrong answer: the index of the first trap (a known wrong
+   * query) whose result the learner's matches, i.e. the learner would pass if
+   * that trap were the reference.
+   */
+  trap?: number
 }
 
 export const MAX_ROWS = 500

@@ -1,7 +1,7 @@
 import { PGlite } from '@electric-sql/pglite'
 import type { Issue } from '../engine/types.ts'
 import type { Course, Lang } from '../content/types.ts'
-import { SCHEMA_SQL, SCHEMA_VERSION } from './schema.ts'
+import { MIGRATIONS, SCHEMA_SQL, SCHEMA_VERSION } from './schema.ts'
 
 export interface AttemptInput {
   exerciseId: string
@@ -12,6 +12,8 @@ export interface AttemptInput {
   isCorrect: boolean
   error?: { message: string; code?: string }
   issues?: Issue[]
+  /** Show answer was used. Recorded with isCorrect false. */
+  revealed?: boolean
 }
 
 export interface MistakeRow {
@@ -22,6 +24,8 @@ export interface MistakeRow {
   correct_streak: number
   mastered: boolean
   note: string | null
+  /** The answer was revealed at least once. */
+  revealed: boolean
 }
 
 export type LessonState = 'done' | 'available'
@@ -40,8 +44,15 @@ export class Progress {
   /** `dataDir` is `idb://sql-lab` in the browser; omit it for an in-memory store in tests. */
   static async open(dataDir?: string): Promise<Progress> {
     const db = await PGlite.create(dataDir ? { dataDir } : {})
-    await db.exec(SCHEMA_SQL)
-    await db.query(`INSERT INTO settings (key, value) VALUES ('schema_version', $1) ON CONFLICT (key) DO UPDATE SET value = $1`, [String(SCHEMA_VERSION)])
+    const from = await storedVersion(db)
+    await db.transaction(async tx => {
+      for (let v = from + 1; from > 0 && v <= SCHEMA_VERSION; v++) {
+        const step = MIGRATIONS[v]
+        if (step) await tx.exec(step)
+      }
+      await tx.exec(SCHEMA_SQL)
+      await tx.query(`INSERT INTO settings (key, value) VALUES ('schema_version', $1) ON CONFLICT (key) DO UPDATE SET value = $1`, [String(SCHEMA_VERSION)])
+    })
     return new Progress(db)
   }
 
@@ -75,9 +86,9 @@ export class Progress {
    */
   async recordAttempt(a: AttemptInput, course: Course): Promise<{ lessonCompleted: boolean }> {
     await this.db.query(
-      `INSERT INTO attempts (exercise_id, lesson_id, kind, lang, submitted, is_correct, error, error_code, issues)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [a.exerciseId, a.lessonId, a.kind, a.lang, a.submitted, a.isCorrect, a.error?.message ?? null, a.error?.code ?? null, a.issues ? JSON.stringify(a.issues) : null],
+      `INSERT INTO attempts (exercise_id, lesson_id, kind, lang, submitted, is_correct, error, error_code, issues, revealed)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [a.exerciseId, a.lessonId, a.kind, a.lang, a.submitted, a.isCorrect, a.error?.message ?? null, a.error?.code ?? null, a.issues ? JSON.stringify(a.issues) : null, Boolean(a.revealed)],
     )
     if (!a.isCorrect) return { lessonCompleted: false }
     const lesson = course.lessons[a.lessonId]
@@ -93,17 +104,17 @@ export class Progress {
     return { lessonCompleted: true }
   }
 
-  /** Per exercise: ever solved, and how many submissions so far. */
+  /** Per exercise: ever solved, and how many submissions so far (reveals are not submissions). */
   async exerciseStatus(): Promise<Map<string, { solved: boolean; attempts: number }>> {
     const r = await this.db.query<{ exercise_id: string; solved: boolean; attempts: number }>(
-      'SELECT exercise_id, bool_or(is_correct) AS solved, count(*)::int AS attempts FROM attempts GROUP BY exercise_id',
+      'SELECT exercise_id, bool_or(is_correct) AS solved, (count(*) FILTER (WHERE NOT revealed))::int AS attempts FROM attempts GROUP BY exercise_id',
     )
     return new Map(r.rows.map(x => [x.exercise_id, { solved: x.solved, attempts: x.attempts }]))
   }
 
   async attemptsFor(exerciseId: string) {
-    const r = await this.db.query<{ submitted: string; is_correct: boolean; created_at: Date }>(
-      'SELECT submitted, is_correct, created_at FROM attempts WHERE exercise_id = $1 ORDER BY id DESC LIMIT 20',
+    const r = await this.db.query<{ submitted: string; is_correct: boolean; revealed: boolean; created_at: Date }>(
+      'SELECT submitted, is_correct, revealed, created_at FROM attempts WHERE exercise_id = $1 ORDER BY id DESC LIMIT 20',
       [exerciseId],
     )
     return r.rows
@@ -135,4 +146,13 @@ export class Progress {
   async close() {
     await this.db.close()
   }
+}
+
+/** The schema version a database was last opened with; 0 for a new, empty one. */
+async function storedVersion(db: PGlite): Promise<number> {
+  const exists = await db.query<{ ok: boolean }>(`SELECT to_regclass('public.settings') IS NOT NULL AS ok`)
+  if (!exists.rows[0]?.ok) return 0
+  const r = await db.query<{ value: string }>(`SELECT value FROM settings WHERE key = 'schema_version'`)
+  // Version 1 always wrote its number; a settings table without one is version 1 too.
+  return Number(r.rows[0]?.value ?? 1)
 }

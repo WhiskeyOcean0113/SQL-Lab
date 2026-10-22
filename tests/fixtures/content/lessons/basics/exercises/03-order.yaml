@@ -1,11 +1,23 @@
 kind: parsons
 difficulty: 2
 lesson_ref: core
-prompt: { zh: 按年龄排序。, en: Sort by age. }
-hint: { zh: ORDER BY 在最后。, en: ORDER BY goes last. }
+objective: order-rows
+prompt: { zh: 按年龄从小到大排序，列出名字。, en: "List the names, youngest first." }
+hints:
+  - { zh: ORDER BY 在最后。, en: ORDER BY goes last. }
+explain:
+  zh: "`SELECT name` 和 `FROM pets` 在前，`ORDER BY age` 放在最后，按年龄从小到大排。`WHERE age` 不是完整的条件，用不上。"
+  en: "`SELECT name` and `FROM pets` come first; `ORDER BY age` goes last and sorts by age, youngest first. `WHERE age` is not a complete condition, so it is not needed."
 solution: |
   SELECT name
   FROM pets
   ORDER BY age
 distractors: [WHERE age]
 check: { order_matters: true }
+traps:
+  - sql: |
+      SELECT name
+      FROM pets
+    say:
+      zh: 少了排序的那一行：没有 ORDER BY，{{term:row}}的顺序没有保证。
+      en: "The sorting line is missing: without ORDER BY, the order of the {{term:row|rows}} is not guaranteed."

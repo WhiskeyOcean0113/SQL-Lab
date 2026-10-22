@@ -70,9 +70,10 @@ export class Engine {
     }
   }
 
-  async grade(dataset: string, learner: string, solution: string, check: CheckSpec): Promise<Grade> {
+  /** Grade a submission; `traps` are known wrong queries, matched only when the answer is wrong. */
+  async grade(dataset: string, learner: string, solution: string, check: CheckSpec, traps: string[] = []): Promise<Grade> {
     try {
-      return await this.send<Grade>({ op: 'grade', dataset, learner, solution, check })
+      return await this.send<Grade>({ op: 'grade', dataset, learner, solution, check, traps })
     } catch (e) {
       if (e instanceof TimeoutError) {
         return { correct: false, issues: [{ code: 'sql-error' }], error: { message: e.message, code: 'SQLLAB_TIMEOUT' }, missing: [], extra: [] }

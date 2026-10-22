@@ -49,9 +49,23 @@ interface ExerciseBase {
   difficulty: 1 | 2 | 3
   /** Rendered HTML in each language. */
   prompt: Bi
-  hint: Bi
+  /** The hint ladder's authored levels, general to specific (a legacy `hint` is one level). */
+  hints: Bi[]
+  /** Why the reference answer is right. Required for predict and in template-2 lessons. */
+  explain?: Bi
+  /** Id of the lesson objective this exercise practises (template 2). */
+  objective?: string
   /** Section id in the lesson that this exercise practises. */
   lessonRef: string
+}
+
+/**
+ * A known wrong query. When a submission's result matches it, the verdict
+ * shows `say` (rendered HTML) above the usual diff.
+ */
+export interface Trap {
+  sql: string
+  say: Bi
 }
 
 export interface QueryExercise extends ExerciseBase {
@@ -62,13 +76,17 @@ export interface QueryExercise extends ExerciseBase {
   check: CheckSpec
   /** For `parsons`: the solution's lines plus distractors, in display order. */
   pieces?: string[]
+  traps: Trap[]
 }
+
+/** A predict option as inline HTML, with why it is right or wrong (template 2). */
+export type Choice = Bi & { why?: Bi }
 
 export interface PredictExercise extends ExerciseBase {
   kind: 'predict'
   /** The query the learner reads. They can run it at any time. */
   query: string
-  choices: Bi[]
+  choices: Choice[]
   answer: number
   /** Why the answer is right, shown after answering. */
   explain: Bi
@@ -78,10 +96,21 @@ export interface PredictExercise extends ExerciseBase {
 
 export type Exercise = QueryExercise | PredictExercise
 
+/** What a learner can do after the lesson; `text` is inline HTML. */
+export interface Objective {
+  id: string
+  text: Bi
+}
+
 export interface Lesson extends Titled {
   id: string
   module: string
+  /** 2 for lessons written to the v2 template; 1 for legacy lessons. */
+  template: 1 | 2
   summary: Bi
+  objectives: Objective[]
+  /** Words from `introduces` taught for recognition only, exempt from practice coverage. */
+  reference: string[]
   dataset: string
   prereqs: string[]
   body: Record<Lang, Section[]>

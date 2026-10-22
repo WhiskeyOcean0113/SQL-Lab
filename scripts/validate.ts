@@ -130,9 +130,32 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       problems.push(where(`needs at least ${MIN_EXERCISES} exercises of ${MIN_KINDS} kinds (has ${lesson.exercises.length} of ${kinds.size})`))
     }
 
+    // Objectives and exercise feedback: checked wherever present, required from template 2 on.
+    const v2 = lesson.template === 2
+    const objectives = new Set(lesson.objectives.map(o => o.id))
+    for (const word of lesson.reference) {
+      if (!vocabulary[id]?.introduces.includes(word)) problems.push(where(`reference lists ${word}, which is not in introduces`))
+    }
+    if (v2) {
+      const n = lesson.objectives.length
+      if (n < 2 || n > 5) problems.push(where(`template 2 needs 2–5 objectives (has ${n})`))
+      for (const o of lesson.objectives) {
+        const practice = lesson.exercises.filter(e => e.objective === o.id)
+        if (practice.length < 2 || !practice.some(e => e.kind === 'write')) {
+          problems.push(where(`objective "${o.id}" needs at least two exercises, one of them write (has ${practice.length}: ${practice.map(e => e.kind).join(', ') || 'none'})`))
+        }
+      }
+    }
+
     for (const ex of lesson.exercises) {
       const at =(s: string) => `exercise ${ex.id}: ${s}`
       if (!enIds.includes(ex.lessonRef)) problems.push(at(`lesson_ref "${ex.lessonRef}" is not a section of ${id}`))
+      if (ex.objective !== undefined && !objectives.has(ex.objective)) problems.push(at(`objective "${ex.objective}" is not an objective of ${id}`))
+      if (v2) {
+        const missing = [ex.objective ? '' : '`objective`', ex.explain ? '' : '`explain`'].filter(Boolean)
+        if (missing.length) problems.push(at(`template 2 needs ${missing.join(' and ')}`))
+        if (ex.kind === 'predict' && ex.choices.some(c => !c.why)) problems.push(at('template 2 needs a `why` on every choice'))
+      }
 
       if (ex.kind === 'predict') {
         const r = await db.run(ex.query, { limit: Infinity })
@@ -176,6 +199,28 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
       if (ex.kind === 'debug') {
         const { expected, actual } = await db.runPair(ex.starter, ex.solution, ex.check)
         if (gradeRuns(expected, actual, ex.check).correct) problems.push(at('the broken starter query already passes'))
+      }
+
+      // A trap is a known wrong answer: it must run, must fail the check, and its result must be one a learner can match.
+      const check = ex.check
+      const trapRuns: Awaited<ReturnType<PracticeDb['run']>>[] = []
+      const sameOutcome = (reference: (typeof trapRuns)[number], learner: (typeof trapRuns)[number]) => {
+        try { return gradeRuns(reference, learner, check).correct } catch { return false }
+      }
+      for (const [i, trap] of ex.traps.entries()) {
+        const label = `trap ${i + 1}`
+        const { expected, actual } = await db.runPair(trap.sql, ex.solution, ex.check)
+        trapRuns.push(actual)
+        if (!actual.ok) problems.push(at(`${label} fails: ${actual.error?.message}`))
+        else if (ex.check.mode === 'result' && !finalResult(actual)) problems.push(at(`${label} returns no result set, so no answer can match it`))
+        else if (gradeRuns(expected, actual, ex.check).correct) problems.push(at(`${label} passes against the solution`))
+        else {
+          const first = trapRuns.findIndex((earlier, j) => j < i && earlier.ok && sameOutcome(earlier, actual))
+          if (first !== -1) warnings.push(at(`${label} gives the same result as trap ${first + 1}, so its \`say\` never shows`))
+        }
+        for (const lang of ['zh', 'en'] as const) {
+          if (squash(plain(trap.say[lang])).includes(squash(ex.solution))) problems.push(at(`${label}.say.${lang} contains the full solution`))
+        }
       }
     }
   }
@@ -253,6 +298,9 @@ export async function validate(root: string): Promise<{ problems: string[]; warn
     }
   }
 }
+
+const squash = (s: string) => s.replace(/\s+/g, ' ').replace(/\s*;\s*$/, '').trim()
+const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&')
 
 /** Postgres's own keyword and function lists, plus the dataset's table and column names. */
 async function lexiconOf(db: PracticeDb): Promise<Lexicon> {

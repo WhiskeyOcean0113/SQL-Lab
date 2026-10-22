@@ -1,0 +1,22 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+objective: order-rows
+prompt: { zh: 列出所有宠物的名字和年龄，按年龄从小到大排序。, en: "List every pet's name and age, youngest first." }
+hints:
+  - { zh: 哪一列决定顺序？, en: Which column decides the order? }
+  - { zh: "排序的子句写在 `FROM` 之后，默认从小到大。", en: "The sorting clause goes after `FROM` and sorts smallest first by default." }
+explain:
+  zh: "`ORDER BY age` 按年龄从小到大排，所以 Mochi（3）在 Tofu（7）前面。Bean 没有年龄，升序时 PostgreSQL 把 NULL 排在最后。按 `name` 排就成了字母顺序。"
+  en: "`ORDER BY age` sorts by age, smallest first, so Mochi (3) comes before Tofu (7). Bean has no age, and in ascending order PostgreSQL puts NULL last. Sorting by `name` would give alphabetical order instead."
+solution: SELECT name, age FROM pets ORDER BY age
+check: { order_matters: true }
+traps:
+  - sql: SELECT name, age FROM pets ORDER BY name
+    say:
+      zh: 这是按名字的字母顺序排的。题目要按年龄排：排序依据应该是 `age` 这一列。
+      en: "This sorts the names alphabetically. The task asks for age order: sort by the `age` column."
+  - sql: SELECT name, age FROM pets
+    say:
+      zh: 没有 ORDER BY，{{term:row}}的顺序没有保证。加上按年龄排序的子句。
+      en: "Without ORDER BY, the order of the {{term:row|rows}} is not guaranteed. Add a clause that sorts by age."

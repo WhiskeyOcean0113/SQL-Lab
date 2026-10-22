@@ -1,7 +1,12 @@
 kind: debug
 difficulty: 2
 lesson_ref: core
+objective: pick-columns
 prompt: { zh: 修好它。, en: Fix it. }
-hint: { zh: 看列名。, en: Check the column name. }
+hints:
+  - { zh: 读一读报错：PostgreSQL 不认识哪个名字？, en: "Read the error: which name does PostgreSQL not recognise?" }
+explain:
+  zh: "这一列叫 `name`。`nam` 不存在，所以 PostgreSQL 报错 42703。把列名写对就是唯一的改动。"
+  en: "The column is called `name`. `nam` does not exist, so PostgreSQL stops with error 42703. Spelling it right is the only change."
 starter: SELECT nam FROM pets
 solution: SELECT name FROM pets

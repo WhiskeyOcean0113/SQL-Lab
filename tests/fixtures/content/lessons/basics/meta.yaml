@@ -1,5 +1,16 @@
 title: { zh: 基础查询, en: Basic queries }
 summary: { zh: 读一张表。, en: Read one table. }
+template: 2
+objectives:
+  - id: pick-columns
+    zh: "能写出从一张{{term:table}}里取出指定{{term:column}}的查询。"
+    en: "Write a query that returns chosen {{term:column|columns}} of a {{term:table}}."
+  - id: order-rows
+    zh: "能写出按某一{{term:column}}排序的查询。"
+    en: "Write a query that sorts {{term:row|rows}} by a {{term:column}}."
+  - id: predict-filter
+    zh: "能预测 WHERE 条件会留下哪些{{term:row}}，并写出这样的条件。"
+    en: "Predict which {{term:row|rows}} a WHERE condition keeps, and write one."
 dataset: tiny
 prereqs: []
 introduces: [SELECT, FROM, WHERE, ORDER, BY]

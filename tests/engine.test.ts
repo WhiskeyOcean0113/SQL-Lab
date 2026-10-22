@@ -160,3 +160,38 @@ describe('grading', () => {
     expect(g.error?.code).toBe('42703')
   })
 })
+
+describe('traps', () => {
+  const solution = "SELECT name FROM customers WHERE country = 'China'"
+  const traps = [
+    'SELECT nme FROM customers', // fails to run, so it can never match
+    "SELECT name FROM customers WHERE country <> 'China'",
+    'SELECT name FROM customers',
+    "SELECT name FROM customers WHERE country != 'China'", // same result as trap 1
+  ]
+
+  it('names the first trap whose result the wrong answer matches', async () => {
+    const g = await db.grade("SELECT name FROM customers WHERE NOT country = 'China'", solution, query, traps)
+    expect(g.correct).toBe(false)
+    expect(g.trap).toBe(1)
+    expect(g.issues.length).toBeGreaterThan(0) // the usual diff is still there
+    expect((await db.grade('SELECT name FROM customers ORDER BY id DESC', solution, query, traps)).trap).toBe(2)
+  })
+
+  it('leaves trap unset for a right answer, an unmatched wrong one and an error', async () => {
+    const right = await db.grade("SELECT name FROM customers WHERE country IN ('China')", solution, query, traps)
+    expect(right).toMatchObject({ correct: true })
+    expect(right.trap).toBeUndefined()
+    expect((await db.grade('SELECT name FROM customers WHERE id < 3', solution, query, traps)).trap).toBeUndefined()
+    expect((await db.grade('SELECT nme FROM customers', solution, query, traps)).trap).toBeUndefined()
+  })
+
+  it('grades traps with the same check, each run from the same data', async () => {
+    const check: CheckSpec = { mode: 'tables', orderMatters: false, columnNames: true, tables: ['products'] }
+    const sol = 'UPDATE products SET stock = stock + 10 WHERE stock < 10'
+    const changeAll = ['DELETE FROM products WHERE stock < 10', 'UPDATE products SET stock = stock + 10']
+    const g = await db.grade('UPDATE products SET stock = 10 + stock', sol, check, changeAll)
+    expect(g.issues[0]).toEqual({ code: 'tables-differ', data: { table: 'products' } })
+    expect(g.trap).toBe(1)
+  })
+})

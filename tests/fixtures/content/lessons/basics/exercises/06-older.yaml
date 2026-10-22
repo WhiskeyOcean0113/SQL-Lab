@@ -1,0 +1,16 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+objective: predict-filter
+prompt: { zh: 列出年龄大于 2 的宠物的名字。, en: List the names of pets older than 2. }
+hints:
+  - { zh: 哪些行该留下？把它写成关于 age 的条件。, en: Which rows should stay? Write that as a condition on age. }
+explain:
+  zh: "`WHERE age > 2` 留下 Mochi 和 Tofu。Bean 的 age 是 NULL，`NULL > 2` 不是 true，不用另加条件它就被排除了。写成 `>=` 会把正好 2 岁的也留下。"
+  en: "`WHERE age > 2` keeps Mochi and Tofu. Bean's age is NULL, and `NULL > 2` is not true, so Bean is left out without any extra condition. `>=` would also keep a pet aged exactly 2."
+solution: SELECT name FROM pets WHERE age > 2
+traps:
+  - sql: SELECT * FROM pets WHERE age > 2
+    say:
+      zh: 筛选的{{term:row}}对了，但 `*` 返回了所有{{term:column}}。题目只要名字。
+      en: "The right {{term:row|rows}} are kept, but `*` returns every {{term:column}}. The task wants only the names."

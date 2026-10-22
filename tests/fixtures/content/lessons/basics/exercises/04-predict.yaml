@@ -1,10 +1,19 @@
 kind: predict
 difficulty: 1
 lesson_ref: why
+objective: predict-filter
 prompt: { zh: 返回几行？, en: How many rows come back? }
-hint: { zh: 数一数。, en: Count them. }
+hints:
+  - { zh: 逐只检查年龄，包括年龄未知的那只。, en: "Check each pet's age against the condition, including the one whose age is unknown." }
 query: SELECT * FROM pets WHERE age > 2
-choices: ['1', '2', '3']
+choices:
+  - text: '1'
+    why: { zh: Mochi 3 岁，Tofu 7 岁，两只都大于 2。, en: "Mochi is 3 and Tofu is 7: both are over 2." }
+  - text: '2'
+    why: { zh: Mochi 和 Tofu 满足条件；Bean 的 age 是 NULL，被排除了。, en: "Mochi and Tofu match; Bean's age is NULL, so it is left out." }
+  - zh: '3'
+    en: '3'
+    why: { zh: "Bean 的 age 是 NULL，`NULL > 2` 不是 true，所以这一行不会返回。", en: "Bean's age is NULL. `NULL > 2` is not true, so that row does not come back." }
 answer: 1
 explain: { zh: "`NULL > 2` 不是 true。", en: "`NULL > 2` is not true." }
 verify: { rows: 2 }

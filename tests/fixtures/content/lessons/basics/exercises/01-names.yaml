@@ -1,6 +1,17 @@
 kind: write
 difficulty: 1
 lesson_ref: example
+objective: pick-columns
 prompt: { zh: 列出所有宠物的名字。, en: List every pet's name. }
-hint: { zh: 用 `SELECT`。, en: Use `SELECT`. }
+hints:
+  - { zh: 哪一列存的是名字？, en: Which column holds the names? }
+  - { zh: "`SELECT` 后面写要取的列，`FROM` 后面写表。", en: "The columns you want go after `SELECT`; the table goes after `FROM`." }
+explain:
+  zh: "`SELECT name` 只取题目要的那一列，`FROM pets` 指明它来自哪张{{term:table}}。写成 `SELECT *` 会把 `id` 和 `age` 也一起返回。"
+  en: "`SELECT name` picks the one column the task asks for, and `FROM pets` names the {{term:table}} it comes from. `SELECT *` would also return `id` and `age`."
 solution: SELECT name FROM pets
+traps:
+  - sql: SELECT * FROM pets
+    say:
+      zh: "`*` 会返回所有{{term:column}}。题目只要名字：在 `SELECT` 后面只写那一列。"
+      en: "`*` returns every {{term:column}}. The task wants only the names: list just that column after `SELECT`."

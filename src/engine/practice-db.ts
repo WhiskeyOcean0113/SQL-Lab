@@ -1,6 +1,7 @@
 import { PGlite } from '@electric-sql/pglite'
+import { gradeRuns } from './grade.ts'
 import { compileTransactions, hasTransactionControl } from './sql-scan.ts'
-import { MAX_ROWS, type Cell, type CheckSpec, type ResultSet, type RunOutcome, type SqlError } from './types.ts'
+import { MAX_ROWS, type Cell, type CheckSpec, type Grade, type ResultSet, type RunOutcome, type SqlError } from './types.ts'
 
 // Date and time types come back as the exact text Postgres prints, so the
 // learner sees `2024-03-01`, not a JavaScript Date in their local time zone.
@@ -124,17 +125,45 @@ export class PracticeDb {
 
   /** Run the learner's SQL and the reference solution the same way, ready for grading. */
   async runPair(learnerSql: string, solutionSql: string, check: CheckSpec) {
-    const snapshot = check.mode === 'tables' ? check.tables : undefined
-    const probe = check.mode === 'probe' ? check.probe : undefined
-    const attempts = check.mode === 'attempts' ? check.attempts : undefined
-    const opts = { limit: Number.POSITIVE_INFINITY, snapshot, probe, attempts }
+    const opts = gradingOptions(check)
     const expected = await this.run(solutionSql, opts)
     const actual = await this.run(learnerSql, opts)
     return { expected, actual }
   }
 
+  /**
+   * Grade a submission. When it is wrong, run each trap (a known wrong query)
+   * the same way and report the first one whose result the learner's matches:
+   * the learner would pass if that trap were the reference.
+   */
+  async grade(learnerSql: string, solutionSql: string, check: CheckSpec, traps: string[] = []): Promise<Grade> {
+    const { expected, actual } = await this.runPair(learnerSql, solutionSql, check)
+    const grade = gradeRuns(expected, actual, check)
+    if (grade.correct || !actual.ok) return grade
+    for (const [i, sql] of traps.entries()) {
+      const trap = await this.run(sql, gradingOptions(check))
+      if (!trap.ok) continue
+      try {
+        if (gradeRuns(trap, actual, check).correct) return { ...grade, trap: i }
+      } catch {
+        // A trap with nothing to compare (no result set, no probe) matches nothing.
+      }
+    }
+    return grade
+  }
+
   async close() {
     await this.db.close()
+  }
+}
+
+/** What a graded run must capture, per check mode. */
+function gradingOptions(check: CheckSpec) {
+  return {
+    limit: Number.POSITIVE_INFINITY,
+    snapshot: check.mode === 'tables' ? check.tables : undefined,
+    probe: check.mode === 'probe' ? check.probe : undefined,
+    attempts: check.mode === 'attempts' ? check.attempts : undefined,
   }
 }
 

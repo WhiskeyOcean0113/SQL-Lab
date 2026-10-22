@@ -1,7 +1,7 @@
 import { highlightSql } from '../../content/highlight.ts'
-import type { Exercise, Lesson, PredictExercise, QueryExercise } from '../../content/types.ts'
+import type { Exercise, Lang, Lesson, PredictExercise, QueryExercise } from '../../content/types.ts'
 import type { Grade } from '../../engine/types.ts'
-import { t, tText } from '../../i18n/index.ts'
+import { t, tText, type StringKey } from '../../i18n/index.ts'
 import { href, notFound, sectionHeading, type Ctx } from '../app.ts'
 import { $, $$, html, mount, raw, type Raw } from '../dom.ts'
 import { createEditor, type EditorHandle } from '../editor.ts'
@@ -38,9 +38,10 @@ export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n:
             <span class="type kind-${ex.kind}">${raw(t(lang, `kind.${ex.kind}`))}</span>
             <div class="prompt">${raw(ex.prompt[lang])}</div>
             <ul class="req"></ul>
-            <div class="hint">
-              <button type="button" class="btn small" data-hint aria-expanded="false">${raw(t(lang, 'ex.hint'))}</button>
-              <div class="hint-body" hidden>${raw(ex.hint[lang])}</div>
+            <div class="hint" data-help>
+              <div class="hint-levels" aria-live="polite">${ex.hints.map(h => html`<div class="hint-body" tabindex="-1" hidden>${raw(h[lang])}</div>`)}</div>
+              <div class="hint-answer" tabindex="-1" aria-live="polite" hidden></div>
+              <div class="hint-actions"></div>
               <p><a class="link" href="${href.lesson(lessonId, ex.lessonRef)}">${raw(t(lang, 'ex.back', { section: sectionHeading(lesson, ex.lessonRef, lang) }))}</a></p>
             </div>
           </div>
@@ -52,21 +53,102 @@ export function renderExercise(root: HTMLElement, ctx: Ctx, lessonId: string, n:
 
   renderSteps(root, ctx, lesson, n)
   renderPager(root, ctx, lesson, n)
-  const hintBtn = $<HTMLButtonElement>('[data-hint]', root)
-  hintBtn.addEventListener('click', () => {
-    const body = $('.hint-body', root)
-    body.hidden = !body.hidden
-    hintBtn.setAttribute('aria-expanded', String(!body.hidden))
-    mount(hintBtn, raw(t(lang, body.hidden ? 'ex.hint' : 'ex.hideHint')))
-  })
 
-  const env: Env = { root, ctx, lesson, ex, n, onProgress }
+  const env = { root, ctx, lesson, ex, n, onProgress, sql: () => '' } as Env
+  env.help = mountHelp(env)
   if (ex.kind === 'predict') renderPredict(env, ex)
   else void renderQuery(env, ex)
   window.scrollTo(0, 0)
 }
 
-interface Env { root: HTMLElement; ctx: Ctx; lesson: Lesson; ex: Exercise; n: number; onProgress: () => void }
+interface Env {
+  root: HTMLElement
+  ctx: Ctx
+  lesson: Lesson
+  ex: Exercise
+  n: number
+  onProgress: () => void
+  /** The learner's current SQL, recorded with a reveal. */
+  sql: () => string
+  help: Help
+}
+
+/* ---------- hint ladder ---------- */
+
+type Rung = 'hint' | 'more' | 'answer'
+const RUNG_LABEL: Record<Rung, StringKey> = { hint: 'ex.hint', more: 'help.more', answer: 'help.answer' }
+
+interface Help {
+  /** The rung a button can open next, if any. */
+  next(): Rung | undefined
+  advance(focus?: boolean): void
+  /** Redraw the button after a submission: Show answer may now be available. */
+  refresh(): void
+}
+
+/**
+ * Show hint opens the first authored level, More help each next one, and
+ * after the last comes Show answer (query exercises, once something has been
+ * submitted): the reference solution and `explain`, recorded as a reveal.
+ */
+function mountHelp(env: Env): Help {
+  const { root, ctx, ex } = env
+  const lang = ctx.lang
+  const box = $('[data-help]', root)
+  let opened = 0
+  let revealed = false
+
+  const step = (): Rung | 'wait' | undefined => {
+    if (opened < ex.hints.length) return opened === 0 ? 'hint' : 'more'
+    if (ex.kind === 'predict' || revealed) return undefined
+    return (ctx.status.get(ex.id)?.attempts ?? 0) > 0 ? 'answer' : 'wait'
+  }
+
+  const drawActions = () => {
+    const s = step()
+    mount($('.hint-actions', box), s === 'wait'
+      ? html`<p class="hint-note">${raw(t(lang, 'help.answerLater'))}</p>`
+      : s ? html`<button type="button" class="btn small" data-help-next>${raw(t(lang, RUNG_LABEL[s]))}</button>` : html``)
+  }
+
+  /** The bottom rung: the reference solution and `explain`, recorded as a wrong attempt. */
+  const reveal = (query: QueryExercise): HTMLElement => {
+    revealed = true
+    const answer = $('.hint-answer', box)
+    mount(answer, html`
+      <h4>${raw(t(lang, 'answer.reference'))}</h4>
+      ${codePane(query.solution)}
+      ${query.explain ? html`<div class="hint-explain">${raw(query.explain[lang])}</div>` : ''}
+      <p class="hint-note">${raw(t(lang, 'help.revealed'))}</p>`)
+    answer.hidden = false
+    void record(env, env.sql(), { correct: false, issues: [] }, true)
+    return answer
+  }
+
+  const advance = (focus = false) => {
+    const s = step()
+    let shown: HTMLElement | undefined
+    if (s === 'hint' || s === 'more') {
+      shown = $$('.hint-body', box)[opened++]
+      if (shown) shown.hidden = false
+    } else if (s === 'answer' && ex.kind !== 'predict') shown = reveal(ex)
+    drawActions()
+    // Keep keyboard focus: on the next rung's button, or on what just opened.
+    if (focus) ($$<HTMLButtonElement>('[data-help-next]', box)[0] ?? shown)?.focus()
+  }
+
+  box.addEventListener('click', e => {
+    if ((e.target as HTMLElement).closest('[data-help-next]')) advance(true)
+  })
+  drawActions()
+  return {
+    next: () => { const s = step(); return s === 'wait' ? undefined : s },
+    advance,
+    refresh: drawActions,
+  }
+}
+
+const codePane = (sql: string) => html`<pre class="code-pane"><code>${raw(highlightSql(sql))}</code></pre>`
 
 function renderSteps(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
   mount($('.steps', root), html`${lesson.exercises.map((e, i) => {
@@ -100,18 +182,32 @@ function renderPager(root: HTMLElement, ctx: Ctx, lesson: Lesson, n: number) {
   mount($('.ex-pager', root), html`${left}<span class="sp"></span>${right}`)
 }
 
-/** Record a submission, refresh progress, and say whether the lesson just completed. */
-async function record(env: Env, submitted: string, grade: Pick<Grade, 'correct' | 'issues' | 'error'>) {
+/**
+ * Record a submission (or, with `revealed`, a Show answer), refresh progress,
+ * and say whether the lesson just completed.
+ */
+async function record(env: Env, submitted: string, grade: Pick<Grade, 'correct' | 'issues' | 'error'>, revealed = false) {
   const { ctx, ex, lesson } = env
   const { lessonCompleted } = await ctx.progress.recordAttempt({
     exerciseId: ex.id, lessonId: lesson.id, kind: ex.kind, lang: ctx.lang, submitted,
-    isCorrect: grade.correct, error: grade.error, issues: grade.issues,
+    isCorrect: grade.correct, error: grade.error, issues: grade.issues, revealed,
   }, ctx.course)
   await ctx.refresh()
   renderSteps(env.root, ctx, lesson, env.n)
   renderPager(env.root, ctx, lesson, env.n)
   env.onProgress()
+  env.help.refresh()
   return { lessonCompleted, attempts: ctx.status.get(ex.id)?.attempts ?? 1 }
+}
+
+/** The learner's SQL next to the reference solution, or one pane when they are the same. */
+function comparison(sql: string, ex: QueryExercise, lang: Lang) {
+  const norm = (s: string) => s.replace(/\s+/g, ' ').replace(/\s*;\s*$/, '').trim()
+  if (norm(sql) === norm(ex.solution)) return html`<div class="compare"><h4>${raw(t(lang, 'answer.same'))}</h4>${codePane(sql)}</div>`
+  return html`<div class="side-by-side">
+    <div><h4>${raw(t(lang, 'answer.yours'))}</h4>${codePane(sql)}</div>
+    <div><h4>${raw(t(lang, 'answer.reference'))}</h4>${codePane(ex.solution)}</div>
+  </div>`
 }
 
 function successFoot(env: Env, lessonCompleted: boolean): Raw {
@@ -200,6 +296,7 @@ async function renderQuery(env: Env, ex: QueryExercise) {
     getSql = () => editor!.get()
     $$<HTMLButtonElement>('[data-restore]', work).forEach(b => b.addEventListener('click', () => { editor!.set(ex.starter); editor!.markError(undefined) }))
   }
+  env.sql = () => getSql()
 
   const out = $('.panel-out', work)
   const verdictEl = $('[data-verdict]', work)
@@ -230,7 +327,7 @@ async function renderQuery(env: Env, ex: QueryExercise) {
     if (needAnswer(sql)) return
     submitBtn.disabled = true
     try {
-      const g = await ctx.engine.grade(lesson.dataset, sql, ex.solution, ex.check)
+      const g = await ctx.engine.grade(lesson.dataset, sql, ex.solution, ex.check, ex.traps.map(tr => tr.sql))
       editor?.markError(g.error?.position)
       mount(out, html``)
       const { lessonCompleted, attempts: count } = await record(env, sql, g)
@@ -238,22 +335,28 @@ async function renderQuery(env: Env, ex: QueryExercise) {
       if (g.correct) {
         mount(verdictEl, html`<div class="verdict">
           <div class="verdict-top"><span class="badge ok">${raw(t(lang, 'verdict.correct'))}</span><span class="sum">${raw(t(lang, 'ex.attempt', { n: count }))}</span></div>
+          ${comparison(sql, ex, lang)}
+          ${ex.explain ? html`<div class="explain">${raw(ex.explain[lang])}</div>` : ''}
           ${successFoot(env, lessonCompleted)}
         </div>`)
       } else {
         const summary = g.expected && g.actual ? t(lang, 'verdict.summary', { expected: g.expected.rows.length, actual: g.actual.rows.length }) : t(lang, 'ex.attempt', { n: count })
+        const say = g.trap === undefined ? undefined : ex.traps[g.trap]?.say[lang]
+        const rung = env.help.next()
         mount(verdictEl, html`<div class="verdict">
           <div class="verdict-top"><span class="badge bad">${raw(t(lang, 'verdict.wrong'))}</span><span class="sum">${raw(summary)}</span></div>
-          ${failureBody(g, sql, lang)}
+          ${failureBody(g, sql, lang, say)}
           <div class="verdict-foot">
-            <button type="button" class="btn" data-hint2>${raw(t(lang, 'ex.hint'))}</button>
+            ${rung ? html`<button type="button" class="btn" data-help-verdict>${raw(t(lang, RUNG_LABEL[rung]))}</button>` : ''}
             <a class="link" href="${href.lesson(lesson.id, ex.lessonRef)}">${raw(t(lang, 'ex.back', { section: sectionHeading(lesson, ex.lessonRef, lang) }))}</a>
           </div>
         </div>`)
-        $$<HTMLButtonElement>('[data-hint2]', verdictEl).forEach(b => b.addEventListener('click', () => {
-          const btn = $<HTMLButtonElement>('[data-hint]', env.root)
-          if ($('.hint-body', env.root).hidden) btn.click()
-          btn.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        $$<HTMLButtonElement>('[data-help-verdict]', verdictEl).forEach(b => b.addEventListener('click', () => {
+          env.help.advance()
+          $('[data-help]', env.root).scrollIntoView({ behavior: 'smooth', block: 'center' })
+          const after = env.help.next()
+          if (after) mount(b, raw(t(lang, RUNG_LABEL[after])))
+          else b.remove()
         }))
       }
       verdictEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -305,6 +408,8 @@ function mountParsons(work: HTMLElement, ex: QueryExercise, lang: Ctx['lang']): 
 function renderPredict(env: Env, ex: PredictExercise) {
   const { root, ctx, lesson } = env
   const lang = ctx.lang
+  // Predict first, then run. Legacy lessons keep Run open: some of their prompts say "run the query below".
+  const locked = lesson.template === 2
   mount($('.req', root), html`<li>${raw(t(lang, 'ex.req.dataset', { name: lesson.dataset }))}</li>`)
   const work = $('.work', root)
   mount(work, html`
@@ -315,9 +420,11 @@ function renderPredict(env: Env, ex: PredictExercise) {
         ${ex.choices.map((c, i) => html`<label class="choice"><input type="radio" name="choice" value="${i}"><span>${raw(c[lang])}</span></label>`)}
       </fieldset>
       <div class="editor-bar">
-        <button type="button" class="btn" data-run>${raw(t(lang, 'ex.run'))}</button>
+        ${locked
+          ? html`<button type="button" class="btn locked" data-run disabled>${raw(t(lang, 'ex.run'))}</button>`
+          : html`<button type="button" class="btn" data-run>${raw(t(lang, 'ex.run'))}</button>`}
         <button type="button" class="btn primary" data-submit>${raw(t(lang, 'ex.submit'))}</button>
-        <span class="sp"></span>
+        <span class="sp" data-run-note>${locked ? raw(t(lang, 'answer.runLocked')) : ''}</span>
       </div>
     </div>
     <div data-verdict aria-live="polite"></div>
@@ -328,6 +435,12 @@ function renderPredict(env: Env, ex: PredictExercise) {
   work.addEventListener('change', () => labels.forEach(l => l.classList.toggle('picked', l.querySelector('input')!.checked)))
 
   const runBtn = $<HTMLButtonElement>('[data-run]', work)
+  const unlockRun = () => {
+    if (!runBtn.classList.contains('locked')) return
+    runBtn.classList.remove('locked')
+    runBtn.disabled = false
+    mount($('[data-run-note]', work), html``)
+  }
   runBtn.addEventListener('click', async () => {
     runBtn.disabled = true
     try {
@@ -343,19 +456,23 @@ function renderPredict(env: Env, ex: PredictExercise) {
       return
     }
     const choice = Number(picked.value)
+    const chosen = ex.choices[choice]!
     const correct = choice === ex.answer
-    const { lessonCompleted } = await record(env, `choice ${choice}: ${ex.choices[choice]!.en.replace(/<[^>]+>/g, '')}`, { correct, issues: [] })
+    const { lessonCompleted } = await record(env, `choice ${choice}: ${chosen.en.replace(/<[^>]+>/g, '')}`, { correct, issues: [] })
     labels.forEach((l, i) => {
       l.classList.remove('picked', 'right', 'wrong')
       if (i === ex.answer && correct) l.classList.add('right')
       else if (i === choice && !correct) l.classList.add('wrong')
     })
+    // Right or wrong: why this choice, then why the answer is what it is.
     mount(verdictEl, html`<div class="verdict">
       <div class="verdict-top"><span class="badge ${correct ? 'ok' : 'bad'}">${raw(t(lang, correct ? 'verdict.correct' : 'verdict.wrong'))}</span></div>
-      ${correct ? html`<div class="explain">${raw(ex.explain[lang])}</div>` : html`<div class="why"><p>${raw(t(lang, 'verdict.predictWrong'))}</p></div>`}
+      ${chosen.why ? html`<div class="choice-why"><p class="cw-label"><span>${raw(t(lang, 'answer.yourChoice'))}</span><span class="cw-choice">${raw(chosen[lang])}</span></p>${raw(chosen.why[lang])}</div>` : ''}
+      <div class="explain">${raw(ex.explain[lang])}</div>
       ${correct ? successFoot(env, lessonCompleted) : html`<div class="verdict-foot">
         <a class="link" href="${href.lesson(lesson.id, ex.lessonRef)}">${raw(t(lang, 'ex.back', { section: sectionHeading(lesson, ex.lessonRef, lang) }))}</a>
       </div>`}
     </div>`)
+    unlockRun()
   })
 }

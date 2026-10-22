@@ -58,7 +58,7 @@ export async function renderBank(root: HTMLElement, ctx: Ctx) {
                 const filled = Math.min(r.correct_streak, streak)
                 return html`<tr data-id="${r.exercise_id}">
                   <td><a class="ex-t" href="${info.url}">${info.text}</a><div class="ex-l">${info.lesson} · ${info.kind}</div></td>
-                  <td>${raw(t(lang, 'bank.times', { n: r.wrong_count }))}</td>
+                  <td>${raw(t(lang, 'bank.times', { n: r.wrong_count }))}${r.revealed ? html`<div class="ex-l">${raw(t(lang, 'help.revealedTag'))}</div>` : ''}</td>
                   <td><span class="streak" aria-label="${filled} / ${streak}">${Array.from({ length: streak }, (_, i) => html`<i class="${i < filled ? 'on' : ''}"></i>`)}</span></td>
                   <td class="note-cell"><button type="button" class="note-btn${r.note ? '' : ' empty'}" data-note>${r.note ?? raw(t(lang, 'bank.addNote'))}</button></td>
                   <td class="actions"><a class="btn small" href="${info.url}">${raw(t(lang, 'bank.retry'))}</a></td>

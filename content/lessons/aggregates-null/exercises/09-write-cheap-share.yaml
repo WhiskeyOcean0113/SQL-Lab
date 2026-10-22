@@ -1,0 +1,45 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+objective: empty-input
+prompt:
+  zh: 对 `order_items` 里的每笔订单，给出 `order_id`、订单总额 `total`（数量乘单价后相加），以及其中来自单价低于 20 美元的明细的金额 `cheap`。没有这种明细的订单，`cheap` 要显示 0 而不是 NULL。按 `order_id` 排序。
+  en: For each order in `order_items`, return `order_id`, the order's value `total` (quantity times unit price, added up), and `cheap`, the part of that value that comes from lines with a unit price under 20 dollars. Orders without such a line must show 0 for `cheap`, not NULL. Sort by `order_id`.
+hints:
+  - zh: 同一组明细上要算两个总和，其中一个只算部分明细。对一笔没有便宜明细的订单，第二个总和会得到什么？
+    en: You need two sums over the same group of lines, one of them over some lines only. What does the second sum give for an order with no cheap line?
+  - zh: 带 `FILTER` 的总和没有输入时是 NULL；`COALESCE(…, 0)` 把它换成 0。
+    en: "A filtered sum with no input is NULL; `COALESCE(…, 0)` turns it into 0."
+solution: |
+  SELECT order_id,
+         sum(quantity * unit_price) AS total,
+         COALESCE(sum(quantity * unit_price) FILTER (WHERE unit_price < 20), 0) AS cheap
+  FROM order_items
+  GROUP BY order_id
+  ORDER BY order_id;
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT order_id,
+             sum(quantity * unit_price) AS total,
+             sum(quantity * unit_price) FILTER (WHERE unit_price < 20) AS cheap
+      FROM order_items
+      GROUP BY order_id
+      ORDER BY order_id;
+    say:
+      zh: 金额都对，但没有便宜明细的订单显示的是 NULL。这些订单里没有一行通过 `FILTER`，总和没有输入；这里“没有”就是 0 美元，把 NULL 换成 0。
+      en: The amounts are right, but orders without a cheap line show NULL. No line in them passes the `FILTER`, so the sum has no input; here none really is 0 dollars, so turn the NULL into 0.
+  - sql: |
+      SELECT order_id,
+             sum(quantity * unit_price) AS total,
+             COALESCE(sum(quantity * unit_price), 0) AS cheap
+      FROM order_items
+      WHERE unit_price < 20
+      GROUP BY order_id
+      ORDER BY order_id;
+    say:
+      zh: "`WHERE unit_price < 20` 在分组之前就删掉了其他明细，于是 `total` 也只剩便宜明细的金额，没有便宜明细的订单整行消失。条件只该作用于 `cheap` 这一列。"
+      en: "`WHERE unit_price < 20` removes the other lines before grouping, so `total` holds only the cheap lines too, and orders without one disappear. The condition belongs to the `cheap` column alone."
+explain:
+  zh: "`GROUP BY order_id` 让每笔订单一组，`ORDER BY order_id` 排序。`sum(quantity * unit_price)` 是全部明细的总额；同一个总和加上 `FILTER (WHERE unit_price < 20)`，就只算便宜的明细。在订单 2、4 这样没有便宜明细的组里，带 `FILTER` 的 `sum` 没有输入，结果是 NULL，`COALESCE(…, 0)` 把它换成 0。把条件写进 `WHERE` 是常见的错：它会同时改变 `total`，还会让整笔订单消失。"
+  en: "`GROUP BY order_id` makes one group per order and `ORDER BY order_id` sorts. `sum(quantity * unit_price)` is the value of all the lines; the same sum with `FILTER (WHERE unit_price < 20)` adds the cheap lines only. In groups such as orders 2 and 4, with no cheap line, the filtered `sum` gets no input and returns NULL, and `COALESCE(…, 0)` turns it into 0. Putting the condition in `WHERE` is the usual mistake: it changes `total` as well and makes whole orders disappear."

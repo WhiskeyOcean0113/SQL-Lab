@@ -1,0 +1,39 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+objective: empty-input
+prompt:
+  zh: 店里想知道哪些分类完全没有 20 美元以下的库存。这条查询应该列出这样的分类，每个一行：`category_id` 和这个分类的总库存，按 `category_id` 排序；没有分类的商品自成一组。它一行都没返回，可 Electronics 明明没有任何 20 美元以下的商品。修好它。
+  en: Shop wants to know which categories have no stock at all priced under 20 dollars. This query should list each such category, one row each, with `category_id` and the category's total stock, sorted by `category_id`; the product without a category forms a group of its own. It returns no rows, yet Electronics sells nothing under 20 dollars. Fix it.
+hints:
+  - zh: 对 Electronics 这一组来说，`HAVING` 里那个带 `FILTER` 的 `sum` 有没有拿到任何值？它的结果是什么？
+    en: For the Electronics group, does the filtered `sum` in `HAVING` get any values at all? What does it return?
+  - zh: 没有输入的 `sum` 是 NULL，而 `NULL = 0` 不是 true。把 NULL 换成 0 再比较，或者改用没有输入时返回 0 的函数。
+    en: A `sum` with no input is NULL, and `NULL = 0` is not true. Turn the NULL into 0 before comparing, or use the function that returns 0 for no input.
+starter: |
+  SELECT category_id, sum(stock) AS stock
+  FROM products
+  GROUP BY category_id
+  HAVING sum(stock) FILTER (WHERE price < 20) = 0
+  ORDER BY category_id;
+solution: |
+  SELECT category_id, sum(stock) AS stock
+  FROM products
+  GROUP BY category_id
+  HAVING COALESCE(sum(stock) FILTER (WHERE price < 20), 0) = 0
+  ORDER BY category_id;
+check: { order_matters: true }
+traps:
+  - sql: |
+      SELECT category_id, sum(stock) AS stock
+      FROM products
+      WHERE price < 20
+      GROUP BY category_id
+      HAVING sum(stock) = 0
+      ORDER BY category_id;
+    say:
+      zh: 没有一个分类留下来。要找的正是没有 20 美元以下商品的分类，而这样的分类要么被 `WHERE` 在分组之前整组删掉，要么它带 `FILTER` 的总和是 NULL，`NULL = 0` 不成立。条件留在 `HAVING` 里，先把空的总和换成 0。
+      en: No category survives. The categories you want are exactly those with nothing under 20 dollars, and they are either removed whole by `WHERE` before grouping, or their filtered sum is NULL, where `NULL = 0` fails. Keep the test in `HAVING` and turn the empty sum into 0 first.
+explain:
+  zh: "`GROUP BY category_id` 让每个分类一组，NULL 分类也是一组；`sum(stock)` 给出总库存。关键在 `HAVING`：在 Electronics、Outdoor 和没有分类的那组里，没有一件商品低于 20 美元，带 `FILTER` 的 `sum` 一个值都拿不到，结果是 NULL。`COALESCE(…, 0)` 把它换成 0，`= 0` 才成立，三组留下。写成 `HAVING count(*) FILTER (WHERE price < 20) = 0` 也对，因为 `count` 没有输入时就是 0。常见的错误改法是把条件挪进 `WHERE`：那样要找的分类在分组之前就整组消失了。"
+  en: "`GROUP BY category_id` makes one group per category, the NULL category included, and `sum(stock)` gives the total stock. The key is `HAVING`: in Electronics, Outdoor and the group without a category no product costs under 20 dollars, so the filtered `sum` gets no values and returns NULL. `COALESCE(…, 0)` turns that into 0, `= 0` holds, and the three groups stay. `HAVING count(*) FILTER (WHERE price < 20) = 0` works too, since `count` of nothing is 0. A common wrong fix moves the condition into `WHERE`: then the categories you want vanish whole before grouping."

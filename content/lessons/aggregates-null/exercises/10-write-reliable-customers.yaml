@@ -1,0 +1,78 @@
+kind: write
+difficulty: 3
+lesson_ref: example
+objective: filter-clause
+prompt:
+  zh: |
+    shop 想给从没取消过订单的顾客做一份发货报告。对每一位这样的顾客，给出：
+
+    - `customer_id`
+    - `orders`：一共下了几单
+    - `waiting`：其中有几单还没有发货时间
+    - `avg_days`：已发货的订单平均几天发出，天数用 `shipped_at::date - ordered_at::date` 计算，保留 1 位小数
+
+    平均天数最少的排在前面；平均天数相同的，按 `customer_id` 排序。
+  en: |
+    Shop wants a shipping report on the customers who have never cancelled an order. For each such customer, return:
+
+    - `customer_id`
+    - `orders`: how many orders they placed
+    - `waiting`: how many of those have no shipping time yet
+    - `avg_days`: the average shipping time of their shipped orders in days, computed as `shipped_at::date - ordered_at::date` and rounded to 1 decimal
+
+    Fastest average first; customers with the same average in order of `customer_id`.
+hints:
+  - zh: 先分清每个条件属于谁：“从没取消过”是对整位顾客的判断，“还没发货”只属于 `waiting` 这一列，“已发货的订单”由 NULL 规则自动处理。
+    en: "First sort out what each condition belongs to: \"never cancelled\" judges a whole customer, \"no shipping time yet\" belongs to the `waiting` column only, and \"their shipped orders\" is taken care of by the NULL rule."
+  - zh: 判断整组的条件写在 `HAVING` 里，它可以用带 `FILTER` 的计数，比如“取消的订单数为 0”；`avg` 本来就会跳过没发货的订单。
+    en: A condition on the whole group goes in `HAVING`, which may use a filtered count, such as "the number of cancelled orders is 0"; `avg` already skips the orders that have not shipped.
+solution: |
+  SELECT customer_id,
+         count(*) AS orders,
+         count(*) FILTER (WHERE shipped_at IS NULL) AS waiting,
+         round(avg(shipped_at::date - ordered_at::date), 1) AS avg_days
+  FROM orders
+  GROUP BY customer_id
+  HAVING count(*) FILTER (WHERE status = 'cancelled') = 0
+  ORDER BY avg_days, customer_id;
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT customer_id,
+             count(*) AS orders,
+             count(*) FILTER (WHERE shipped_at IS NULL) AS waiting,
+             round(avg(shipped_at::date - ordered_at::date), 1) AS avg_days
+      FROM orders
+      WHERE status <> 'cancelled'
+      GROUP BY customer_id
+      ORDER BY avg_days, customer_id;
+    say:
+      zh: 顾客 3 和 4 也出现了。`WHERE` 只是去掉了他们被取消的那一单，顾客本身还在。题目要排除的是取消过订单的顾客，这是对整组的判断，要写在 `HAVING` 里。
+      en: Customers 3 and 4 appear as well. `WHERE` removed only their cancelled orders, not the customers. The task excludes customers who have ever cancelled, which is a judgement on the whole group and belongs in `HAVING`.
+  - sql: |
+      SELECT customer_id,
+             count(*) AS orders,
+             count(*) FILTER (WHERE shipped_at IS NULL) AS waiting,
+             round(avg(COALESCE(shipped_at::date - ordered_at::date, 0)), 1) AS avg_days
+      FROM orders
+      GROUP BY customer_id
+      HAVING count(*) FILTER (WHERE status = 'cancelled') = 0
+      ORDER BY avg_days, customer_id;
+    say:
+      zh: 平均天数偏小了。`COALESCE(…, 0)` 把没发货的订单算成了 0 天，还让它们进了分母。题目只要已发货订单的平均，`avg` 本来就会跳过 NULL。
+      en: The averages are too low. `COALESCE(…, 0)` counts the unshipped orders as 0 days and puts them in the divisor. The task averages shipped orders only, and `avg` skips NULL by itself.
+  - sql: |
+      SELECT customer_id,
+             count(*) AS orders,
+             count(shipped_at IS NULL) AS waiting,
+             round(avg(shipped_at::date - ordered_at::date), 1) AS avg_days
+      FROM orders
+      GROUP BY customer_id
+      HAVING count(*) FILTER (WHERE status = 'cancelled') = 0
+      ORDER BY avg_days, customer_id;
+    say:
+      zh: "`waiting` 和 `orders` 一样了。`shipped_at IS NULL` 的结果是 true 或 false，从不是 NULL，`count` 会把每一行都数进去。按条件计数要用 `FILTER`。"
+      en: "`waiting` equals `orders`. `shipped_at IS NULL` is true or false, never NULL, so `count` counts every row. Counting by a condition takes `FILTER`."
+explain:
+  zh: "`GROUP BY customer_id` 让每位顾客一组。`count(*)` 数全部订单；`count(*) FILTER (WHERE shipped_at IS NULL)` 只数还没发货的；`avg` 跳过没发货订单的 NULL 天数，只对已发货的求平均，`round(…, 1)` 保留一位小数。`HAVING count(*) FILTER (WHERE status = 'cancelled') = 0` 只留下取消数为 0 的顾客，这里用 `count` 而不用 `sum`，正因为它在没有输入时给 0。`ORDER BY avg_days, customer_id` 先按平均天数，再按编号。最容易犯的错是写 `WHERE status <> 'cancelled'`：它删掉的是订单，不是顾客，顾客 3 和 4 会留在结果里。"
+  en: "`GROUP BY customer_id` makes one group per customer. `count(*)` counts all their orders; `count(*) FILTER (WHERE shipped_at IS NULL)` counts only those not shipped yet; `avg` skips the NULL days of the unshipped orders and averages the shipped ones, and `round(…, 1)` keeps one decimal. `HAVING count(*) FILTER (WHERE status = 'cancelled') = 0` keeps only customers with no cancelled order; it uses `count` rather than `sum` precisely because `count` gives 0 for no input. `ORDER BY avg_days, customer_id` sorts by the average, then by id. The easiest mistake is `WHERE status <> 'cancelled'`: it removes orders, not customers, so customers 3 and 4 stay in the result."

@@ -1,0 +1,30 @@
+kind: write
+difficulty: 2
+lesson_ref: variants
+objective: having-aggregate
+prompt:
+  zh: 哪些分类里，最贵的商品也不超过 60 美元？每个分类一行，列依次为 `category_id`、商品件数 `products` 和最便宜那件的价格 `cheapest`。没有分类的商品也算作一组。
+  en: "In which categories does even the most expensive product cost no more than 60 dollars? One row per category, with the columns `category_id`, the number of products `products`, and the price of the cheapest one, `cheapest`. Products without a category count as a group too."
+hints:
+  - zh: “最贵的商品不超过 60 美元”说的是一件商品，还是整个分类？
+    en: Is "the most expensive product costs no more than 60" about one product or about the whole category?
+  - zh: 一组里的最高价可以用 `max(price)` 算出来，它不必出现在 `SELECT` 里。
+    en: "A group's highest price is `max(price)`, and it need not appear in `SELECT`."
+solution: |
+  SELECT category_id, count(*) AS products, min(price) AS cheapest
+  FROM products
+  GROUP BY category_id
+  HAVING max(price) <= 60;
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT category_id, count(*) AS products, min(price) AS cheapest
+      FROM products
+      WHERE price <= 60
+      GROUP BY category_id;
+    say:
+      zh: "`WHERE price <= 60` 只是去掉了贵的商品，每个分类都还剩几件，所以所有分类都出现了，件数也变少了。题目问的是整个分类的最高价，这是一组的汇总，要在分组之后判断。"
+      en: "`WHERE price <= 60` only removes the expensive products; every category keeps a few, so every category appears, with smaller counts. The task asks about the category's highest price, a summary of the group, which is judged after grouping."
+explain:
+  zh: "`GROUP BY category_id` 分出 6 组；`count(*)` 和 `min(price)` 是要显示的两个汇总；`HAVING max(price) <= 60` 用第三个汇总筛组，它不必出现在 `SELECT` 里。分类 2（最高 399）和分类 3（最高 65）被去掉，留下分类 1、4、5 和没有分类的 Gift Card 那一组。容易写错的是 `WHERE price <= 60`：它逐件去掉贵的商品，每个分类都会留下，回答的是另一个问题。"
+  en: "`GROUP BY category_id` makes 6 groups; `count(*)` and `min(price)` are the two summaries to show; `HAVING max(price) <= 60` filters on a third summary, which need not appear in `SELECT`. Category 2 (top price 399) and category 3 (65) are removed, leaving categories 1, 4 and 5 and the Gift Card's group without a category. The easy mistake is `WHERE price <= 60`: it drops expensive products one by one, every category survives, and it answers a different question."

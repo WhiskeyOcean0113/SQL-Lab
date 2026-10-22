@@ -1,0 +1,39 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+objective: pick-aggregate
+prompt:
+  zh: "`order_items` 里单价低于 20 美元的明细有 11 行。这条查询返回的数字是什么意思？先预测，再运行验证。"
+  en: "`order_items` has 11 lines with a unit price under 20 dollars. What does the number this query returns stand for? Predict first, then run it to check."
+hints:
+  - zh: 两件事分开想：哪些行参与汇总？对这些行做的是数行还是加数？
+    en: "Take it in two parts: which rows are summarised, and is the function counting them or adding something up?"
+query: |
+  SELECT sum(quantity) AS units
+  FROM order_items
+  WHERE unit_price < 20;
+choices:
+  - zh: 11：单价低于 20 美元的明细行数
+    en: "11: the number of lines priced under 20 dollars"
+    why:
+      zh: "这是 `count(*)` 的答案。`sum(quantity)` 不数行，而是把每行的件数加起来；一行明细可能买了好几件。"
+      en: "That is what `count(*)` would give. `sum(quantity)` does not count rows; it adds up each row's quantity, and one line can buy several items."
+  - zh: 28：这 11 行明细的件数之和
+    en: "28: the quantities of those 11 lines added up"
+    why:
+      zh: 对。`WHERE` 先留下 11 行，`sum` 再把它们的 `quantity` 加起来。
+      en: Right. `WHERE` keeps the 11 lines first, then `sum` adds up their `quantity`.
+  - zh: 69：所有明细的件数之和
+    en: "69: the quantities of all lines added up"
+    why:
+      zh: "`WHERE` 在汇总之前执行，单价不低于 20 美元的明细根本没有进入 `sum`。"
+      en: "`WHERE` runs before anything is summarised, so lines priced at 20 dollars or more never reach `sum`."
+  - zh: 3：单价低于 20 美元的不同商品个数
+    en: "3: the number of different products priced under 20 dollars"
+    why:
+      zh: "数不同的商品要写 `count(DISTINCT product_id)`。`sum(quantity)` 不关心是哪件商品，只加件数。"
+      en: "Counting different products takes `count(DISTINCT product_id)`. `sum(quantity)` ignores which product a line is for and only adds quantities."
+answer: 1
+explain:
+  zh: "`FROM` 取出 42 行明细，`WHERE unit_price < 20` 逐行判断，留下 11 行；`sum(quantity)` 把这 11 行的件数加起来，2 + 2 + 3 + 1 + 4 + 1 + 5 + 6 + 2 + 1 + 1 = 28。容易选错的是 11：那是在数行，而问题里的函数在加数。"
+  en: "`FROM` produces the 42 lines, `WHERE unit_price < 20` tests each one and keeps 11, and `sum(quantity)` adds up their quantities: 2 + 2 + 3 + 1 + 4 + 1 + 5 + 6 + 2 + 1 + 1 = 28. The tempting wrong answer is 11, which counts rows, while this function adds numbers."

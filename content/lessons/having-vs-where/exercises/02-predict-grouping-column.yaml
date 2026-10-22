@@ -1,0 +1,41 @@
+kind: predict
+difficulty: 2
+lesson_ref: deeper
+objective: where-or-having
+prompt:
+  zh: 这条查询的 `HAVING` 里没有聚合函数。先预测会发生什么，再运行。
+  en: "The `HAVING` in this query contains no aggregate. Predict what happens, then run it."
+hints:
+  - zh: "`status` 是这条查询的分组列。分组之后，一组里的 `status` 有几个值？"
+    en: "`status` is this query's grouping column. After grouping, how many values of `status` does one group have?"
+query: |
+  SELECT status, count(*) AS orders
+  FROM orders
+  GROUP BY status
+  HAVING status IN ('paid', 'pending')
+  ORDER BY status;
+choices:
+  - zh: 两行：paid 和 pending，各 4 笔
+    en: "Two rows: paid and pending, with 4 orders each"
+    why:
+      zh: 分组列在一组里只有一个值，所以 `HAVING` 可以直接比较它。结果和把条件写在 `WHERE` 里一样。
+      en: A grouping column has one value per group, so `HAVING` can compare it directly. The result is the same as with the condition in `WHERE`.
+  - zh: 两行：paid 和 pending，订单数都是 24
+    en: "Two rows: paid and pending, each with 24 orders"
+    why:
+      zh: "`HAVING` 在分组之后才筛，但 `count(*)` 早已在每组里分别算好了。去掉其他组，不会改变留下的组各自数到的数。"
+      en: "`HAVING` filters after grouping, but by then `count(*)` has been computed within each group. Dropping the other groups does not change what the remaining groups counted."
+  - zh: 报错：status 没有放在聚合函数里
+    en: "An error: status is not inside an aggregate"
+    why:
+      zh: "`status` 就是分组列，`HAVING` 和 `SELECT` 一样可以直接用分组列。会报错的是不在 `GROUP BY` 里的普通列。"
+      en: "`status` is the grouping column, and `HAVING`, like `SELECT`, may use grouping columns directly. The error comes from plain columns that are not in `GROUP BY`."
+  - zh: 报错：HAVING 的条件里必须有聚合函数
+    en: "An error: a HAVING condition must contain an aggregate"
+    why:
+      zh: PostgreSQL 不要求这一点。没有聚合的 `HAVING` 能运行，只是这样的条件更适合放在 `WHERE` 里。
+      en: PostgreSQL does not require one. A `HAVING` without aggregates runs; such a condition simply fits better in `WHERE`.
+answer: 0
+explain:
+  zh: "`GROUP BY status` 分出 5 组，每组数出自己的订单数；`HAVING` 再只留下 status 是 paid 或 pending 的两组，各 4 笔。因为 `status` 是分组列，这个条件对整组有确定的答案，所以能运行。但它其实是一个行条件：写成 `WHERE status IN ('paid', 'pending')`，结果一样，而且其他三种状态的订单根本不必参与分组。"
+  en: "`GROUP BY status` makes 5 groups, each counting its own orders; `HAVING` then keeps the two whose status is paid or pending, with 4 orders each. Because `status` is the grouping column, the condition has a definite answer for each group, so it runs. It is really a row condition, though: written as `WHERE status IN ('paid', 'pending')` it gives the same result, and the other three statuses never have to be grouped at all."

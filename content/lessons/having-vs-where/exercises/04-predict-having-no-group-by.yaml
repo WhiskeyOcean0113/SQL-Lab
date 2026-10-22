@@ -1,0 +1,43 @@
+kind: predict
+difficulty: 3
+lesson_ref: deeper
+objective: where-changes-having
+prompt:
+  zh: 这条查询有 `HAVING`，却没有 `GROUP BY`。先预测它返回什么，再运行。
+  en: "This query has a `HAVING` but no `GROUP BY`. Predict what it returns, then run it."
+hints:
+  - zh: 没有 `GROUP BY` 时，留下来的行算作几组？
+    en: "Without `GROUP BY`, how many groups do the remaining rows form?"
+  - zh: 先找出价格超过 100 美元的商品，把它们的库存加起来，再和 50 比较。
+    en: Find the products priced over 100 dollars, add up their stock, then compare the total with 50.
+query: |
+  SELECT sum(stock) AS units, count(*) AS products
+  FROM products
+  WHERE price > 100
+  HAVING sum(stock) > 50;
+choices:
+  - zh: 没有任何行
+    en: No rows at all
+    why:
+      zh: 3 件高价商品组成一组，库存加起来是 23，不大于 50，`HAVING` 把这唯一的一组去掉了。
+      en: The 3 expensive products form one group whose stock adds up to 23, which is not over 50, so `HAVING` removes the only group there is.
+  - zh: 一行：23 和 3
+    en: "One row: 23 and 3"
+    why:
+      zh: 聚合确实先算出了这一行，但 `HAVING` 随后判断 23 不大于 50，把它去掉了。“有聚合就一定有一行”只在没有 `HAVING` 时成立。
+      en: The aggregates do produce this row first, but `HAVING` then finds 23 is not over 50 and removes it. "Aggregates always give one row" holds only when there is no `HAVING`.
+  - zh: 三行：每件高价商品一行
+    en: "Three rows: one per expensive product"
+    why:
+      zh: 没写 `GROUP BY` 不等于不分组。有聚合或 `HAVING` 时，所有留下的行组成一组，最多输出一行。
+      en: No `GROUP BY` does not mean no grouping. With aggregates or `HAVING`, all remaining rows form one group, which yields at most one row.
+  - zh: 报错：没有 GROUP BY 就不能写 HAVING
+    en: "An error: HAVING needs a GROUP BY"
+    why:
+      zh: 标准 SQL 和 PostgreSQL 都允许这样写，整组就是 `WHERE` 留下的全部行。
+      en: Standard SQL and PostgreSQL both allow it; the single group is every row `WHERE` kept.
+answer: 0
+verify: { rows: 0 }
+explain:
+  zh: "`WHERE price > 100` 留下 Noise-Cancelling Headphones（8）、Mechanical Keyboard（15）和 4K Monitor（0）。没有 `GROUP BY`，这 3 行就是一组，聚合得到 `sum(stock)` = 23、`count(*)` = 3。`HAVING sum(stock) > 50` 对这一组为假，于是结果是空的。如果去掉 `WHERE`，整张表的库存总和是 1534，这一行就会留下：`WHERE` 先去掉的行改变了 `HAVING` 看到的总数。"
+  en: "`WHERE price > 100` keeps the Noise-Cancelling Headphones (8), the Mechanical Keyboard (15) and the 4K Monitor (0). With no `GROUP BY` these 3 rows are one group, which aggregates to `sum(stock)` = 23 and `count(*)` = 3. `HAVING sum(stock) > 50` is false for that group, so the result is empty. Without the `WHERE`, the whole table's stock adds up to 1534 and the row would stay: the rows `WHERE` removes first change the total `HAVING` sees."

@@ -1,0 +1,42 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+objective: empty-input
+prompt:
+  zh: 已付款（`paid`）的订单都还没发货，每一笔的 `shipped_at` 都是 NULL。运行之前，先预测这条查询返回什么。
+  en: Paid orders have not shipped yet, so every one of them has a NULL `shipped_at`. Before you run this query, predict what it returns.
+hints:
+  - zh: "`WHERE` 留下了几行？这些行送给两个聚合函数的值是什么？"
+    en: How many rows does `WHERE` keep, and what values do those rows hand to the two aggregates?
+  - zh: 输入全是 NULL，和一行都没有一样：`count` 给 0，其他聚合函数给 NULL。
+    en: "Input that is all NULL behaves like no input at all: `count` gives 0, every other aggregate NULL."
+query: |
+  SELECT count(shipped_at) AS shipped, max(shipped_at) AS last_shipped
+  FROM orders
+  WHERE status = 'paid';
+choices:
+  - zh: "`shipped` 是 4，`last_shipped` 是 NULL"
+    en: "`shipped` is 4, `last_shipped` is NULL"
+    why:
+      zh: "4 是行数，那是 `count(*)` 的答案。`count(shipped_at)` 只数已知的发货时间，这里一个也没有。"
+      en: "4 is the number of rows, which is what `count(*)` would say. `count(shipped_at)` counts only known shipping times, and there are none."
+  - zh: "`shipped` 是 0，`last_shipped` 是 NULL"
+    en: "`shipped` is 0, `last_shipped` is NULL"
+    why:
+      zh: 对。扔掉 NULL 之后什么都不剩：`count` 的答案是 0，`max` 没有值可比，答案是 NULL。
+      en: "Right. Once the NULLs are dropped nothing is left: `count` answers 0, and `max` has nothing to compare, so it answers NULL."
+  - zh: 两列都是 NULL
+    en: Both columns are NULL
+    why:
+      zh: "`count` 是唯一的例外：没有值时它返回 0，从不返回 NULL。"
+      en: "`count` is the one exception: with no values it returns 0, never NULL."
+  - zh: 一行都没有，因为值是 NULL 的行被去掉了
+    en: No row, because the rows with NULL values are removed
+    why:
+      zh: 扔掉 NULL 的是聚合函数，不是 `WHERE`；不带 `GROUP BY` 的聚合查询总是返回一行。
+      en: The aggregates drop the NULLs, not `WHERE`, and an aggregate query without `GROUP BY` always returns one row.
+answer: 1
+verify: { rows: 1 }
+explain:
+  zh: 一行：0 和 NULL。`WHERE` 留下 4 笔已付款的订单，但它们的 `shipped_at` 全是 NULL。两个聚合函数扔掉 NULL 后都没有输入：`count` 回答“零个”，`max` 无从比较，只能给 NULL。以为 `count(shipped_at)` 是 4，就是把它和数行的 `count(*)` 混在了一起。
+  en: "One row: 0 and NULL. `WHERE` keeps the 4 paid orders, but all their `shipped_at` values are NULL. After dropping them, both aggregates have no input: `count` says none, and `max` has nothing to compare, so it can only give NULL. Expecting 4 from `count(shipped_at)` mixes it up with `count(*)`, which counts rows."

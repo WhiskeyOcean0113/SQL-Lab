@@ -1,0 +1,43 @@
+kind: predict
+difficulty: 1
+lesson_ref: core
+objective: having-aggregate
+prompt:
+  zh: 先想一想，再运行：下面这条查询会返回哪些分类？
+  en: "Think first, then run it: which categories does this query return?"
+hints:
+  - zh: "`HAVING` 对每一组只问一次。这个问题问的是组里的哪一个值？"
+    en: "`HAVING` asks its question once per group. Which single value of the group does it ask about?"
+  - zh: 逐组算平均价格。比如分类 1 有三件商品：42.00、55.50 和 19.99。
+    en: "Work out each category's average price. Category 1, for instance, has three products: 42.00, 55.50 and 19.99."
+query: |
+  SELECT category_id
+  FROM products
+  GROUP BY category_id
+  HAVING avg(price) < 40
+  ORDER BY category_id;
+choices:
+  - zh: 分类 1、4、5
+    en: Categories 1, 4 and 5
+    why:
+      zh: 分类 1 的均价约 39.16，分类 4 是 18.75，分类 5 约 39.67，都低于 40。分类 3 虽然有一只 12.50 美元的杯子，均价却约 41.83。
+      en: Category 1 averages about 39.16, category 4 18.75 and category 5 about 39.67, all under 40. Category 3 has a 12.50 mug, but its average is about 41.83.
+  - zh: 分类 1、2、3、4、5
+    en: Categories 1, 2, 3, 4 and 5
+    why:
+      zh: 这是“组里有任意一件低于 40 美元”的答案，像 `WHERE` 那样逐行看了。`HAVING` 比较的是整组的 `avg(price)`，一组只有一个平均值。
+      en: That answers "has any product under 40", judging row by row as `WHERE` would. `HAVING` compares the group's `avg(price)`, and a group has exactly one average.
+  - zh: 只有分类 4
+    en: Only category 4
+    why:
+      zh: 这是“组里每一件都低于 40 美元”的答案。分类 4 确实如此，但条件问的是平均值，分类 1 和 5 的均价也低于 40。
+      en: That answers "every product is under 40". Category 4 qualifies, but the condition asks about the average, and categories 1 and 5 average under 40 too.
+  - zh: 报错：avg(price) 没有出现在 SELECT 里
+    en: "An error: avg(price) is not in the SELECT list"
+    why:
+      zh: "`HAVING` 可以用任何聚合函数，不要求它也出现在 `SELECT` 里。"
+      en: "`HAVING` may use any aggregate; it does not have to appear in `SELECT` as well."
+answer: 0
+explain:
+  zh: "`GROUP BY` 先把 16 件商品分成 6 组，每组算出一个 `avg(price)`，`HAVING` 再一组一组地判断它是否低于 40。留下分类 1、4、5；分类 2（203）、分类 3（约 41.83）和没有分类的那组（50）被去掉。容易错的地方是把它读成对每件商品的条件：那样就成了“有便宜商品的分类”，答案完全不同。"
+  en: "`GROUP BY` first splits the 16 products into 6 groups and computes one `avg(price)` per group; `HAVING` then judges each group by whether that average is under 40. Categories 1, 4 and 5 remain; category 2 (203), category 3 (about 41.83) and the group without a category (50) are removed. The tempting misreading treats it as a condition on each product, which would give \"categories with some cheap product\", a quite different answer."

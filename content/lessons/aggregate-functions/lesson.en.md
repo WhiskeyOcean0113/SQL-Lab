@@ -1,102 +1,161 @@
 ## Why you need it {#why}
 
-"How many products does shop sell? What is the average price? What do the cheapest and the most expensive cost?"
+"How many items has shop sold altogether?"
 
-Every query so far has been one row in, one row out: `products` has 16 rows, so the result has at most 16, each describing one product. These questions are not about any one product, though, but about **all of them together**. Each answer is a single row.
+The answer is in `order_items`: each row is one product in one order, and `quantity` says how many of it were bought. With the SQL you know so far, though, all you can do is list those rows:
+
+```sql run
+SELECT order_id, product_id, quantity
+FROM order_items;
+```
+
+Forty-two rows, one number each, and adding them up is left to you. Every query so far has been one row in, one row out: `WHERE` can drop rows and a function such as `round()` can rewrite each row's values, but nothing yet turns many rows into one answer.
 
 ## Core idea {#core}
 
-An {{term:aggregate-function}} summarises the values of many rows as one value. The five you will use most:
+That is what an {{term:aggregate-function}} does: it reads many rows, takes one value from each, and hands back a single value. `sum(quantity)` adds up `quantity` across all the rows, `count(*)` counts the rows, and `avg`, `min` and `max` give the average, the smallest and the largest value.
 
-| Function | Does |
-|---|---|
-| `count(*)` | counts the rows |
-| `sum(x)` | adds up |
-| `avg(x)` | averages |
-| `min(x)` / `max(x)` | smallest / largest value |
+Set beside the functions of chapter 2, the difference is plain. `round(price)` works once per row: 16 rows in, 16 rows out. `max(price)` compares all 16 prices together and returns one value. The first is a calculation per row; the second is {{term:aggregation}}.
 
-```sql run
-SELECT count(*) AS products, sum(stock) AS units,
-       avg(price) AS avg_price, min(price) AS cheapest, max(price) AS dearest
-FROM products;
+Here, step by step, is how the three lines of order 3 collapse into one row:
+
+```steps
+- sql: |
+    SELECT order_id, product_id, quantity, unit_price
+    FROM order_items
+    WHERE order_id = 3;
+  say: "`FROM` produces every order line and `WHERE` keeps the three that belong to order 3. These three rows are the input to be summarised."
+- sql: |
+    SELECT quantity, unit_price, quantity * unit_price AS line_total
+    FROM order_items
+    WHERE order_id = 3;
+  say: "The {{term:expression}} `quantity * unit_price` is worked out once per row, giving each line's value. This is still per-row work: three rows in, three rows out."
+- sql: |
+    SELECT sum(quantity * unit_price) AS order_total
+    FROM order_items
+    WHERE order_id = 3;
+  say: "`sum` adds the three values 39.98, 28.50 and 28.00 into 96.48. Three rows in, one row out."
+- sql: |
+    SELECT count(*) AS lines, sum(quantity) AS units,
+           sum(quantity * unit_price) AS order_total, max(unit_price) AS dearest
+    FROM order_items
+    WHERE order_id = 3;
+  say: "One `SELECT` can hold several {{term:aggregate-function|aggregate functions}}. They all summarise the same rows, so there is still one row, with one summary value per column."
 ```
 
-Sixteen rows in, one row out. This is {{term:aggregation}}: no longer one result per row, but one result per group of rows. Without `GROUP BY` (the next lesson), the whole table is one group.
+In the {{term:logical-order}}: `FROM` produces rows, `WHERE` tests them one at a time and drops the ones you do not want, the rows that are left go to the aggregate functions together, and `SELECT` outputs the summaries. `WHERE` runs before anything is summarised, so it decides which rows get summarised.
 
-In the {{term:logical-order}}, `FROM` produces rows, `WHERE` removes the ones you do not want, only the remaining rows reach the aggregate functions, and `SELECT` outputs the totals. So `WHERE` decides which rows get summarised.
+Because there is only one row, one rule follows: **after aggregating, `SELECT` can hold only summary values**, or expressions computed from them. Suppose you added `product_id` to the last step. The three lines have three different `product_id` values and the result has one row, so which one goes in it? Rather than pick one for you at random, the database reports an error.
+
+With nothing at all to summarise, the result is still one row. Order 24 has no lines:
+
+```sql run
+SELECT count(*) AS lines, sum(quantity) AS units
+FROM order_items
+WHERE order_id = 24;
+```
+
+`count(*)` counted zero rows and returns 0. `sum` had no value to add and returns NULL, which means "there is no answer", not "the answer is 0". `avg`, `min` and `max` behave the same way: with no values to compare, there is no largest one.
+
+```check
+query: |
+  SELECT count(*) AS lines, sum(quantity) AS units
+  FROM order_items
+  WHERE product_id = 8;
+question: Ceramic Mug (product 8) appears on 4 order lines, with quantities 2, 4, 6 and 1. What does this query return?
+choices:
+  - 4 rows, one per `quantity`
+  - "1 row: `lines` is 4 and `units` is 13"
+  - "1 row: `lines` is 13 and `units` is 13"
+  - "1 row: `lines` is 4 and `units` is 4"
+answer: 1
+explain: Both aggregates summarise the same 4 rows. `count(*)` counts them, giving 4; `sum(quantity)` adds the quantities, 2 + 4 + 6 + 1 = 13. The result is a single row.
+verify: { rows: 1 }
+```
 
 ## Syntax {#syntax}
+
+In this lesson's queries, every item in the {{term:select-list}} is an aggregate expression:
+
+```syntax
+SELECT aggregate_expression [ AS output_name ] [, …]
+FROM table_name
+[ WHERE condition ]
+```
+
+An `aggregate_expression` is an aggregate call, or an expression built from aggregate calls and constants. The aggregates in this lesson:
 
 ```syntax
 count(*)
 count([ DISTINCT ] expression)
-sum([ DISTINCT ] expression)
-avg([ DISTINCT ] expression)
+sum(expression)
+avg(expression)
 min(expression)
 max(expression)
+bool_and(expression)
+bool_or(expression)
 ```
 
-| Part | What goes there | Notes |
+| Part | What goes there | Optional? |
 |---|---|---|
-| `*` | Only inside `count` | Counts rows, looking at no column's value |
-| `expression` | A column or an expression such as `quantity * unit_price` | Computed for each row; the values are then summarised |
-| `DISTINCT` | Optional | Removes duplicate values before summarising |
+| `aggregate_expression` | For example `count(*)`, `round(avg(price), 2)`, `max(price) - min(price)` | No; at least one |
+| `*` | Only inside `count`; it means "count rows" and looks at no column | Not in `count(*)` |
+| `expression` | A column, or anything that gives one value per row, such as `quantity * unit_price` | No |
+| `DISTINCT` | Removes duplicate values before counting | Yes; without it every row's value counts |
+| `condition` | A condition that can be decided from one row; no aggregates | Yes; without it the whole table is summarised |
 
-| Function | Works on | Result type |
+| Function | Returns | Works on |
 |---|---|---|
-| `count` | Any type | `bigint` |
-| `sum`, `avg` | Numbers | Summing integers gives `bigint`; `avg`, and summing `numeric`, give `numeric` |
-| `min`, `max` | Anything that can be ordered: numbers, text, dates, timestamps | The same as the input |
+| `count` | The number of rows, or of values | Any type |
+| `sum` / `avg` | The total / the average | Numbers |
+| `min` / `max` | The smallest / largest value | Anything with an order: numbers, text, dates, timestamps |
+| `bool_and` / `bool_or` | Whether every row / at least one row is true | {{Term:boolean|Boolean values}}, usually a condition such as `stock > 0` |
 
-**An aggregate call is itself an expression.** So it can sit inside a larger one: `round(avg(price), 2)` and `max(price) - min(price)` are both fine. But it may appear only in the `SELECT` list, `HAVING` and `ORDER BY`; not in `WHERE`, and not inside another aggregate. The logical order explains both: when `WHERE` runs, no summarising has started yet.
+An aggregate call is itself an expression, and that cuts both ways. Its argument can be an expression: `sum(quantity * unit_price)` works out each line's value first and then adds them. And its result can sit inside a larger expression: `round(avg(price), 2)`, `max(price) - min(price)`. It belongs in the {{term:select-list}}, not in `WHERE`, because when `WHERE` runs nothing has been summarised yet.
 
 Some expressions, read against the shapes:
 
-- `count(*)`: count rows.
+- `count(*)`: count rows, looking at no column.
 - `count(DISTINCT customer_id)`: with `DISTINCT`, count how many different customer ids there are.
-- `sum(quantity * unit_price)`: the `expression` is a multiplication, worked out for each row before the total is taken.
+- `bool_or(stock = 0)`: the `expression` is a condition, true or false in each row; if any row is true, so is the result.
 
 ## Example {#example}
 
-Task: how many orders came in during June 2024, and when were the first and the last placed?
+Task: in the second quarter of 2024 (April to June), how many orders came in, from how many different customers, and when were the first and the last placed?
 
-1. **Mark out the rows to summarise.** June's orders, with chapter 1's half-open range: `ordered_at >= '2024-06-01' AND ordered_at < '2024-07-01'`.
-2. **Pick a function for each question.** "How many" is `count(*)`; "the first" is the earliest time, `min(ordered_at)`; "the last" is `max(ordered_at)`.
-3. **Name each result.** An aggregate's column is named after the function by default; an alias reads better.
+1. **Mark out the rows to summarise.** Second-quarter orders, with chapter 1's half-open range: `ordered_at >= '2024-04-01' AND ordered_at < '2024-07-01'`. The condition looks at one row at a time, so it goes in `WHERE`.
+2. **Pick a function for each question.** "How many orders" counts rows: `count(*)`. "How many customers" must not count a customer twice: `count(DISTINCT customer_id)`. "The first" is the earliest time, `min(ordered_at)`, and "the last" is `max(ordered_at)`.
+3. **Name each result.** Without an {{term:alias}}, a column is named after its function, and two of the four would both be called `count`.
 
 ```sql run
 SELECT count(*) AS orders,
+       count(DISTINCT customer_id) AS customers,
        min(ordered_at) AS first_order,
        max(ordered_at) AS last_order
 FROM orders
-WHERE ordered_at >= '2024-06-01' AND ordered_at < '2024-07-01';
+WHERE ordered_at >= '2024-04-01' AND ordered_at < '2024-07-01';
 ```
 
-Seven orders, the first on 4 June and the last on 28 June. `min` and `max` are not limited to numbers: times, dates and text all have an order.
+Fourteen orders from 10 customers, so some customers ordered more than once in those three months. `min` and `max` are not limited to numbers: timestamps compare by time and text alphabetically.
+
+```check
+query: |
+  SELECT count(*) AS orders, count(DISTINCT customer_id) AS customers
+  FROM orders
+  WHERE status = 'delivered';
+question: Without looking at the data, which statement holds whatever the data is?
+choices:
+  - "`customers` is never larger than `orders`"
+  - "`customers` always equals `orders`"
+  - "`customers` can be larger than `orders`"
+  - Both columns are 1, because an aggregate query returns one row
+answer: 0
+explain: Each order has exactly one customer, and `DISTINCT` can only remove repeated ids, so the number of customers equals the number of orders or falls below it. Here it is 11 orders from 10 customers; one customer received two. The result is indeed one row, but the values in it are counts, not 1.
+```
 
 ## Variations {#variants}
 
-**Summarising an expression.** An aggregate's argument can be any expression. Each row of `order_items` is worth quantity times unit price, and adding them all gives total sales:
-
-```sql run
-SELECT sum(quantity * unit_price) AS revenue,
-       count(*) AS order_lines,
-       sum(quantity) AS units
-FROM order_items;
-```
-
-Note the difference between `count(*)` and `sum(quantity)`: 42 is the number of order lines, 69 the number of items sold. One line can buy several.
-
-**Counting distinct values: `count(DISTINCT x)`.** How many customers have ordered?
-
-```sql run
-SELECT count(*) AS orders, count(DISTINCT customer_id) AS customers
-FROM orders;
-```
-
-Twenty-four orders, from 10 different customers.
-
-**Calculating with aggregate results.** The price range is the highest price minus the lowest, and the average is rounded to two places:
+**Calculating with the results.** The price range is the top price minus the bottom one, and the average is rounded to two places:
 
 ```sql run
 SELECT max(price) - min(price) AS price_range,
@@ -104,63 +163,57 @@ SELECT max(price) - min(price) AS price_range,
 FROM products;
 ```
 
-**Summarising true and false: `bool_or` and `bool_and`.** "Is anything sold out?" "Does every product cost more than 5 dollars?":
+`max(price)` and `min(price)` each collapse to one value before the subtraction happens, and `round` works on the single value `avg` hands back.
+
+**Summarising true and false: `bool_or` and `bool_and`.** "Does anything cost more than 300 dollars?" "Is every product in stock?"
 
 ```sql run
-SELECT bool_or(stock = 0) AS any_sold_out,
-       bool_and(price > 5) AS all_over_5
+SELECT bool_or(price > 300) AS any_over_300,
+       bool_and(stock > 0) AS all_in_stock
 FROM products;
 ```
 
-`bool_or` is true when at least one row is true; `bool_and` needs every row to be true. Standard SQL calls `bool_and` `every`, and PostgreSQL accepts both names.
+4K Monitor settles both on its own. It costs 399 dollars, so `bool_or` is true; it has no stock, so `bool_and` is false. `bool_or` answers "is it true of at least one row?", and `bool_and` "is it true of every row?".
 
-**Smallest and largest text and dates.** Text compares alphabetically, dates chronologically:
+**Calculate, then summarise, or the other way round?** The same quantities and prices give very different answers depending on the order:
 
 ```sql run
-SELECT min(name) AS first_name, max(name) AS last_name,
-       min(joined_on) AS earliest, max(joined_on) AS latest
-FROM customers;
+SELECT sum(quantity * unit_price) AS order_total,
+       sum(quantity) * sum(unit_price) AS not_a_total
+FROM order_items
+WHERE order_id = 3;
 ```
+
+The first column multiplies within each row and then adds: 96.48, the real value of order 3. The second adds the quantities into 6 and the prices into 57.49 and then multiplies, giving 344.94, as if every item had cost the three prices put together. It means nothing. When the columns hold no NULLs, addition splits up, so `sum(a + b)` equals `sum(a) + sum(b)`; multiplication does not.
 
 ## Going deeper {#deeper}
 
-**Result types.** `count` returns `bigint`; `sum` of integers also returns `bigint`, so the total cannot overflow; `avg` returns an exact `numeric` with many decimal places, usually worth a `round`:
+**Result types.** `count` returns `bigint`; so does `sum` over integers, so no total is too large to hold. `avg` returns an exact `numeric` with a long tail of decimals, which usually wants a `round`:
 
 ```sql run
-SELECT avg(stock) AS raw_avg, round(avg(stock), 1) AS rounded
+SELECT avg(quantity) AS raw_avg, round(avg(quantity), 2) AS rounded
+FROM order_items;
+```
+
+`quantity` is an integer, yet `avg` does no {{term:integer-division}}: 1.64 does not become 1. Writing `sum(quantity) / count(*)` yourself would give 1, because that divides one integer by another.
+
+**Aggregates do not nest.** Once `avg` has turned all the rows into one value, `max` has no rows left to compare:
+
+```sql run error
+SELECT max(avg(price))
 FROM products;
 ```
 
-Unlike chapter 2's integer division, `avg` keeps the fraction.
-
-**No rows to summarise still gives one row.** No product costs more than 1000 dollars, yet this query still returns a row, with a `count` of 0:
-
-```sql run
-SELECT count(*) AS products
-FROM products
-WHERE price > 1000;
-```
-
-With an aggregate and no `GROUP BY`, the result is **always exactly one row**. In that case `sum`, `avg`, `min` and `max` return NULL, which the last lesson of this chapter covers.
-
-**`count(1)` is the same as `count(*)`.** Many people write `count(1)` believing it beats `count(*)`. In PostgreSQL the results are identical and the speed difference is negligible. `count(*)` is the standard form and says most plainly what it does: count rows.
-
-**`DISTINCT` works in `sum` and `avg` too, but is rarely what you want.** `sum(DISTINCT quantity)` is 21, while `sum(quantity)` is 69: the first removes repeated quantities before adding, so two lines that each bought 2 count once. Unless a question really asks for the sum of the distinct values, do not write it.
-
-**Aggregates do not nest.** `max(avg(price))` is an error: one aggregate turns many rows into one value, and then there are no "many rows" left to aggregate again. Questions like that need chapter 5's subqueries.
-
-**SQLite and MySQL differ.** The first common mistake below is an error in PostgreSQL, but SQLite runs it: next to `max` it happens to take the row holding the maximum, and with other aggregates any row at all. MySQL with `ONLY_FULL_GROUP_BY` switched off runs it too and takes a value from any row. PostgreSQL's strictness is protecting you.
-
 ## Common mistakes {#mistakes}
 
-**1. Wanting the name of the most expensive product, and writing `name` next to `max(price)`.**
+**1. Wanting the name of the dearest product, and writing `name` next to `max(price)`.**
 
 ```sql run error
 SELECT name, max(price)
 FROM products;
 ```
 
-`max(price)` turns 16 rows into one value, but there are still 16 values of `name`, and the database cannot fit them into one row. After aggregating, only totals can be selected. To find the most expensive product, you do not need an aggregate at all; sort and take the first row:
+The error is `column "products.name" must appear in the GROUP BY clause or be used in an aggregate function`. Many people expect `max` to bring its row along, but `max(price)` hands back a price and nothing about where it came from, while `name` still has 16 values that cannot fit in one row. The `GROUP BY` in the message is the clause that splits rows into groups; without it, the whole table is one group. Finding the dearest product needs no aggregate at all: sort and take the first row.
 
 ```sql run
 SELECT name, price
@@ -174,28 +227,42 @@ LIMIT 1;
 ```sql run error
 SELECT name, price
 FROM products
-WHERE price > avg(price);
+WHERE price = max(price);
 ```
 
-`WHERE` runs row by row before aggregation, when no average exists yet. Conditions on totals go in `HAVING` (the third lesson of this chapter); "products dearer than the average" needs a subquery from chapter 5.
+The error is `aggregate functions are not allowed in WHERE`. `WHERE` tests one row at a time, and while it tests the first row the top price has not been worked out. A condition in `WHERE` uses only the row's own values, such as `quantity * unit_price > 100`. To find the row with the largest value, sort as above.
 
-**3. `count` where `sum` was meant.** "How many items were sold" is `sum(quantity)`; `count(quantity)` only counts order lines. When a question says "how many", decide first whether it counts rows or quantities inside rows.
+**3. `count` where `sum` was meant.** "How many items were sold" adds up each row's `quantity`; `count(quantity)` only counts the order lines:
 
-**4. Two columns inside `count(DISTINCT …)`.** MySQL allows `count(DISTINCT customer_id, status)`; PostgreSQL does not:
-
-```sql run error
-SELECT count(DISTINCT customer_id, status)
-FROM orders;
+```sql run
+SELECT count(quantity) AS lines, sum(quantity) AS units
+FROM order_items;
 ```
 
-The error is `function count(integer, text) does not exist`: in the shape, `count`'s parentheses hold one `expression`. To count distinct combinations, wrap the two columns in parentheses as one unit: `count(DISTINCT (customer_id, status))` gives 23.
+Forty-two lines, 69 items. In everyday speech "how many" can mean either, so before writing, ask: am I counting rows, or adding up a number inside them?
 
-**5. Expecting no result when nothing matches.** If `WHERE` removes every row, the result is still one row: `count` is 0 and the other functions are NULL.
+**4. Averaging over the wrong rows.** "What is an order worth on average?" written as `avg(quantity * unit_price)` gives 76.57. But a row of `order_items` is an order line, not an order, so that is the average value of a line. The divisor of `avg` is the number of rows it summarises, and here the rows and the orders are not the same thing:
+
+```sql run
+SELECT count(*) AS lines, count(DISTINCT order_id) AS orders
+FROM order_items;
+```
+
+The 42 lines belong to only 23 orders. Before averaging, ask: an average per what? And is one row of the table one of those?
 
 ## Summary {#summary}
 
-- An {{term:aggregate-function}} summarises many rows as one value: `count(*)`, `sum`, `avg`, `min`, `max`.
-- `WHERE` filters rows first; only the rows left are summarised.
-- With an aggregate and no `GROUP BY`, the result is always one row, even when there is nothing to summarise.
-- After aggregating you cannot select plain columns; `count(DISTINCT x)` counts distinct values only.
-- Aggregates cannot appear in `WHERE`, and cannot be nested.
+- An {{term:aggregate-function}} summarises many rows as one value: `count(*)` counts rows, `sum`, `avg`, `min` and `max` summarise a column or an expression, and `bool_or` and `bool_and` summarise true and false.
+- `WHERE` filters row by row before anything is summarised, so it decides which rows count, and it cannot contain an aggregate.
+- With an aggregate and no `GROUP BY` the result is always one row, even with nothing to summarise: `count` gives 0 and the others NULL.
+- After aggregating, `SELECT` can hold only summary values; to find the row with the largest value, use `ORDER BY … LIMIT 1`.
+- Before writing, decide whether you are counting rows or adding up amounts, and what the average is per.
+
+## Reference {#reference}
+
+- `count(1)` gives the same result as `count(*)` with no noticeable difference in speed. `count(*)` is the standard form and says most plainly what it does: count rows.
+- `sum` and `avg` accept `DISTINCT` too: `sum(DISTINCT quantity)` drops repeated quantities before adding and gives 21, not 69. Write it only when a question really asks for the sum of the different values.
+- Standard SQL calls `bool_and` `every`, and PostgreSQL accepts both names. The standard's counterparts of `bool_or`, `any` and `some`, are not supported, because they would be ambiguous next to `= ANY (…)`.
+- To count distinct combinations, wrap the columns in parentheses as one value: `count(DISTINCT (customer_id, status))`. MySQL accepts `count(DISTINCT customer_id, status)`; PostgreSQL reports an error.
+- SQLite, and MySQL with `ONLY_FULL_GROUP_BY` switched off, run `SELECT name, max(price) FROM products`: SQLite takes the row that holds the maximum, MySQL any row. PostgreSQL's error protects you from an answer that looks plausible and is wrong.
+- In PostgreSQL, `count(*)` over a whole table reads the entire table or an index covering every row, so on a large table it is not instant.

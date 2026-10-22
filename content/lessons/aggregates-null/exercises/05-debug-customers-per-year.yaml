@@ -1,0 +1,35 @@
+kind: debug
+difficulty: 1
+lesson_ref: mistakes
+objective: null-inputs
+prompt:
+  zh: 这条查询想按加入年份统计顾客：每年一行，依次是年份和那一年加入的顾客数，按年份排序。它能运行，但两年的数字加起来只有 10，而 shop 有 12 位顾客。修好它。
+  en: This query should count customers by the year they joined, one row per year, with the year and the number of customers who joined that year, sorted by year. It runs, but the two numbers add up to 10, and shop has 12 customers. Fix it.
+hints:
+  - zh: 少掉的是哪两位顾客？看看他们在 `customers` 里有什么共同点。
+    en: Which two customers are missing? Look at what they have in common in `customers`.
+  - zh: "`count(列)` 不数这一列为 NULL 的行。要数顾客，就要数行。"
+    en: "`count(column)` skips the rows where that column is NULL. To count customers, count rows."
+starter: |
+  SELECT extract(year FROM joined_on) AS year, count(email) AS customers
+  FROM customers
+  GROUP BY extract(year FROM joined_on)
+  ORDER BY year;
+solution: |
+  SELECT extract(year FROM joined_on) AS year, count(*) AS customers
+  FROM customers
+  GROUP BY extract(year FROM joined_on)
+  ORDER BY year;
+check: { order_matters: true }
+traps:
+  - sql: |
+      SELECT extract(year FROM joined_on) AS year, COALESCE(count(email), 0) AS customers
+      FROM customers
+      GROUP BY extract(year FROM joined_on)
+      ORDER BY year;
+    say:
+      zh: 还是 9 和 1。`count(email)` 在计数时就跳过了没有邮箱的两位顾客；`count` 从不返回 NULL，所以外面套 `COALESCE` 什么也改变不了。要数的是行，不是邮箱。
+      en: Still 9 and 1. `count(email)` skips the two customers without an email while it counts, and `count` never returns NULL, so wrapping it in `COALESCE` changes nothing. Count rows, not emails.
+explain:
+  zh: "`GROUP BY` 按年份分组，`ORDER BY year` 排序，这两处都没问题。错在 `count(email)`：顾客 6 和 12 没有邮箱，于是 2023 年少数了 1 位，2024 年也少数了 1 位。`count(*)` 数的是每组的行数，与哪一列为空无关。换成 `count(joined_on)` 碰巧也对，因为这一列不允许为空，但 `count(*)` 才直接说出了“数顾客”的意思。"
+  en: "`GROUP BY` groups by year and `ORDER BY year` sorts, and both are fine. The fault is `count(email)`: customers 6 and 12 have no email, so 2023 loses one customer and 2024 loses one. `count(*)` counts each group's rows, whatever is empty. `count(joined_on)` would happen to work too, since that column cannot be NULL, but `count(*)` says what you mean: count the customers."

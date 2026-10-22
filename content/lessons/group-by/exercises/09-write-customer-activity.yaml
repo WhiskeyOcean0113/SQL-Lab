@@ -1,0 +1,40 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+objective: choose-grain
+prompt:
+  zh: |
+    客服想找出最常下单的顾客。对每位下过单的顾客，给出顾客编号 `customer_id`、他下过的订单数 `orders`，以及他最近一次下单的时间 `last_order`。订单最多的顾客排在前面，订单数相同时按顾客编号从小到大。
+  en: |
+    Customer service wants to find the most frequent buyers. For every customer who has ordered, show the customer id `customer_id`, the number of orders they have placed `orders`, and the time of their most recent order `last_order`. Customers with the most orders come first; on a tie, sort by customer id, lowest first.
+hints:
+  - zh: 先定粒度：问题里的“每位”指的是什么？分组列一个不多、一个不少。
+    en: "Settle the grain first: \"every customer\" means one row per what? Use no grouping column more, and none less."
+  - zh: “最近一次”是组里最晚的那个时间；排序先看订单数，再看顾客编号。
+    en: The most recent order is the latest time in the group. Sort by the number of orders first, then by customer id.
+solution: |
+  SELECT customer_id, count(*) AS orders, max(ordered_at) AS last_order
+  FROM orders
+  GROUP BY customer_id
+  ORDER BY orders DESC, customer_id;
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT customer_id, count(*) AS orders, max(ordered_at) AS last_order
+      FROM orders
+      GROUP BY customer_id, status
+      ORDER BY orders DESC, customer_id;
+    say:
+      zh: 多了一个分组列 `status`，每组成了“一位顾客的一种状态”，同一位顾客出现了好几次，订单数也被拆散了。问题要每位顾客一行，只按顾客分组。
+      en: The extra grouping column `status` makes each group one status of one customer, so customers appear several times and their orders are split up. The question wants one row per customer, so group by the customer alone.
+  - sql: |
+      SELECT customer_id, count(*) AS orders, min(ordered_at) AS last_order
+      FROM orders
+      GROUP BY customer_id
+      ORDER BY orders DESC, customer_id;
+    say:
+      zh: "`min` 给出的是最早的一次下单。“最近一次”是组里最晚的时间。"
+      en: "`min` gives the earliest order. The most recent order is the latest time in the group."
+explain:
+  zh: "问题说“每位顾客”，所以粒度是每位顾客一行，`GROUP BY customer_id`。`count(*)` 数这位顾客的订单行，`max(ordered_at)` 取组里最晚的时间，也就是最近一次下单。`ORDER BY orders DESC, customer_id` 让下单最多的顾客 1（4 笔）排第一，订单数相同的按编号排。常见的错误是顺手把 `status` 也写进 `GROUP BY`，结果每位顾客被拆成了好几行。"
+  en: "\"Every customer\" sets the grain at one row per customer: `GROUP BY customer_id`. `count(*)` counts that customer's order rows, and `max(ordered_at)` takes the latest time in the group, which is the most recent order. `ORDER BY orders DESC, customer_id` puts customer 1, with 4 orders, first and breaks ties by id. A common slip is to add `status` to `GROUP BY` as well, which splits each customer into several rows."

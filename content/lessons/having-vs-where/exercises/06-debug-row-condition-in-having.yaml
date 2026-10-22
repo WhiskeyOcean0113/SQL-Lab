@@ -1,0 +1,42 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+objective: where-or-having
+prompt:
+  zh: 下面这条查询想数出每个分类里还有库存（`stock` 大于 0）的商品有几件，列依次为 `category_id` 和件数。没有分类的商品也算作一组。它报错了，修好它。
+  en: "This query should count, for each category, the products still in stock (`stock` greater than 0), with `category_id` and the count as its columns. Products without a category count as a group too. It fails. Fix it."
+hints:
+  - zh: “还有库存”是一件商品的属性，还是整个分类的属性？它应该在分组之前还是之后判断？
+    en: Is "still in stock" a property of one product or of a whole category? Should it be judged before grouping or after?
+  - zh: 不要为了消除报错去改 `GROUP BY`。行条件写在分组之前的那个子句里。
+    en: "Do not change `GROUP BY` to make the error go away. A row condition goes in the clause that comes before grouping."
+starter: |
+  SELECT category_id, count(*) AS in_stock
+  FROM products
+  GROUP BY category_id
+  HAVING stock > 0;
+solution: |
+  SELECT category_id, count(*) AS in_stock
+  FROM products
+  WHERE stock > 0
+  GROUP BY category_id;
+traps:
+  - sql: |
+      SELECT category_id, count(*) AS in_stock
+      FROM products
+      GROUP BY category_id, stock
+      HAVING stock > 0;
+    say:
+      zh: 把 `stock` 加进 `GROUP BY` 消掉了报错，但每组变成了“一个分类里库存数相同的商品”，一个分类拆成了好几行。库存条件说的是单件商品，应该在分组之前筛掉。
+      en: "Adding `stock` to `GROUP BY` silences the error, but each group becomes \"the products of one category with the same stock level\", so a category splits into several rows. The stock condition is about single products and should filter them before grouping."
+  - sql: |
+      SELECT category_id, count(*) AS in_stock
+      FROM products
+      GROUP BY category_id
+      HAVING sum(stock) > 0;
+    say:
+      zh: "`sum(stock) > 0` 判断的是整个分类的库存总和。分类 2 的总库存大于 0，于是缺货的 4K Monitor 也被数了进去。题目的条件是对每件商品的。"
+      en: "`sum(stock) > 0` judges the whole category's total stock. Category 2's total is above 0, so the out-of-stock 4K Monitor is counted too. The task's condition is about each product."
+explain:
+  zh: "`stock` 不是分组列，到 `HAVING` 时一个分类里有好几个库存数，PostgreSQL 不知道该比较哪一个，于是报错。“还有库存”对着一件商品就能回答，所以写成 `WHERE stock > 0`：先去掉缺货的 4K Monitor，再按分类分组计数。分类 2 因此是 3 件而不是 4 件。照着报错把 `stock` 加进 `GROUP BY` 也能运行，但会把每个分类按库存数拆成很多行。"
+  en: "`stock` is not a grouping column, so by the time `HAVING` runs a category has several stock values and PostgreSQL cannot tell which to compare. \"Still in stock\" can be answered from one product, so it becomes `WHERE stock > 0`: drop the out-of-stock 4K Monitor first, then group by category and count. Category 2 therefore has 3, not 4. Following the error and adding `stock` to `GROUP BY` also runs, but it splits every category into one row per stock level."

@@ -5,3 +5,14 @@ summary:
 dataset: shop
 prereqs: [group-by]
 introduces: [HAVING]
+template: 2
+objectives:
+  - id: having-aggregate
+    zh: "能写出用{{term:aggregate-function}}筛选{{term:group|分组}}的 HAVING 条件，包括 SELECT 里没有出现的聚合。"
+    en: "Write a HAVING condition that filters {{term:group|groups}} on an {{term:aggregate-function}}, including one that does not appear in SELECT."
+  - id: where-or-having
+    zh: "能找出一个条件说的是一{{term:row}}还是一整组，把它放进 WHERE 或 HAVING，并改正放错位置的查询。"
+    en: "Find whether a condition is about one {{term:row}} or a whole {{term:group}}, put it in WHERE or HAVING, and fix a query that puts it in the wrong one."
+  - id: where-changes-having
+    zh: "能预测 WHERE 先去掉的{{term:row}}会怎样改变 HAVING 看到的组和聚合值，并写出依赖这一点的查询。"
+    en: "Predict how the {{term:row|rows}} WHERE removes first change the groups and totals HAVING sees, and write a query that relies on it."

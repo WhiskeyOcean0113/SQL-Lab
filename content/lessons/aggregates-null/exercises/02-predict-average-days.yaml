@@ -1,0 +1,38 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+objective: null-inputs
+prompt:
+  zh: 顾客 1 下过 4 笔订单。其中 3 笔已发货，分别用了 1 天、2 天和 1 天；第 4 笔还在等待处理，`shipped_at` 是 NULL。先预测这条查询的结果，再运行。
+  en: Customer 1 has placed 4 orders. Three have shipped, after 1, 2 and 1 days; the fourth is still pending, so its `shipped_at` is NULL. Predict the result, then run the query.
+hints:
+  - zh: 还没发货的那笔订单，天数是多少？`avg` 会拿它怎么办？
+    en: What is the shipping time of the order that has not shipped? What does `avg` do with it?
+  - zh: "`avg` 先扔掉 NULL，再用剩下的值的和，除以剩下的值的个数。"
+    en: "`avg` drops NULL first, then divides the sum of the remaining values by how many remain."
+query: |
+  SELECT round(avg(shipped_at::date - ordered_at::date), 2) AS avg_days
+  FROM orders
+  WHERE customer_id = 1;
+choices:
+  - text: '1.00'
+    why:
+      zh: 这是把未发货的订单当成 0 天，再除以 4。`avg` 不会把 NULL 换成 0，它直接扔掉 NULL，分母只有 3。
+      en: This counts the pending order as 0 days and divides by 4. `avg` does not turn NULL into 0; it drops it, so the divisor is 3.
+  - text: '1.33'
+    why:
+      zh: 对。NULL 被扔掉，剩下 1、2、1，和是 4，除以 3 得 1.33。
+      en: Right. The NULL is dropped, leaving 1, 2 and 1; their sum, 4, divided by 3 is 1.33.
+  - text: 'NULL'
+    why:
+      zh: "`1 + NULL` 确实是 NULL，但聚合函数不是把值一个个加起来：它先扔掉 NULL，再汇总已知的值。"
+      en: "`1 + NULL` is indeed NULL, but an aggregate does not just add the values one by one: it drops the NULLs first and summarises the known values."
+  - zh: 报错：avg 处理不了 NULL
+    en: "An error: avg cannot handle NULL"
+    why:
+      zh: 聚合函数遇到 NULL 不会报错，扔掉 NULL 正是它们的默认行为。
+      en: Aggregates never fail on NULL; dropping it is exactly what they do by default.
+answer: 1
+explain:
+  zh: 1.33。`WHERE` 留下顾客 1 的 4 笔订单；天数表达式在待处理的那笔上是 NULL；`avg` 扔掉它，用 1 + 2 + 1 = 4 除以 3。选 1.00 的人默认 NULL 等于 0，但 SQL 把 NULL 当作“不知道”，不当作 0。
+  en: 1.33. `WHERE` keeps customer 1's four orders; the days expression is NULL for the pending one; `avg` drops it and divides 1 + 2 + 1 = 4 by 3. Choosing 1.00 assumes NULL means 0, but SQL treats NULL as "not known", never as 0.

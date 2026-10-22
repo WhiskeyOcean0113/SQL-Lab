@@ -1,0 +1,38 @@
+kind: write
+difficulty: 3
+lesson_ref: mistakes
+objective: aggregate-expressions
+prompt:
+  zh: |
+    老板问：一笔订单平均能带来多少收入？
+
+    一笔订单的金额是它所有明细的数量乘单价之和，只算有明细的订单。返回一列 `avg_order_value`，四舍五入到两位小数。
+  en: |
+    The owner asks: what does an order bring in, on average?
+
+    An order is worth the sum of quantity times unit price over its lines, and only orders that have lines count. Return one column, `avg_order_value`, rounded to two decimal places.
+hints:
+  - zh: 先想清楚分子和分母：总收入是多少？一共有几笔订单？`order_items` 里的一行是一笔订单吗？
+    en: "Settle the numerator and the denominator first. What is the total revenue? How many orders are there? Is one row of `order_items` one order?"
+  - zh: "`avg` 的分母是行数，而这里的行是明细。可以自己做除法：总金额除以不同订单的个数。"
+    en: "The divisor of `avg` is the number of rows, and here the rows are order lines. You can do the division yourself: the total value divided by the number of different orders."
+solution: |
+  SELECT round(sum(quantity * unit_price) / count(DISTINCT order_id), 2) AS avg_order_value
+  FROM order_items;
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT round(avg(quantity * unit_price), 2) AS avg_order_value
+      FROM order_items;
+    say:
+      zh: 这是每行明细的平均金额：`avg` 除以的是 42 行明细，而题目问的是每笔订单。分母应该是订单的个数。
+      en: "This is the average value of an order line: `avg` divides by 42 lines, but the question is per order. The divisor should be the number of orders."
+  - sql: |
+      SELECT round(sum(quantity * unit_price) / 24, 2) AS avg_order_value
+      FROM order_items;
+    say:
+      zh: "`orders` 里有 24 笔订单，但有一笔没有任何明细，不该算进来。而且把数字写死，数据一变答案就错了：让查询自己数出 `order_items` 里有几笔订单。"
+      en: "`orders` holds 24 orders, but one has no lines and should not count. A number typed in also goes wrong as soon as the data changes: let the query count the orders in `order_items` itself."
+explain:
+  zh: "`sum(quantity * unit_price)` 先逐行算出金额，再加起来，得到总收入 3215.95；`count(DISTINCT order_id)` 数出这些明细属于 23 笔订单；两者相除，再用 `round(…, 2)` 保留两位小数，得 139.82。`avg(quantity * unit_price)` 看起来更直接，可它的分母是 42 行明细，算出的是每行的平均金额 76.57。总金额是 `numeric`，所以这里的除法不会变成整数除法。"
+  en: "`sum(quantity * unit_price)` works out each line's value and adds them into a total revenue of 3215.95; `count(DISTINCT order_id)` finds that those lines belong to 23 orders; dividing one by the other and applying `round(…, 2)` gives 139.82. `avg(quantity * unit_price)` looks more direct, but its divisor is the 42 lines, so it gives the average line value, 76.57. The total is `numeric`, so this division is not integer division."

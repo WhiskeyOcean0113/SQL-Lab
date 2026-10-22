@@ -1,0 +1,40 @@
+kind: write
+difficulty: 2
+lesson_ref: example
+objective: where-or-having
+prompt:
+  zh: 客服要跟进还没完成的订单：状态既不是 `delivered` 也不是 `cancelled` 的订单都算未完成。哪些顾客手上有 2 笔或更多未完成的订单？列依次为 `customer_id`、未完成订单数 `open_orders`，以及其中最早一笔的下单时间 `oldest`。
+  en: "Customer service wants to follow up on unfinished orders: any order whose status is neither `delivered` nor `cancelled` is unfinished. Which customers have 2 or more unfinished orders? The columns are `customer_id`, the number of unfinished orders `open_orders`, and when the oldest of them was placed, `oldest`."
+hints:
+  - zh: 这里有两个条件：“未完成”和“2 笔或更多”。各自对着一行能不能回答？
+    en: 'There are two conditions here: "unfinished" and "2 or more". Can each be answered from one row?'
+  - zh: 排除两种状态，可以用第 1 章学过的 `NOT IN`。
+    en: "To exclude two statuses, use `NOT IN` from Chapter 1."
+solution: |
+  SELECT customer_id, count(*) AS open_orders, min(ordered_at) AS oldest
+  FROM orders
+  WHERE status NOT IN ('delivered', 'cancelled')
+  GROUP BY customer_id
+  HAVING count(*) >= 2;
+check: { column_names: true }
+traps:
+  - sql: |
+      SELECT customer_id, count(*) AS open_orders, min(ordered_at) AS oldest
+      FROM orders
+      GROUP BY customer_id
+      HAVING count(*) >= 2;
+    say:
+      zh: 没有 `WHERE`，`count(*)` 数的是每位顾客的全部订单，所以 10 位顾客都够 2 笔。“未完成”说的是单笔订单，要在分组之前把其他订单去掉。
+      en: "Without a `WHERE`, `count(*)` counts each customer's orders of every kind, so all 10 customers reach 2. \"Unfinished\" is about a single order, so the other orders must be removed before grouping."
+  - sql: |
+      SELECT customer_id, count(*) AS open_orders, min(ordered_at) AS oldest
+      FROM orders
+      WHERE status <> 'delivered'
+      GROUP BY customer_id
+      HAVING count(*) >= 2;
+    say:
+      zh: 取消的订单也被算成了未完成，顾客 3 因此多了出来。题目把 `cancelled` 也排除在外。
+      en: "Cancelled orders are counted as unfinished, which lets customer 3 in. The task excludes `cancelled` as well."
+explain:
+  zh: "“未完成”对着一笔订单就能判断，所以写成 `WHERE status NOT IN ('delivered', 'cancelled')`，先去掉已完成和已取消的订单；`GROUP BY customer_id` 再把剩下的 8 笔按顾客分组；`count(*)` 和 `min(ordered_at)` 都只算未完成的订单；“2 笔或更多”要数一整组，所以是 `HAVING count(*) >= 2`。结果是顾客 1 和 2。只写 `HAVING`、漏掉 `WHERE` 也能运行，却会把每位顾客的全部订单都数进去。"
+  en: "\"Unfinished\" can be judged from one order, so it becomes `WHERE status NOT IN ('delivered', 'cancelled')`, removing delivered and cancelled orders first; `GROUP BY customer_id` then groups the remaining 8 orders by customer; `count(*)` and `min(ordered_at)` cover unfinished orders only; and \"2 or more\" needs the whole group counted, so it is `HAVING count(*) >= 2`. The result is customers 1 and 2. Writing only the `HAVING` and leaving out the `WHERE` also runs, but it counts every one of a customer's orders."

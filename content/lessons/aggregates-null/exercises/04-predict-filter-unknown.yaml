@@ -1,0 +1,36 @@
+kind: predict
+difficulty: 2
+lesson_ref: syntax
+objective: filter-clause
+prompt:
+  zh: 两位顾客住在 Shanghai，另有两位没有登记城市（`city` 是 NULL）。下面哪条查询返回的数和这条查询相同？先判断，再运行。
+  en: Two customers live in Shanghai, and two have no city on record (their `city` is NULL). Which of the queries below returns the same number as this one? Decide first, then run it.
+hints:
+  - zh: 对城市为 NULL 的两位顾客，`city <> 'Shanghai'` 的结果是什么？`FILTER` 会让这样的行进去吗？
+    en: For the two customers whose city is NULL, what is `city <> 'Shanghai'`? Does `FILTER` let such a row in?
+  - zh: "`FILTER` 和 `WHERE` 一样，只放进条件为 true 的行；unknown 和 false 都进不去。"
+    en: "`FILTER`, like `WHERE`, lets in only the rows where the condition is true; unknown stays out with false."
+query: |
+  SELECT count(*) FILTER (WHERE city <> 'Shanghai') AS not_shanghai
+  FROM customers;
+choices:
+  - text: "`SELECT count(*) - 2 FROM customers;`"
+    why:
+      zh: 这条返回 10，等于默认城市未知的两位顾客也“不在 Shanghai”。可 `NULL <> 'Shanghai'` 是 unknown，`FILTER` 不会放这两行进去。
+      en: This returns 10, as if the two customers with no city were "not in Shanghai". But `NULL <> 'Shanghai'` is unknown, and `FILTER` does not let those rows in.
+  - text: "`SELECT count(city <> 'Shanghai') FROM customers;`"
+    why:
+      zh: 这条返回 10。它数的是比较结果不为 NULL 的行，false 也算，所以 Shanghai 的两位也被数了进去，只有城市为 NULL 的两位被扔掉。
+      en: This returns 10. It counts the rows whose comparison result is not NULL, false included, so the two Shanghai customers are counted and only the two with no city are dropped.
+  - text: "`SELECT count(*) FROM customers WHERE city <> 'Shanghai';`"
+    why:
+      zh: 对。`WHERE` 和 `FILTER` 用同一条规则筛行：只留下条件为 true 的行。两条查询都数到 8 行。
+      en: "Right. `WHERE` and `FILTER` keep rows by the same rule: only where the condition is true. Both queries count 8 rows."
+  - text: "`SELECT count(*) FROM customers WHERE city IS DISTINCT FROM 'Shanghai';`"
+    why:
+      zh: 这条返回 10。`IS DISTINCT FROM` 把 NULL 当作和 Shanghai 不同，所以城市未知的两位也被算了进去。
+      en: This returns 10. `IS DISTINCT FROM` treats NULL as different from Shanghai, so the two customers with no city are counted too.
+answer: 2
+explain:
+  zh: 原查询返回 8。12 位顾客里，`city <> 'Shanghai'` 对 8 位是 true，对住在 Shanghai 的 2 位是 false，对没有城市的 2 位是 unknown。`FILTER` 只放进 true 的行，和 `WHERE` 完全一样。差别只在于 `FILTER` 只影响它所在的那一个聚合函数；这条查询里只有一个聚合函数，所以两种写法结果相同。
+  en: "The query returns 8. Of the 12 customers, `city <> 'Shanghai'` is true for 8, false for the 2 in Shanghai, and unknown for the 2 with no city. `FILTER` lets in only the true rows, exactly as `WHERE` does. The one difference is that `FILTER` affects only its own aggregate; this query has just one, so the two forms agree."

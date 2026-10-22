@@ -1,0 +1,33 @@
+kind: parsons
+difficulty: 1
+lesson_ref: example
+objective: choose-grain
+prompt:
+  zh: 用下面的片段拼出一条查询：每笔订单一行，列依次为 `order_id`、这笔订单里有几种商品 `products`、一共买了几件 `units`，按 `order_id` 排序。有两个片段是多余的。
+  en: Arrange the pieces into a query with one row per order, with the columns `order_id`, the number of different products in that order `products`, and the number of items bought `units`, sorted by `order_id`. Two pieces are not needed.
+hints:
+  - zh: 结果要“每个什么一行”？`order_items` 的一行又是什么？
+    en: One row per what? And what is one row of `order_items`?
+  - zh: 一笔订单里的每种商品是 `order_items` 的一行，所以数行就是数商品种类，件数要对 `quantity` 求和。
+    en: Each product in an order is one row of `order_items`, so counting rows counts products, and items mean adding up `quantity`.
+solution: |
+  SELECT order_id, count(*) AS products, sum(quantity) AS units
+  FROM order_items
+  GROUP BY order_id
+  ORDER BY order_id;
+distractors:
+  - GROUP BY order_id, product_id
+  - GROUP BY product_id
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT order_id, count(*) AS products, sum(quantity) AS units
+      FROM order_items
+      GROUP BY order_id, product_id
+      ORDER BY order_id;
+    say:
+      zh: 多了一个分组列。`order_id` 加 `product_id` 正好是 `order_items` 一行的粒度，所以每组只有一行，`products` 处处是 1。题目要每笔订单一行，只按订单分组。
+      en: "One grouping column too many. `order_id` plus `product_id` is exactly the grain of one `order_items` row, so every group is a single row and `products` is always 1. The task wants one row per order: group by the order alone."
+explain:
+  zh: "`order_items` 的一行是“某笔订单里的一种商品”，题目要的是每笔订单一行，所以只按 `order_id` 分组。`count(*)` 数组里的行，也就是商品种类；`sum(quantity)` 加起件数；`ORDER BY order_id` 满足排序要求。多加 `product_id` 作分组列，组就回到了单行明细；只按 `product_id` 分组，则既改了粒度，`SELECT` 里的 `order_id` 也会报错。"
+  en: "A row of `order_items` is one product within one order, and the task wants one row per order, so group by `order_id` alone. `count(*)` counts the group's rows, which is the number of products; `sum(quantity)` adds up the items; `ORDER BY order_id` gives the order asked for. Adding `product_id` as a grouping column takes the groups back to single lines, and grouping by `product_id` alone changes the grain and makes `order_id` in `SELECT` an error."

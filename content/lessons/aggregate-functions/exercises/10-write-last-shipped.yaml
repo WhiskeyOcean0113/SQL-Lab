@@ -1,0 +1,36 @@
+kind: write
+difficulty: 3
+lesson_ref: mistakes
+objective: one-row-rule
+prompt:
+  zh: 最近一次发货的是哪笔订单？返回一行，列依次为订单编号 `id` 和发货时间 `shipped_at`。
+  en: Which order was shipped most recently? Return one row with the order's `id` and its `shipped_at`, in that order.
+hints:
+  - zh: "“哪一笔”要的是一整行，不是一个汇总值。想想怎样找出排在最前面的那一行，再留意还没发货的订单。"
+    en: "\"Which order\" asks for a whole row, not a summary value. Think about how to find the row that comes first, and watch out for orders that have not shipped."
+  - zh: 按发货时间从晚到早排，只取第一行。降序时，NULL 默认排在哪一端？
+    en: Sort by shipping time, latest first, and keep the first row. In descending order, which end do NULLs go to by default?
+solution: |
+  SELECT id, shipped_at
+  FROM orders
+  WHERE shipped_at IS NOT NULL
+  ORDER BY shipped_at DESC
+  LIMIT 1;
+traps:
+  - sql: |
+      SELECT id, shipped_at
+      FROM orders
+      ORDER BY shipped_at DESC
+      LIMIT 1;
+    say:
+      zh: 降序时 PostgreSQL 把 NULL 排在最前，所以第一行是一笔还没发货的订单。先去掉没有发货时间的订单，或者让 NULL 排到最后。
+      en: In descending order PostgreSQL puts NULLs first, so the first row is an order that has not shipped. Leave out the orders with no shipping time, or send the NULLs to the end.
+  - sql: |
+      SELECT max(shipped_at) AS shipped_at
+      FROM orders;
+    say:
+      zh: "`max` 找到了最近的发货时间，却交不出是哪笔订单：聚合之后只剩汇总值。要一整行，就不要聚合，改为排序后取第一行。"
+      en: "`max` finds the latest shipping time but cannot say which order it belongs to, because only summary values are left after aggregating. For a whole row, do not aggregate: sort and take the first row."
+explain:
+  zh: "`WHERE shipped_at IS NOT NULL` 去掉还没发货的订单；`ORDER BY shipped_at DESC` 把最晚的发货时间排在最前；`LIMIT 1` 只留第一行：订单 17，2024-05-30 07:35。写成 `ORDER BY shipped_at DESC NULLS LAST` 也可以。`max(shipped_at)` 能找到这个时间，但它只交出一个值，订单编号放不进来；只写 `ORDER BY shipped_at DESC LIMIT 1` 也不对，降序时 NULL 排在最前，第一行会是一笔没发货的订单。"
+  en: "`WHERE shipped_at IS NOT NULL` drops the orders that have not shipped; `ORDER BY shipped_at DESC` puts the latest shipping time first; `LIMIT 1` keeps that row: order 17, shipped 2024-05-30 07:35. `ORDER BY shipped_at DESC NULLS LAST` works too. `max(shipped_at)` finds the time but hands back a single value with no room for the order id, and plain `ORDER BY shipped_at DESC LIMIT 1` is wrong as well: NULLs come first in descending order, so the first row is an order that never shipped."

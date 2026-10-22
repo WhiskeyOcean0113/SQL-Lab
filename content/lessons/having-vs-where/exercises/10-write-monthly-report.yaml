@@ -1,0 +1,63 @@
+kind: write
+difficulty: 3
+lesson_ref: core
+objective: where-changes-having
+prompt:
+  zh: |
+    运营要一份月报，只算没有被取消的订单。每个月一行，列依次为：
+
+    - `month`：月份，写成 `2024-03` 这样的文字；
+    - `orders`：这个月未取消的订单数；
+    - `shipped`：其中已经发货（`shipped_at` 不为空）的笔数。
+
+    只列出未取消订单至少 3 笔的月份，从最近的月份排到最早的月份。
+  en: |
+    The operations team wants a monthly report that counts only orders that were not cancelled. One row per month, with these columns:
+
+    - `month`: the month, as text such as `2024-03`;
+    - `orders`: the month's orders that were not cancelled;
+    - `shipped`: how many of those have shipped (`shipped_at` is not NULL).
+
+    List only the months with at least 3 orders that were not cancelled, from the most recent month back to the earliest.
+hints:
+  - zh: 先给每个条件定时机：“没有被取消”是在数之前用，还是数完之后用？“至少 3 笔”呢？
+    en: 'Give each condition its moment first: is "not cancelled" used before counting or after? And "at least 3"?'
+  - zh: 月份可以用第 2 章的 `to_char` 得到；“已发货的笔数”可以用 `CASE` 把每笔订单变成 1 或 0 再加起来。
+    en: "`to_char` from Chapter 2 gives the month; for the shipped count, `CASE` can turn each order into 1 or 0 to be added up."
+solution: |
+  SELECT to_char(ordered_at, 'YYYY-MM') AS month,
+         count(*) AS orders,
+         sum(CASE WHEN shipped_at IS NOT NULL THEN 1 ELSE 0 END) AS shipped
+  FROM orders
+  WHERE status <> 'cancelled'
+  GROUP BY to_char(ordered_at, 'YYYY-MM')
+  HAVING count(*) >= 3
+  ORDER BY month DESC;
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT to_char(ordered_at, 'YYYY-MM') AS month,
+             count(*) AS orders,
+             sum(CASE WHEN shipped_at IS NOT NULL THEN 1 ELSE 0 END) AS shipped
+      FROM orders
+      GROUP BY to_char(ordered_at, 'YYYY-MM')
+      HAVING count(*) >= 3
+      ORDER BY month DESC;
+    say:
+      zh: 取消的订单也被数进去了，所以 2 月和 4 月看起来也有 3 笔。“没有被取消”限定的是被数的行，要在分组之前去掉取消的订单。
+      en: "Cancelled orders are counted too, so February and April seem to have 3 orders each. \"Not cancelled\" restricts which rows are counted, so cancelled orders must go before grouping."
+  - sql: |
+      SELECT to_char(ordered_at, 'YYYY-MM') AS month,
+             count(*) AS orders,
+             sum(CASE WHEN shipped_at IS NOT NULL THEN 1 ELSE 0 END) AS shipped
+      FROM orders
+      WHERE status <> 'cancelled'
+      GROUP BY to_char(ordered_at, 'YYYY-MM')
+      HAVING count(*) >= 3
+      ORDER BY month;
+    say:
+      zh: 月份和数字都对了，但顺序反了。题目要从最近的月份排起，排序需要降序。
+      en: The months and numbers are right, but the order is reversed. The task starts from the most recent month, which needs a descending sort.
+explain:
+  zh: "`WHERE status <> 'cancelled'` 先逐行去掉 2 笔取消的订单；`GROUP BY to_char(ordered_at, 'YYYY-MM')` 把剩下的订单按月份分组；`count(*)` 数出每月的订单，`sum(CASE …)` 把已发货的记 1、未发货的记 0 再加起来；`HAVING count(*) >= 3` 去掉 2 月和 4 月（各剩 2 笔）；`ORDER BY month DESC` 让 6 月排在最前。月份是 `2024-03` 这样的文字，所以按文字降序也就是按时间从近到远。漏掉 `WHERE` 是最可能的错误：查询照样能跑，但 2 月和 4 月会因为算上了取消的订单而混进结果。"
+  en: "`WHERE status <> 'cancelled'` first removes the 2 cancelled orders row by row; `GROUP BY to_char(ordered_at, 'YYYY-MM')` groups the rest by month; `count(*)` counts each month's orders, and `sum(CASE …)` scores shipped orders 1 and the rest 0 and adds them up; `HAVING count(*) >= 3` drops February and April, which have 2 each; `ORDER BY month DESC` puts June first. The months are text like `2024-03`, so a descending text sort runs from the most recent month back. Leaving out the `WHERE` is the likely mistake: the query still runs, but February and April slip in because their cancelled orders are counted."

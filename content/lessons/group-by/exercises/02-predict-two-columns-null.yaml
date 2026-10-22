@@ -1,0 +1,43 @@
+kind: predict
+difficulty: 2
+lesson_ref: core
+objective: form-groups
+prompt:
+  zh: |
+    这条查询只看三个国家的顾客：China 的 Lin Wei 和 Chen Yu 住在 Shanghai，Zhang Min 住在 Beijing；Japan 的 Kenji Sato 和 Mei Tanaka 都住在 Osaka；Brazil 的 Lucas Silva 没有填城市，`city` 是 NULL。先预测，再运行：它返回几行？
+  en: |
+    This query looks at customers from three countries. In China, Lin Wei and Chen Yu live in Shanghai and Zhang Min in Beijing; in Japan, Kenji Sato and Mei Tanaka both live in Osaka; in Brazil, Lucas Silva gave no city, so `city` is NULL. Predict first, then run it: how many rows come back?
+hints:
+  - zh: 有两个分组列时，什么样的顾客才会进同一组？
+    en: With two grouping columns, which customers end up in the same group?
+  - zh: 把每位顾客写成“国家 + 城市”，数一数有几种不同的组合。NULL 也算一种。
+    en: Write each customer as a country-and-city pair and count the different pairs. NULL counts as a value here.
+query: |
+  SELECT country, city, count(*) AS customers
+  FROM customers
+  WHERE country IN ('China', 'Japan', 'Brazil')
+  GROUP BY country, city
+  ORDER BY country, city;
+choices:
+  - text: '3'
+    why:
+      zh: 3 是每个国家一行，或者丢掉了 NULL 城市那一行。但 `city` 也是分组列，China 会分成 Shanghai 和 Beijing 两组；Brazil 的 NULL 也自成一组，不会被丢掉。
+      en: Three would be one row per country, or the NULL city dropped. But `city` is a grouping column too, so China splits into Shanghai and Beijing, and Brazil's NULL forms a group of its own rather than disappearing.
+  - text: '4'
+    why:
+      zh: 对。组合有 Brazil + NULL、China + Beijing、China + Shanghai、Japan + Osaka 四种，每种一行。
+      en: Right. There are four pairs, Brazil + NULL, China + Beijing, China + Shanghai and Japan + Osaka, and each gives one row.
+  - text: '6'
+    why:
+      zh: 6 是每位顾客一行。`GROUP BY` 会把组合相同的顾客合并：两位 Shanghai 的顾客一行，两位 Osaka 的顾客一行。
+      en: Six is one row per customer. `GROUP BY` merges customers with the same pair, so the two in Shanghai share a row, as do the two in Osaka.
+  - zh: 报错
+    en: An error
+    why:
+      zh: "`city` 是分组列，可以出现在 `SELECT` 里；分组列里有 NULL 也完全合法。"
+      en: "`city` is a grouping column, so it may appear in `SELECT`, and a NULL in a grouping column is perfectly legal."
+answer: 1
+verify: { rows: 4 }
+explain:
+  zh: 有两个分组列时，“国家 + 城市”的组合相同才进同一组，所以结果的粒度是每个组合一行。China 有两个城市，贡献两行；Japan 和 Brazil 各一行。Brazil 那一行的 `city` 是 NULL：分组时 NULL 被看作同一个值，自成一组。
+  en: With two grouping columns, rows share a group only when the country-and-city pair matches, so the grain is one row per pair. China has two cities and gives two rows; Japan and Brazil give one each. Brazil's row has a NULL `city`, because grouping treats NULL as a value and gives it a group.

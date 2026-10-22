@@ -1,0 +1,35 @@
+kind: debug
+difficulty: 2
+lesson_ref: mistakes
+objective: group-expression
+prompt:
+  zh: 这条查询想统计每年有多少位顾客注册：每年一行，列依次为 `joined_year` 和 `customers`，按年份从早到晚排列。它能运行，但年份一再重复，每行都是 1。修好它。
+  en: This query should count how many customers joined each year, one row per year, with the columns `joined_year` and `customers`, from the earliest year to the latest. It runs, but the years repeat and every count is 1. Fix it.
+hints:
+  - zh: 每一组是按什么分出来的？那个值在 12 位顾客之间有几种？
+    en: What forms each group? How many different values does it have among the 12 customers?
+  - zh: "`SELECT` 里按什么统计，`GROUP BY` 里就要写同一个表达式。"
+    en: "Whatever `SELECT` counts by, `GROUP BY` must group by the same expression."
+starter: |
+  SELECT extract(year FROM joined_on) AS joined_year, count(*) AS customers
+  FROM customers
+  GROUP BY joined_on
+  ORDER BY joined_year;
+solution: |
+  SELECT extract(year FROM joined_on) AS joined_year, count(*) AS customers
+  FROM customers
+  GROUP BY extract(year FROM joined_on)
+  ORDER BY joined_year;
+check: { order_matters: true, column_names: true }
+traps:
+  - sql: |
+      SELECT DISTINCT extract(year FROM joined_on) AS joined_year, count(*) AS customers
+      FROM customers
+      GROUP BY joined_on
+      ORDER BY joined_year;
+    say:
+      zh: "`DISTINCT` 去掉了重复的行，但每组还是一个完整的日期，所以每个数仍然是 1。要改的是分组本身：按年份分组，而不是按日期。"
+      en: "`DISTINCT` removed the repeated rows, but each group is still one full date, so every count is still 1. The grouping itself has to change: group by the year, not the date."
+explain:
+  zh: "原来的 `GROUP BY joined_on` 按完整日期分组，12 位顾客的注册日期各不相同，于是 12 组，每组 1 人。`SELECT` 里的 `extract(year FROM joined_on)` 不报错，因为它由分组列算出来，组内只有一个值。把 `GROUP BY` 改成同一个 `extract` 表达式后，同一年的顾客进了同一组：2023 年 10 位，2024 年 2 位。`ORDER BY joined_year` 保证年份从早到晚。"
+  en: "The original `GROUP BY joined_on` groups by full date, and all 12 customers joined on different days, so there are 12 groups of one. `extract(year FROM joined_on)` in `SELECT` raises no error, since it is computed from the grouping column and has one value per group. With the same `extract` expression in `GROUP BY`, customers from the same year share a group: 10 in 2023 and 2 in 2024. `ORDER BY joined_year` puts the years in order."
